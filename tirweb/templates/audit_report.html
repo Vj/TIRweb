@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>TIRweb Security & Regulatory Compliance Audit Report</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 22mm 16mm 22mm 16mm;
+    @top-left {
+      content: "TIRweb | Web Application & API Security Audit";
+      font-family: "Liberation Sans", sans-serif;
+      font-size: 8pt;
+      color: #64748b;
+    }
+    @top-right {
+      content: "CONFIDENTIAL — {{ client_name }}";
+      font-family: "Liberation Sans", sans-serif;
+      font-size: 8pt;
+      font-weight: bold;
+      color: #475569;
+    }
+    @bottom-left {
+      content: "Aligned with CERT-In, DPDP Rules 2025, RBI Directions, PCI DSS v4.0 & ISO 27001";
+      font-family: "Liberation Sans", sans-serif;
+      font-size: 7.5pt;
+      color: #64748b;
+    }
+    @bottom-right {
+      content: "Page " counter(page) " of " counter(pages);
+      font-family: "Liberation Sans", sans-serif;
+      font-size: 8pt;
+      font-weight: bold;
+      color: #334155;
+    }
+  }
+
+  @page :first {
+    @top-left { content: none; }
+    @top-right { content: none; }
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Liberation Sans", Arial, sans-serif;
+    font-size: 9.5pt;
+    line-height: 1.45;
+    color: #1e293b;
+    margin: 0;
+  }
+
+  /* Cover Banner */
+  .cover-header {
+    background: #0f172a;
+    color: #ffffff;
+    padding: 28px 30px;
+    border-radius: 6px;
+    border-left: 6px solid #0284c7;
+    margin-bottom: 22px;
+  }
+  .cover-badge {
+    display: inline-block;
+    background: #0284c7;
+    color: #ffffff;
+    font-size: 8pt;
+    font-weight: bold;
+    letter-spacing: 0.08em;
+    padding: 3px 9px;
+    border-radius: 3px;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .cover-title {
+    font-size: 20pt;
+    font-weight: bold;
+    margin: 0 0 6px 0;
+    line-height: 1.2;
+  }
+  .cover-subtitle {
+    font-size: 10.5pt;
+    color: #cbd5e1;
+    margin: 0;
+  }
+
+  /* Metadata Grid */
+  .meta-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+    font-size: 9pt;
+  }
+  .meta-table td {
+    padding: 7px 10px;
+    border: 1px solid #cbd5e1;
+  }
+  .meta-label {
+    background: #f1f5f9;
+    font-weight: bold;
+    color: #334155;
+    width: 22%;
+  }
+  .meta-val {
+    width: 28%;
+    color: #0f172a;
+  }
+
+  h2 {
+    font-size: 13pt;
+    color: #0f172a;
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 4px;
+    margin: 22px 0 12px 0;
+    page-break-after: avoid;
+  }
+
+  h3 {
+    font-size: 10.5pt;
+    color: #1e3a8a;
+    margin: 16px 0 8px 0;
+    page-break-after: avoid;
+  }
+
+  /* Summary Cards */
+  .kpi-row {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 8px 0;
+    margin: 0 -8px 18px -8px;
+  }
+  .kpi-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    padding: 10px 8px;
+    text-align: center;
+    background: #f8fafc;
+    width: 20%;
+  }
+  .kpi-num {
+    font-size: 16pt;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 2px;
+  }
+  .kpi-lbl {
+    font-size: 7.5pt;
+    text-transform: uppercase;
+    color: #475569;
+    font-weight: bold;
+  }
+
+  /* Standard Data Tables */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 16px;
+    font-size: 8.5pt;
+  }
+  table.data-table thead {
+    display: table-header-group;
+  }
+  table.data-table tr {
+    page-break-inside: avoid;
+  }
+  table.data-table th {
+    background: #1e293b;
+    color: #ffffff;
+    text-align: left;
+    padding: 7px 8px;
+    font-weight: bold;
+    border: 1px solid #1e293b;
+  }
+  table.data-table td {
+    padding: 6px 8px;
+    border: 1px solid #cbd5e1;
+    vertical-align: top;
+  }
+  table.data-table tbody tr:nth-child(even) {
+    background: #f8fafc;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .sev-Critical { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+  .sev-High     { background: #ffedd5; color: #9a3412; border: 1px solid #fdba74; }
+  .sev-Medium   { background: #fef9c3; color: #854d0e; border: 1px solid #fde047; }
+  .sev-Low      { background: #e0f2fe; color: #075985; border: 1px solid #7dd3fc; }
+  .sev-Info     { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
+
+  .st-PASS            { background: #dcfce7; color: #166534; }
+  .st-FAIL            { background: #fee2e2; color: #991b1b; }
+  .st-HYBRID_REVIEW   { background: #fef3c7; color: #92400e; }
+  .st-MANUAL_REQUIRED { background: #e0e7ff; color: #3730a3; }
+  .st-TOOL_MISSING,
+  .st-DRY_RUN         { background: #f1f5f9; color: #475569; }
+
+  /* Finding Cards */
+  .finding-card {
+    border: 1px solid #cbd5e1;
+    border-radius: 5px;
+    margin-bottom: 14px;
+    page-break-inside: avoid;
+  }
+  .finding-header {
+    background: #f1f5f9;
+    padding: 8px 12px;
+    border-bottom: 1px solid #cbd5e1;
+  }
+  .finding-title {
+    font-weight: bold;
+    font-size: 9.5pt;
+    color: #0f172a;
+  }
+  .finding-body {
+    padding: 9px 12px;
+    font-size: 8.5pt;
+  }
+  .evidence-box {
+    background: #0f172a;
+    color: #e2e8f0;
+    font-family: "Liberation Mono", monospace;
+    font-size: 7.5pt;
+    padding: 8px 10px;
+    border-radius: 4px;
+    white-space: pre-wrap;
+    word-break: break-word;
+    margin-top: 6px;
+  }
+  .tag-list {
+    margin: 4px 0 0 0;
+    padding-left: 16px;
+    color: #334155;
+  }
+  .page-break {
+    page-break-before: always;
+  }
+</style>
+</head>
+<body>
+
+  <!-- Cover Header -->
+  <div class="cover-header">
+    <div class="cover-badge">{{ tool }} Compliance &amp; VAPT Report • v{{ schema_version }}</div>
+    <h1 class="cover-title">Web Application &amp; API Security Assessment</h1>
+    <p class="cover-subtitle">OWASP Top 10, Advanced Penetration Testing &amp; Indian Regulatory Compliance Mapping (CERT-In, DPDP Rules 2025, RBI)</p>
+  </div>
+
+  <!-- Engagement Metadata -->
+  <table class="meta-table">
+    <tr>
+      <td class="meta-label">Client / Entity</td>
+      <td class="meta-val"><strong>{{ client_name }}</strong></td>
+      <td class="meta-label">Target Scope</td>
+      <td class="meta-val"><code>{{ target }}</code></td>
+    </tr>
+    <tr>
+      <td class="meta-label">Audit Profile</td>
+      <td class="meta-val"><strong>{{ profile }}</strong></td>
+      <td class="meta-label">Assessment Org</td>
+      <td class="meta-val">{{ auditor_org }}</td>
+    </tr>
+    <tr>
+      <td class="meta-label">Report Generated</td>
+      <td class="meta-val">{{ generated_at }}</td>
+      <td class="meta-label">Total Controls Tested</td>
+      <td class="meta-val"><strong>{{ summary.total | default(0) }}</strong></td>
+    </tr>
+  </table>
+
+  <!-- 1. Executive Summary -->
+  <h2>1. Executive Summary &amp; Risk Posture</h2>
+  <table class="kpi-row">
+    <tr>
+      <td class="kpi-card">
+        <span class="kpi-num" style="color:#166534;">{{ summary.pass | default(0) }}</span>
+        <span class="kpi-lbl">Passed</span>
+      </td>
+      <td class="kpi-card">
+        <span class="kpi-num" style="color:#991b1b;">{{ summary.fail | default(0) }}</span>
+        <span class="kpi-lbl">Failed (Open)</span>
+      </td>
+      <td class="kpi-card">
+        <span class="kpi-num" style="color:#92400e;">{{ summary.hybrid_review | default(0) }}</span>
+        <span class="kpi-lbl">Hybrid Review</span>
+      </td>
+      <td class="kpi-card">
+        <span class="kpi-num" style="color:#3730a3;">{{ summary.manual_required | default(0) }}</span>
+        <span class="kpi-lbl">Manual Playbook</span>
+      </td>
+      <td class="kpi-card">
+        <span class="kpi-num" style="color:#b91c1c;">{{ severity_counts.Critical + severity_counts.High }}</span>
+        <span class="kpi-lbl">Crit / High Fails</span>
+      </td>
+    </tr>
+  </table>
+
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Failed Findings by Severity</th>
+        <th>Critical</th>
+        <th>High</th>
+        <th>Medium</th>
+        <th>Low</th>
+        <th>Info</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Confirmed Non-Compliant Controls</strong></td>
+        <td><span class="badge sev-Critical">{{ severity_counts.Critical }}</span></td>
+        <td><span class="badge sev-High">{{ severity_counts.High }}</span></td>
+        <td><span class="badge sev-Medium">{{ severity_counts.Medium }}</span></td>
+        <td><span class="badge sev-Low">{{ severity_counts.Low }}</span></td>
+        <td><span class="badge sev-Info">{{ severity_counts.Info }}</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- 2. Indian Regulatory Compliance Matrix -->
+  <h2>2. Indian Regulatory Compliance Mapping</h2>
+  <p style="font-size:8.5pt; color:#475569; margin-top:0;">
+    Traceability matrix mapping tested controls to the Digital Personal Data Protection (DPDP) Rules 2025, CERT-In Directions u/s 70B of the IT Act &amp; Technical Guidelines, and RBI Cyber/Payment Security Directions.
+  </p>
+
+  {% for pillar, rows in compliance_matrix.items() %}
+  <h3>{{ pillar }}</h3>
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th style="width:36%;">Regulatory Mandate / Clause</th>
+        <th style="width:13%;">Check ID</th>
+        <th style="width:27%;">Control Title</th>
+        <th style="width:11%;">Severity</th>
+        <th style="width:13%;">Status</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in rows %}
+      <tr>
+        <td>{{ row.clause }}</td>
+        <td><code>{{ row.check_id }}</code></td>
+        <td>{{ row.title }}</td>
+        <td><span class="badge sev-{{ row.severity }}">{{ row.severity }}</span></td>
+        <td><span class="badge st-{{ row.status }}">{{ row.status }}</span></td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endfor %}
+
+  <!-- 3. Detailed Technical Control Results -->
+  <div class="page-break"></div>
+  <h2>3. Detailed Technical Findings &amp; Evidence</h2>
+
+  {% for item in results %}
+  <div class="finding-card">
+    <div class="finding-header">
+      <table style="width:100%; border-collapse:collapse;">
+        <tr>
+          <td class="finding-title">
+            <code>{{ item.check_id }}</code> [{{ item.module_id }}] — {{ item.title }}
+          </td>
+          <td style="text-align:right; white-space:nowrap;">
+            <span class="badge sev-{{ item.severity }}">{{ item.severity }}</span>
+            <span class="badge st-{{ item.status }}">{{ item.status }}</span>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div class="finding-body">
+      <div>
+        <strong>Execution Mode:</strong> {{ item.execution_mode }} &nbsp;|&nbsp;
+        <strong>Tools / Bindings:</strong> {{ item.tools_invoked | join(", ") if item.tools_invoked else "Manual Verification" }}
+      </div>
+      <div style="margin-top:4px;">
+        <strong>Indian Compliance:</strong> {{ item.india_compliance | join(" • ") }}
+      </div>
+      <div style="margin-top:2px;">
+        <strong>Global Standards:</strong> {{ item.global_compliance | join(" • ") }}
+      </div>
+      <div class="evidence-box">{{ item.output_summary }}</div>
+    </div>
+  </div>
+  {% endfor %}
+
+</body>
+</html>

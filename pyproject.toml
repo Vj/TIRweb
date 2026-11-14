@@ -1,0 +1,58 @@
+[build-system]
+requires = ["hatchling>=1.25.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "tirweb"
+version = "0.1.0"
+description = "TIRweb: Standalone Web Application, API & Cloud-Native Security Auditing Tool with Indian Regulatory Compliance Mappings"
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "Proprietary" }
+keywords = ["security", "owasp", "vapt", "compliance", "cert-in", "dpdp", "web-security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Security",
+]
+
+dependencies = [
+    "pydantic>=2.14.0",
+    "typer>=0.29.0",
+    "pyyaml>=6.0.2",
+    "rich>=13.9.0",
+    "weasyprint>=63.0",
+    "jinja2>=3.1.4",
+    "httpx>=0.28.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=1.5.0",
+    "ruff>=0.8.0",
+    "mypy>=1.13.0",
+]
+
+[project.scripts]
+tirweb = "tirweb.cli:app"
+
+[tool.hatch.build.targets.wheel]
+packages = ["tirweb"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"rules" = "tirweb/rules"
+"tirweb/templates" = "tirweb/templates"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"

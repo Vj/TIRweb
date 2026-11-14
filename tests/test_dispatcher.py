@@ -1,0 +1,177 @@
+from tirweb.dispatcher import ToolDispatcher
+from tirweb.models import AppProfile, TIRWebChecklist
+
+
+class TestToolDispatcher:
+    async def test_automated_check_passes_when_tool_reports_clean(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        create_proc = mock_subprocess_factory(
+            which_map={"testssl.sh": "/usr/local/bin/testssl.sh"},
+            returncode=0,
+            stdout=b"TLS 1.3 offered\nHSTS: max-age=31536000 (OK)\n",
+        )
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        dispatcher = ToolDispatcher(concurrency=2)
+        await dispatcher.initialize_dynamic_bindings()
+        res = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert res.status == "PASS"
+        assert res.check_id == "WEB-CRY-001"
+        assert "TLS 1.3 offered" in res.output_summary
+        create_proc.assert_awaited_once()
+
+    async def test_automated_check_fails_on_vulnerability_output(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"testssl.sh": "/usr/local/bin/testssl.sh"},
+            returncode=0,
+            stdout=b"TLS 1.0 offered (NOT ok)\nBEAST VULNERABLE\n",
+        )
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        res = await dispatcher.execute_check("https://legacy.example.in", mod, chk)
+
+        assert res.status == "FAIL"
+        assert "VULNERABLE" in res.output_summary
+
+    async def test_nuclei_binding_fails_when_findings_returned(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        create_proc = mock_subprocess_factory(
+            which_map={"nuclei": "/usr/bin/nuclei"},
+            returncode=0,
+            stdout=b"[ssrf-aws-metadata] [http] [critical] https://example.in/fetch?url=http://169.254.169.254\n",
+        )
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.BFSI_FINTECH)
+            if c.id == "WEB-LOG-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        await dispatcher.initialize_dynamic_bindings()
+        res = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert res.status == "FAIL"
+        assert "Found 1 issue(s)" in res.output_summary
+        # Verify nuclei was invoked with expected tags
+        called_args = create_proc.call_args.args
+        assert called_args[:4] == ("nuclei", "-u", "https://example.in", "-tags")
+        assert called_args[4] == "ssrf"
+
+    async def test_hybrid_check_returns_hybrid_review_on_clean_probe(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"nuclei": "/usr/bin/nuclei"},
+            returncode=0,
+            stdout=b"",
+        )
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-IAM-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        await dispatcher.initialize_dynamic_bindings()
+        res = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert res.status == "HYBRID_REVIEW"
+
+    async def test_manual_check_skips_subprocess_execution(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        create_proc = mock_subprocess_factory(which_map={})
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.SAAS_MULTITENANT)
+            if c.id == "WEB-IAM-003"
+        )
+
+        dispatcher = ToolDispatcher()
+        res = await dispatcher.execute_check("https://saas.example.in", mod, chk)
+
+        assert res.status == "MANUAL_REQUIRED"
+        create_proc.assert_not_awaited()
+
+    async def test_missing_binary_marks_check_tool_missing(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(which_map={})  # No binaries installed
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        res = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert res.status == "TOOL_MISSING"
+        assert "not found in PATH" in res.output_summary
+
+    async def test_dry_run_mode_does_not_spawn_processes(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        create_proc = mock_subprocess_factory(which_map={"testssl.sh": "/usr/bin/testssl.sh"})
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        res = await dispatcher.execute_check("https://example.in", mod, chk, dry_run=True)
+
+        assert res.status == "DRY_RUN"
+        assert "Would dispatch bindings: testssl" in res.output_summary
+        create_proc.assert_not_awaited()
+
+    async def test_subprocess_timeout_kills_process_and_fails(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory, monkeypatch
+    ) -> None:
+        # Reduce timeout inside _run_subprocess to 0.05s for fast testing
+        from tirweb import dispatcher as disp_mod
+
+        orig_run = disp_mod._run_subprocess
+
+        async def fast_timeout_run(cmd, timeout=180):
+            return await orig_run(cmd, timeout=0.05)
+
+        monkeypatch.setattr(disp_mod, "_run_subprocess", fast_timeout_run)
+        mock_subprocess_factory(
+            which_map={"testssl.sh": "/usr/bin/testssl.sh"},
+            hang=True,
+        )
+
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        dispatcher = ToolDispatcher()
+        res = await dispatcher.execute_check("https://slow.example.in", mod, chk)
+
+        assert res.status == "FAIL"
+        assert "timed out" in res.output_summary

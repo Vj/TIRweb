@@ -1,0 +1,76 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tirweb.internal/schemas/checklist.v1.json",
+  "title": "TIRweb Security Audit Checklist Schema",
+  "type": "object",
+  "required": ["schema_version", "tool_suite", "metadata", "modules"],
+  "properties": {
+    "schema_version": { "type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$" },
+    "tool_suite": { "const": "TIRweb" },
+    "metadata": {
+      "type": "object",
+      "required": ["description", "supported_profiles"],
+      "properties": {
+        "description": { "type": "string" },
+        "supported_profiles": {
+          "type": "array",
+          "items": {
+            "enum": ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+          }
+        }
+      }
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["module_id", "name", "checks"],
+        "properties": {
+          "module_id": { "type": "string", "pattern": "^TIR-[A-Z]+$" },
+          "name": { "type": "string" },
+          "checks": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "title",
+                "category",
+                "severity",
+                "execution_mode",
+                "profiles",
+                "test_procedures",
+                "compliance"
+              ],
+              "properties": {
+                "id": { "type": "string", "pattern": "^WEB-[A-Z]{3}-\\d{3}$" },
+                "title": { "type": "string" },
+                "category": { "type": "string" },
+                "severity": { "enum": ["Critical", "High", "Medium", "Low", "Info"] },
+                "execution_mode": { "enum": ["automated", "hybrid", "manual"] },
+                "tool_binding": { "type": "array", "items": { "type": "string" } },
+                "profiles": {
+                  "type": "array",
+                  "items": {
+                    "enum": ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+                  }
+                },
+                "test_procedures": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                "compliance": {
+                  "type": "object",
+                  "required": ["india", "global"],
+                  "properties": {
+                    "india": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+                    "global": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
