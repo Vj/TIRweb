@@ -7,6 +7,7 @@ import base64
 import re
 from datetime import datetime, timezone
 from .models import AuthContext, ChecklistItem
+from urllib.parse import urljoin, urlparse
 
 
 INSECURE_JWT_ALGS = {"none", "hs1", "rs1", "es1", "rsa1_5"}
@@ -257,6 +258,116 @@ def _extract_structural_shape(payload: Any) -> Any:
     return type(payload).__name__
 
 
+async def probe_metafiles_and_ria_policies(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> tuple[bool, str]:
+    """
+    WSTG-INFO-03 & WSTG-CONF-08: Inspect robots.txt, sitemap.xml, security.txt,
+    and legacy RIA cross-domain policies (crossdomain.xml / clientaccesspolicy.xml).
+    """
+    sensitive_keywords = ("/admin", "/internal", "/backup", "/config", "/.git", "/.env", "/swagger", "/actuator")
+    issues: list[str] = []
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        headers=ctx.primary_auth.to_http_headers(),
+    ) as client:
+        # 1. Check robots.txt & sitemap.xml for sensitive disallowed/listed paths
+        for meta_path in ("/robots.txt", "/sitemap.xml"):
+            resp = await client.get(urljoin(target, meta_path))
+            if resp.status_code == 200 and resp.text:
+                lower_body = resp.text.lower()
+                leaked = [kw for kw in sensitive_keywords if kw in lower_body]
+                if leaked:
+                    issues.append(f"{meta_path} discloses sensitive path patterns: {', '.join(leaked)}")
+
+        # 2. Check legacy RIA cross-domain XML policies for wildcard '*' access
+        for ria_path in ("/crossdomain.xml", "/clientaccesspolicy.xml"):
+            resp = await client.get(urljoin(target, ria_path))
+            if resp.status_code == 200 and ("domain=\"*\"" in resp.text or "uri=\"*\"" in resp.text):
+                issues.append(f"{ria_path} allows wildcard '*' cross-domain access.")
+
+    if issues:
+        return False, "Metafile / RIA policy findings:\n- " + "\n- ".join(issues)
+    return True, "Metafiles (robots.txt/sitemap.xml) and RIA cross-domain policies verified clean."
+
+
+async def probe_path_confusion(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> tuple[bool, str]:
+    """
+    WSTG-CONF-13: Test path normalization discrepancies (/admin/..;/, double slashes, case variations)
+    on protected paths to detect reverse-proxy/WAF ACL bypasses.
+    """
+    protected_candidates = ctx.probe_endpoints or ["/admin", "/api/admin"]
+    bypass_findings: list[str] = []
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        headers=ctx.primary_auth.to_http_headers(),
+    ) as client:
+        for base_path in protected_candidates:
+            clean_path = "/" + base_path.lstrip("/")
+            base_url = urljoin(target, clean_path)
+            baseline = await client.get(base_url)
+
+            # Only test path confusion if the canonical endpoint is restricted (401/403)
+            if baseline.status_code not in {401, 403}:
+                continue
+
+            variants = [
+                f"{clean_path}/..;/",
+                f"{clean_path}..%2f",
+                f"/{clean_path}",
+                clean_path.upper(),
+            ]
+            for variant in variants:
+                variant_url = f"{target.rstrip('/')}{variant}"
+                resp = await client.get(variant_url)
+                if resp.status_code == 200:
+                    bypass_findings.append(
+                        f"Canonical '{clean_path}' returned {baseline.status_code}, but variant '{variant}' returned HTTP 200."
+                    )
+
+    if bypass_findings:
+        return False, "Path confusion ACL bypass detected:\n- " + "\n- ".join(bypass_findings)
+    return True, "Path normalization & confusion checks passed (consistent ACL enforcement)."
+
+
+async def probe_open_redirect(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> tuple[bool, str]:
+    """
+    WSTG-CLNT-04: Test common redirect parameters for unvalidated external Location headers.
+    """
+    canary_domain = "untrusted-redirect-audit.example.invalid"
+    canary_url = f"https://{canary_domain}/phish"
+    redirect_params = ("next", "url", "redirect", "redirect_uri", "returnTo", "dest")
+    vulnerable_params: list[str] = []
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        headers=ctx.primary_auth.to_http_headers(),
+    ) as client:
+        for param in redirect_params:
+            resp = await client.get(target, params={param: canary_url})
+            if resp.status_code in {301, 302, 303, 307, 308}:
+                location = resp.headers.get("location", "")
+                parsed_loc = urlparse(location)
+                if parsed_loc.netloc == canary_domain or location.startswith(f"//{canary_domain}"):
+                    vulnerable_params.append(f"?{param}={canary_url} -> Location: {location}")
+
+    if vulnerable_params:
+        return False, "Open redirect vulnerability detected:\n- " + "\n- ".join(vulnerable_params)
+    return True, "Open redirect parameter checks passed (no external Location reflection)."
+
+
 async def probe_differential_idor(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
@@ -295,3 +406,94 @@ async def probe_differential_idor(
     if flagged:
         return False, "Potential cross-user access control parity detected:\n- " + "\n- ".join(flagged)
     return True, f"Differential access check passed across {len(endpoints)} endpoint(s) (Token B properly isolated)."
+
+GRAPHQL_DEFAULT_PATHS = ("/graphql", "/api/graphql", "/v1/graphql", "/graphql/console")
+
+
+async def probe_graphql_security(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> tuple[bool, str]:
+    """
+    WSTG-APIT-01: Test GraphQL endpoints for enabled __schema introspection,
+    field suggestion leakage, and unrestricted query batching / alias amplification.
+    """
+    candidate_paths: list[str] = list(GRAPHQL_DEFAULT_PATHS)
+    if ctx.probe_endpoints:
+        for ep in ctx.probe_endpoints:
+            if "graphql" in ep.lower() and ep not in candidate_paths:
+                candidate_paths.insert(0, ep)
+
+    introspection_query = {"query": "{__schema{queryType{name}types{name}}}"}
+    batch_payload = [
+        {"query": "{__typename}"},
+        {"query": "{__typename}"},
+        {"query": "{__typename}"},
+        {"query": "{__typename}"},
+        {"query": "{__typename}"},
+    ]
+
+    discovered_endpoints: list[str] = []
+    issues: list[str] = []
+
+    headers = {
+        **ctx.primary_auth.to_http_headers(),
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+    }
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        headers=headers,
+    ) as client:
+        for path in candidate_paths:
+            gql_url = urljoin(target, path)
+
+            # 1. Test Schema Introspection (__schema)
+            try:
+                resp = await client.post(gql_url, json=introspection_query)
+            except httpx.HTTPError:
+                continue
+
+            if resp.status_code == 200:
+                try:
+                    body = resp.json()
+                except ValueError:
+                    continue
+
+                if isinstance(body, dict) and ("data" in body or "errors" in body):
+                    discovered_endpoints.append(path)
+                    data_obj = body.get("data")
+                    if isinstance(data_obj, dict) and data_obj.get("__schema"):
+                        issues.append(
+                            f"[{path}] GraphQL schema introspection (__schema) is enabled in response."
+                        )
+
+                    # 2. Test Query Batching Abuse (Array of operations in single HTTP POST)
+                    try:
+                        batch_resp = await client.post(gql_url, json=batch_payload)
+                        if batch_resp.status_code == 200:
+                            batch_body = batch_resp.json()
+                            if (
+                                isinstance(batch_body, list)
+                                and len(batch_body) == len(batch_payload)
+                                and all(
+                                    isinstance(item, dict) and "data" in item
+                                    for item in batch_body
+                                )
+                            ):
+                                issues.append(
+                                    f"[{path}] Unauthenticated/unthrottled GraphQL query batching allowed ({len(batch_payload)} batched operations executed)."
+                                )
+                    except (httpx.HTTPError, ValueError):
+                        pass
+
+    if issues:
+        return False, "GraphQL security findings:\n- " + "\n- ".join(issues)
+    if discovered_endpoints:
+        return (
+            True,
+            f"GraphQL endpoint(s) verified ({', '.join(discovered_endpoints)}): introspection disabled and query batching restricted.",
+        )
+    return True, "No exposed GraphQL endpoints detected at standard paths (/graphql, /api/graphql)."

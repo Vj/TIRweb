@@ -1,28 +1,36 @@
 # TIRweb
 
-**TIRweb** is a standalone, profile-driven Web Application, API, and Cloud-Native Security Auditing CLI tool. It combines native asynchronous HTTPx security probes, external scanner orchestration (`nuclei`, `testssl.sh`, `trivy`), and guided manual verification playbooks—mapped directly to **Indian statutory/regulatory mandates** (**CERT-In Directions & Technical Guidelines**, **DPDP Act 2023 & DPDP Rules 2025**, **RBI Digital Payment Security Controls**) and **global frameworks** (**OWASP Top 10**, **OWASP API Top 10**, **PCI DSS v4.0**, **ISO 27001:2022**, **SOC 2**).
-
-> **Note:** TIRweb is developed as a completely independent, self-contained tool alongside **TIR** and **TIRiOS**.
+**TIRweb** is a standalone, profile-driven Web Application, API, DevSecOps, and Cloud-Native Security Auditing CLI tool. It achieves **1:1 parity with all 99 OWASP WSTG v4.2 test cases** while mapping controls directly to **Indian statutory and regulatory frameworks** (**CERT-In Directions u/s 70B & Technical Guidelines**, **DPDP Act 2023 & DPDP Rules 2025**, **RBI Digital Payment Security Controls**) alongside **global standards** (**OWASP Top 10**, **OWASP API Top 10**, **PCI DSS v4.0**, **ISO 27001:2022**, **SOC 2**).
 
 ---
 
-## Key Capabilities
+## Rulesets & Coverage
 
-* **28 Granular Security Controls Across 5 Core Modules:**
-  * `TIR-IAM`: Identity, Access Control (IDOR/BOLA, BFLA, Multi-Tenancy), Session Lifecycle, OAuth 2.0/OIDC/SAML, and GraphQL/gRPC API authorization.
-  * `TIR-CRYPTO`: TLS 1.2/1.3 & cipher hardening, HSTS, encryption at rest, Argon2/bcrypt password hashing, key management, and PII exposure prevention.
-  * `TIR-INJECT`: SQL/NoSQL, XSS (Reflected, Stored, DOM, SVG upload), OS Command/LDAP/SSTI/CRLF/Email Header injection, XXE, Deserialization, Request Smuggling, Prototype Pollution, and WebSockets.
-  * `TIR-LOGIC`: Insecure design controls, financial/e-commerce business logic, workflow/approval chains, SSRF & cloud metadata isolation (`169.254.169.254`), file upload security, and regulated sector controls.
-  * `TIR-INFRA`: Security headers, CORS validation, build artifact/source map exposure, SCA & SBOM/CBOM hygiene, Subresource Integrity (SRI), DevSecOps CI/CD gates, and statutory audit logging.
-* **Domain-Specific Application Profiles:**
-  * `core` (25 baseline checks)
-  * `bfsi_fintech` (28 checks — adds multi-tenancy, financial race conditions/tampering, transaction signing, and KYC/AML controls)
-  * `saas_multitenant` (27 checks — adds tenant isolation and subscription/workflow logic)
-  * `healthcare_pii` (27 checks — adds PHI need-to-know and emergency break-glass auditability)
-  * `ecommerce` (26 checks — adds cart, coupon, inventory, and payment gateway integrity)
-* **Native Async HTTPx Probes:** Built-in, zero-external-dependency probes for security headers (`httpx_headers`), CORS reflection (`httpx_cors`), differential cross-user BOLA/IDOR comparison (`httpx_idor_diff`), and RFC 8725 / DPDP JWT hygiene inspection (`httpx_jwt`).
-* **Authenticated Scanning:** Supports repeatable custom headers (`-H`), bearer tokens (`--bearer-token` / `TIRWEB_BEARER_TOKEN`), cookies (`-b`), YAML/JSON session files (`--auth-file`), and secondary user contexts (`--secondary-auth-file`) with automatic secret redaction in reports.
-* **Compliance PDF Reporting:** Converts JSON scan outputs into styled A4 compliance reports via **WeasyPrint**.
+TIRweb ships with two validated YAML rulesets in `rules/`:
+
+1. **`rules/tirweb_checklist_v1.yaml` (42 Consolidated Compliance & WSTG v4.2 Checks):**
+   * `TIR-IAM` (`WEB-IAM-001`..`011`): IDOR/BOLA, BFLA, Multi-Tenancy, Auth Hardening, MFA/OAuth2/OIDC/SAML, Session Lifecycle & JWTs, Account Erasure, GraphQL/gRPC, Remember-Me/Recovery, Alternative Channels, and Session Puzzling.
+   * `TIR-CRYPTO` (`WEB-CRY-001`..`004`): TLS 1.2/1.3 & HSTS, At-Rest Encryption/Argon2id/KMS, PII Exposure Prevention, and Padding Oracle Resistance.
+   * `TIR-INJECT` (`WEB-INJ-001`..`009`): SQL/NoSQLi, XSS (Reflected, Stored, DOM, SVG), OS Command/LDAP/SSTI/CRLF/Email Injection, XXE & Deserialization, Request Smuggling/Prototype Pollution/WebSockets/Cache Poisoning, HPP, SSI/XPath, Memory Safety, and Open Redirect/CSS/Resource Manipulation.
+   * `TIR-LOGIC` (`WEB-LOG-001`..`006`): Threat Modeling & Rate Limits, Financial/E-Commerce Tampering & Race Conditions, Workflow/Approval Chains, SSRF & Cloud Metadata Isolation, File Upload Security, and BFSI/Healthcare Sector Controls.
+   * `TIR-INFRA` (`WEB-INF-001`..`012`): Security Headers/CORS/HTTP Methods, Build Artifacts & Admin Interfaces, SCA/SBOM/CBOM, SRI & Supply Chain, CI/CD DevSecOps Gates, Tamper-Resistant Logging & NTP Sync, Search Recon/Subdomains, Metafiles & RIA Policies, Source/EXIF Metadata, Architecture/WAF Mapping, Subdomain Takeover, and Path Confusion.
+2. **`rules/tirweb_wstg_v42_full.yaml` (99 Granular OWASP WSTG v4.2 Checks):**
+   * 1:1 mapping of `WSTG-INFO-01` through `WSTG-APIT-01` generated from `Book1.xlsx` via `convert_wstg_excel.py`.
+
+---
+
+## Native Python HTTPx Probes
+
+TIRweb includes **8 built-in asynchronous probes** (`tirweb/probes.py`) that execute natively on Windows, macOS, Linux, and Docker without external CLI dependencies:
+
+* `httpx_headers`: HSTS, CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and `Server`/`X-Powered-By` leak detection.
+* `httpx_cors`: Arbitrary `Origin` reflection with `Access-Control-Allow-Credentials: true` and wildcard `*` checks.
+* `httpx_idor_diff`: Differential cross-user BOLA/IDOR comparison using primary (`--auth-file`) vs. secondary (`--secondary-auth-file`) sessions.
+* `httpx_jwt`: RFC 8725 algorithm/header hygiene (`alg=none`, `HS256` warning, `jku`/`x5u`/`jwk`, `exp`/`aud`/`iss`) and DPDP Rules 2025 PII detection in unencrypted JWS claims.
+* `httpx_metafiles`: `/robots.txt` & `/sitemap.xml` path disclosure and `/crossdomain.xml` & `/clientaccesspolicy.xml` wildcard checks.
+* `httpx_path_confusion`: Reverse-proxy/WAF path normalization bypass checks (`/admin/..;/`, double slashes, case variations).
+* `httpx_open_redirect`: External `Location` reflection across common redirect parameters (`next`, `url`, `redirect`, `redirect_uri`, `returnTo`, `dest`).
+* `httpx_graphql`: `/graphql` and `/api/graphql` `__schema` introspection and query batching abuse checks (`WSTG-APIT-01`).
 
 ---
 
@@ -30,122 +38,75 @@
 
 ```text
 TIRweb/
+├── .github/
+│   └── workflows/
+│       └── ci.yml           # Automated Ruff, YAML validation, Pytest & Docker smoke CI
 ├── Dockerfile
 ├── .dockerignore
+├── convert_wstg_excel.py    # OWASP WSTG v4.2 Excel (Book1.xlsx) -> YAML converter
 ├── pyproject.toml
 ├── requirements.txt
 ├── README.md
 ├── rules/
-│   └── tirweb_checklist_v1.yaml
+│   ├── tirweb_checklist_v1.yaml
+│   └── tirweb_wstg_v42_full.yaml
 ├── tirweb/
 │   ├── __init__.py
-│   ├── models.py          # Pydantic v2 schema, profile filters & AuthContext
-│   ├── probes.py          # Native async HTTPx probes (headers, CORS, IDOR, JWT)
-│   ├── dispatcher.py      # Async tool-binding orchestrator
-│   ├── reporter.py        # WeasyPrint compliance matrix & PDF generator
+│   ├── models.py            # Pydantic v2 schema, profile filters & AuthContext
+│   ├── probes.py            # 8 native async HTTPx security probes
+│   ├── dispatcher.py        # Async tool-binding orchestrator
+│   ├── reporter.py          # WeasyPrint PDF & interactive HTML compliance generator
 │   ├── templates/
 │   │   └── audit_report.html
-│   └── cli.py             # Typer CLI entrypoint
+│   └── cli.py               # Typer CLI entrypoint
 └── tests/
     ├── conftest.py
     ├── test_models.py
     ├── test_probes.py
+    ├── test_new_probes.py
     ├── test_dispatcher.py
     └── test_cli.py
 
-
-Quick Installation
-pip install -r requirements.txt
-
-### Installation
-
-Option 1: Docker (Recommended — All Scanners & WeasyPrint Pre-Installed)
-
-docker build -t tirweb:0.1.0 .
-docker run --rm tirweb:0.1.0 --help
-
-Option 2: Local Python Environment (Python 3.12+)
-Install system dependencies for WeasyPrint (Debian/Ubuntu/WSL2):
-
-sudo apt-get update && sudo apt-get install -y \
-  libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b \
-  libgdk-pixbuf-2.0-0 libffi8 shared-mime-info fonts-liberation
-
-Create a virtual environment and install TIRweb:
+1- Installation & Quick Start
 
 python -m venv .venv
-
-.\.venv\Scripts\Activate.ps1
-
-source .venv/bin/activate
-
+source .venv/bin/activate        # Windows PowerShell: .\.venv\Scripts\Activate.ps1
 pip install -r requirements.txt
 pip install -e .
 
+2 - Validate, Scan & Export Reports
 
-(Optional) Ensure external scanners (nuclei, testssl.sh, trivy) are available in your PATH if running full external bindings.
-CLI Usage
-1. Validate Checklist Schema
-Verify YAML syntax, regex check IDs (WEB-XXX-000), uniqueness, and compliance tags:
-
-Bash
+# Validate both YAML rulesets
 tirweb validate --checklist rules/tirweb_checklist_v1.yaml
-2. Preview Selected Checks (Dry Run)
-Bash
+tirweb validate --checklist rules/tirweb_wstg_v42_full.yaml
+
+# Run an authenticated differential scan (bfsi_fintech profile)
 tirweb scan \
   --target [https://staging.example.in](https://staging.example.in) \
   --checklist rules/tirweb_checklist_v1.yaml \
   --profile bfsi_fintech \
-  --dry-run
-3. Run Authenticated & Differential BOLA/IDOR Scan
-Create a session file (auth_user_a.yaml):
-
-YAML
-bearer_token: "eyJhbGciOiJFUzI1NiIsInR5cCI6IkpXVCJ9..."
-headers:
-  X-Tenant-ID: "tenant-alpha-01"
-cookies:
-  session_id: "s3ss10n_t0k3n"
-Execute the scan against your staging target:
-
-Bash
-tirweb scan \
-  --target [https://api.staging.example.in](https://api.staging.example.in) \
-  --checklist rules/tirweb_checklist_v1.yaml \
-  --profile saas_multitenant \
   --auth-file auth_user_a.yaml \
   --secondary-auth-file auth_user_b.yaml \
-  --endpoint "/api/v1/orders/ORD-10492" \
-  --endpoint "/api/v1/users/profile/8821" \
-  --out reports/saas_audit.json
-4. Generate Compliance PDF Report (CERT-In, RBI & DPDP Rules 2025)
-Bash
-tirweb report \
-  --input reports/saas_audit.json \
-  --out reports/saas_compliance_report.pdf \
-  --client "Acme Technologies India Pvt. Ltd." \
-  --auditor "Security Assessment Team"
-Running Tests
-Bash
-pip install -e ".[dev]"
+  --endpoint "/api/v1/orders/ORD-101" \
+  --out report.json
+
+# Export interactive HTML report (works natively on Windows, macOS & Linux)
+tirweb report --input report.json --out report.html --client "Target Organization"
+
+# Export compliance PDF report (uses WeasyPrint; auto-falls back to .html if GTK3 is absent)
+tirweb report --input report.json --out report.pdf --client "Target Organization"
+
+
+3 - Run Unit Tests
 pytest -v
 
 ---
 
-### 2. `requirements.txt`
+### Final End-to-End Verification in PowerShell
 
-```text
-# Core Runtime Dependencies
-pydantic>=2.14.0
-typer>=0.29.0
-pyyaml>=6.0.2
-rich>=13.9.0
-httpx>=0.28.0
-jinja2>=3.1.4
-weasyprint>=63.0
+Run these commands to generate and open the new interactive compliance report locally:
 
-# Development & Testing Dependencies
-pytest>=8.4.0
-pytest-asyncio>=1.5.0
-ruff>=0.8.0
-mypy>=1.13.0
+```powershell
+tirweb scan --target https://www.staarkeninfosec.com --checklist rules/tirweb_checklist_v1.yaml --out report.json
+tirweb report --input report.json --out report.html --client "Staarken InfoSec LLP"
+Start-Process .\report.html

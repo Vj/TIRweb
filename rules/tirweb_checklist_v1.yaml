@@ -1,7 +1,7 @@
 schema_version: "1.0.0"
 tool_suite: "TIRweb"
 metadata:
-  description: "Web Application, API & Cloud-Native Security Audit Checklist with Indian & Global Regulatory Mappings"
+  description: "TIRweb Comprehensive Web Application, API, DevSecOps & Cloud-Native Security Audit Checklist with OWASP WSTG v4.2, Indian & Global Regulatory Mappings"
   supported_profiles:
     - "core"
     - "bfsi_fintech"
@@ -10,20 +10,24 @@ metadata:
     - "ecommerce"
 
 modules:
+  # ============================================================================
+  # MODULE 1: IDENTITY, ACCESS CONTROL & SESSION ENGINE (11 Checks: WEB-IAM-001..011)
+  # ============================================================================
   - module_id: "TIR-IAM"
     name: "Identity, Access Control & Session Engine"
     checks:
       - id: "WEB-IAM-001"
-        title: "Horizontal Privilege Escalation (IDOR / BOLA) & Unpredictable Identifiers"
+        title: "Horizontal Privilege Escalation (IDOR / BOLA), Identifier Entropy & File Path Traversal"
         category: "Broken Access Control / API Security"
         severity: "Critical"
-        execution_mode: "hybrid" # automated fuzzing + manual role-matrix verification
-        tool_binding: ["zap_auth_fuzzer", "nuclei_bola", "manual_proxy"]
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_idor_diff", "nuclei_bola", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Swap object/resource IDs across User A and User B tokens on all GET/PUT/PATCH/DELETE endpoints."
-          - "Verify UUIDs/GUIDs are v4 random (not sequential or v1 timestamp-based)."
-          - "Test file download endpoints for path traversal across user directories."
+          - "Verify that substituting resource IDs in URLs, query parameters, or JSON bodies across User A and User B tokens does not expose unauthorized records."
+          - "Confirm sequential ID enumeration is blocked across all endpoints returning user-specific data."
+          - "Validate that UUIDs/GUIDs are cryptographically random (v4) rather than sequential or time-based (v1)."
+          - "Verify file download endpoints enforce canonical path validation and prevent traversal to other users' files."
         compliance:
           india:
             - "DPDP Rules 2025 - Rule 6(1)(b) (Access Control Safeguards)"
@@ -32,45 +36,49 @@ modules:
           global:
             - "OWASP Top 10: A01 Broken Access Control"
             - "OWASP API Top 10: API1 BOLA"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-01, WSTG-ATHZ-04"
             - "PCI DSS v4.0: Req. 6.2.4, 7.2"
             - "ISO 27001:2022: A.8.3, A.8.26"
             - "SOC 2: CC6.1, CC6.3"
 
       - id: "WEB-IAM-002"
-        title: "Vertical Privilege Escalation, BFLA & Mass Assignment"
+        title: "Vertical Privilege Escalation, BFLA, HTTP Method Tampering & Forced Admin Browsing"
         category: "Broken Access Control / API Security"
         severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["zap_autorize", "nuclei_bfla", "manual_proxy"]
+        tool_binding: ["nuclei_bfla", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Replay admin API endpoints and feature-flagged routes using standard/unprivileged session tokens."
-          - "Test HTTP verb tampering (GET -> POST/PUT/DELETE/HEAD) to bypass route-level ACLs."
-          - "Inject privileged fields (e.g., isAdmin: true, role: 'admin', tier: 'enterprise') in JSON/form payloads."
+          - "Verify standard users cannot access administrative pages, API endpoints, or feature-flagged functionality by modifying URLs or client-side flags."
+          - "Confirm role-based UI hiding is backed by strict server-side authorization enforcement."
+          - "Verify HTTP method overrides (GET, POST, PUT, PATCH, DELETE, HEAD) enforce identical authorization rules."
+          - "Confirm access controls are immediately re-evaluated after privilege revocation, role change, or subscription downgrade."
         compliance:
           india:
-            - "DPDP Rules 2025 - Rule 6(1)(b)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) (Role-Based Access Enforcement)"
             - "CERT-In CISG-2024-01"
           global:
             - "OWASP Top 10: A01 Broken Access Control"
-            - "OWASP API Top 10: API3 BOPLA / API5 BFLA"
+            - "OWASP API Top 10: API5 BFLA"
+            - "OWASP WSTG v4.2: WSTG-ATHZ-02, WSTG-ATHZ-03"
             - "PCI DSS v4.0: Req. 6.2.4, 7.2.2"
             - "ISO 27001:2022: A.8.2, A.8.3"
             - "SOC 2: CC6.2, CC6.3"
 
       - id: "WEB-IAM-003"
-        title: "Multi-Tenant Data Isolation & Cross-Tenant Enumeration"
+        title: "Multi-Tenant Isolation & Cross-Tenant Data Enumeration"
         category: "Multi-Tenancy Security"
         severity: "Critical"
         execution_mode: "manual"
-        tool_binding: ["manual_proxy", "graphql_tester"]
+        tool_binding: ["httpx_idor_diff", "manual_proxy"]
         profiles: ["saas_multitenant", "healthcare_pii", "bfsi_fintech"]
         test_procedures:
-          - "Modify tenant_id headers, JWT claims, or subdomain routing to query Tenant B records from Tenant A."
-          - "Verify bulk exports, search indices, and GraphQL resolvers enforce tenant scoping."
+          - "Verify Tenant A cannot access Tenant B data through any REST, GraphQL, or background export endpoint."
+          - "Confirm cross-tenant resource enumeration and shared-cache or search-index leakage are prevented."
+          - "Verify tenant context is derived strictly from verified server-side session/token claims rather than untrusted headers."
         compliance:
           india:
-            - "DPDP Rules 2025 - Rule 6(1)(b) & (c)"
+            - "DPDP Rules 2025 - Rule 6(1)(b) & (c) (Data Segregation)"
             - "RBI Master Direction on Outsourcing / Cloud Isolation"
           global:
             - "OWASP Top 10: A01 Broken Access Control"
@@ -78,47 +86,48 @@ modules:
             - "SOC 2: CC6.1"
 
       - id: "WEB-IAM-004"
-        title: "Authentication Hardening, MFA Enforcement & SSO/OAuth2/SAML Integrity"
+        title: "Authentication Hardening (Brute-Force, Password Policy, Breach Screening & Enumeration)"
         category: "Identification and Authentication Failures"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_auth", "saml_raider", "oauth_tester"]
+        tool_binding: ["nuclei_auth", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify brute-force rate limiting, account lockout, and consistent responses (no user enumeration)."
-          - "Enforce 12+ character password policy with compromised password database screening."
-          - "Test MFA bypasses (direct post-login URL access, backup code brute-force, session fixation)."
-          - "Validate OAuth2 redirect_uri strict allowlisting, state CSRF parameter, and SAML XML Signature Wrapping (XSW)."
+          - "Verify brute-force protections (progressive delay, CAPTCHA, or account lockout) are enforced on login endpoints."
+          - "Confirm password policies enforce a 12+ character minimum and screen against known compromised password lists."
+          - "Verify login, registration, and password reset return uniform responses and constant-time execution to prevent user enumeration."
         compliance:
           india:
-            - "RBI Digital Payment Security Controls (Mandatory 2FA / Step-Up Auth)"
-            - "CERT-In CISG-2024-01 (Authentication & Session Controls)"
+            - "CERT-In CISG-2024-01 (Authentication Controls)"
+            - "RBI Digital Payment Security Controls (Credential Hygiene)"
           global:
             - "OWASP Top 10: A07 Identification and Authentication Failures"
-            - "PCI DSS v4.0: Req. 8.3, 8.4"
+            - "OWASP WSTG v4.2: WSTG-IDNT-04, WSTG-ATHN-03, WSTG-ATHN-07"
+            - "PCI DSS v4.0: Req. 8.3.4, 8.3.6"
             - "ISO 27001:2022: A.8.5"
             - "SOC 2: CC6.1"
 
       - id: "WEB-IAM-005"
-        title: "Session Lifecycle, Token Entropy & Account Erasure"
-        category: "Session & Account Management"
-        severity: "High"
+        title: "MFA Enforcement & Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)"
+        category: "Identity & Single Sign-On Flaws"
+        severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["zap_session", "manual_proxy"]
+        tool_binding: ["nuclei_auth", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Confirm server-side session invalidation upon logout, password reset, or role downgrade."
-          - "Verify idle timeout enforcement and new session ID issuance post-login."
-          - "Confirm account deletion performs cryptographic/hard erasure rather than soft-delete accessible via API."
+          - "Verify Multi-Factor Authentication cannot be bypassed via direct post-authentication navigation, backup code brute-forcing, or pre-MFA session reuse."
+          - "Validate OAuth 2.0 / OIDC flows enforce exact redirect_uri matching, cryptographic state parameters (CSRF protection), and strict token audience (aud) validation."
+          - "Verify SAML assertions reject XML Signature Wrapping (XSW), unsigned assertions, and replayed assertion IDs."
         compliance:
           india:
-            - "DPDP Act 2023 Sec 12 & DPDP Rules 2025 (Right to Erasure)"
+            - "RBI Digital Payment Security Controls (Mandatory 2FA / Additional Factor of Authentication)"
             - "CERT-In CISG-2024-01"
           global:
             - "OWASP Top 10: A07 Identification and Authentication Failures"
-            - "PCI DSS v4.0: Req. 8.2.8"
-            - "ISO 27001:2022: A.8.5, A.8.10"
-            - "SOC 2: CC6.1, P4.2"
+            - "OWASP WSTG v4.2: WSTG-ATHN-04, WSTG-ATHN-11"
+            - "PCI DSS v4.0: Req. 8.4"
+            - "ISO 27001:2022: A.8.5"
+            - "SOC 2: CC6.1"
 
       - id: "WEB-IAM-006"
         title: "Session Lifecycle Management, Token Entropy & Fixation Resistance"
@@ -137,23 +146,128 @@ modules:
             - "RBI Digital Payment Security Controls (Session Timeout & Binding)"
           global:
             - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "OWASP WSTG v4.2: WSTG-SESS-01, WSTG-SESS-02, WSTG-SESS-03, WSTG-SESS-06, WSTG-SESS-07, WSTG-SESS-10"
             - "PCI DSS v4.0: Req. 8.2.8"
             - "ISO 27001:2022: A.8.5"
             - "SOC 2: CC6.1"
-     
+
+      - id: "WEB-IAM-007"
+        title: "Account Lifecycle, Password Reset Security & DPDP Right to Erasure"
+        category: "Account and User Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify password reset tokens are single-use, short-lived, resistant to token manipulation, and do not leak account existence."
+          - "Confirm authenticated password and email updates require current credential/out-of-band verification to prevent account takeover."
+          - "Verify account registration enforces email verification, prevents alias abuse, and prevents role escalation via user invitations."
+          - "Confirm account deletion executes verifiable hard erasure of personal data rather than leaving records accessible via API."
+        compliance:
+          india:
+            - "DPDP Act 2023 Sec 12 & DPDP Rules 2025 (Right to Erasure & Correction)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "OWASP WSTG v4.2: WSTG-IDNT-02, WSTG-IDNT-03, WSTG-ATHN-09"
+            - "ISO 27001:2022: A.8.10"
+            - "SOC 2: P4.2, P5.1"
+
+      - id: "WEB-IAM-008"
+        title: "Advanced API & Microservice Authorization (Mass Assignment, GraphQL, Versioning & gRPC)"
+        category: "API-Specific & Microservices Security"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_graphql", "nuclei_bola", "nuclei_bfla", "manual_proxy"]        
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify JSON/form endpoints reject unexpected privileged fields (mass assignment / auto-binding) and avoid excessive data exposure beyond UI requirements."
+          - "Verify API keys/OAuth tokens enforce granular scope limits and per-endpoint rate limiting."
+          - "Confirm deprecated API versions (e.g., /api/v1/) with weaker controls are decommissioned."
+          - "For GraphQL/gRPC: verify introspection is disabled in production, query depth/batching limits are enforced, and internal microservice calls validate caller identity."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (API Security)"
+            - "RBI Digital Payment Security Controls (API Gateway & Microservice Security)"
+          global:
+            - "OWASP API Top 10: API3 BOPLA, API4 Unrestricted Resource Consumption, API9 Improper Inventory"
+            - "OWASP WSTG v4.2: WSTG-APIT-01"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: CC6.1"
+
+      - id: "WEB-IAM-009"
+        title: "[WSTG-ATHN-05 / ATHN-08] Remember-Me Token Security & Security Question Hygiene"
+        category: "Authentication Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify 'Remember Me' functionality issues high-entropy, revocable, expiring tokens rather than storing plaintext or reversible credentials in cookies/localStorage."
+          - "Verify account recovery avoids OSINT-guessable security questions in favor of cryptographic MFA or out-of-band verification."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Credential & Token Hygiene)"
+            - "DPDP Rules 2025 - Rule 6(1)(a) & (b)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-05, WSTG-ATHN-08"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "PCI DSS v4.0: Req. 8.3"
+            - "ISO 27001:2022: A.8.5"
+
+      - id: "WEB-IAM-010"
+        title: "[WSTG-ATHN-10] Alternative Channel Authentication Parity (Mobile, Legacy & Partner APIs)"
+        category: "Authentication Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Identify all alternative entry channels (mobile app APIs, B2B partner gateways, legacy web endpoints) and verify they enforce equivalent MFA, lockout, and password complexity controls as the primary web application."
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls (Multi-Channel Authentication Parity)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-ATHN-10"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "ISO 27001:2022: A.8.5, A.8.26"
+
+      - id: "WEB-IAM-011"
+        title: "[WSTG-SESS-08] Session Puzzling & Cross-Module Session Variable Isolation"
+        category: "Session Management"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Map session state variables across multi-step flows (registration, password reset, partial MFA login) and verify variables populated in one flow cannot be reused to bypass authentication or authorization in another module."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Session State Integrity)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-SESS-08"
+            - "OWASP Top 10: A07 Identification and Authentication Failures"
+            - "ISO 27001:2022: A.8.5"
+
+  # ============================================================================
+  # MODULE 2: CRYPTOGRAPHY, TRANSPORT & DATA PROTECTION ENGINE (4 Checks: WEB-CRY-001..004)
+  # ============================================================================
   - module_id: "TIR-CRYPTO"
     name: "Cryptography, Transport & Data Protection Engine"
     checks:
       - id: "WEB-CRY-001"
-        title: "Transport Security (TLS 1.2/1.3, Strong Ciphers & HSTS)"
+        title: "Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites & HSTS)"
         category: "Cryptographic Failures"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["testssl", "sslyze", "zap_passive"]
+        tool_binding: ["testssl", "httpx_headers"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify TLS 1.3 preferred, TLS 1.2 minimum; reject SSLv3, TLS 1.0/1.1, RC4, DES, 3DES, and export ciphers."
-          - "Confirm HTTP to HTTPS redirect and Strict-Transport-Security header with max-age >= 31536000."
+          - "Verify all endpoints enforce HTTPS with no unencrypted HTTP fallback."
+          - "Confirm TLS 1.3 is preferred, TLS 1.2 is the minimum supported version, and weak ciphers (RC4, DES, 3DES, export ciphers) are disabled."
+          - "Verify Strict-Transport-Security (HSTS) header is present with an adequate max-age (>= 31536000)."
         compliance:
           india:
             - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption in Transit)"
@@ -161,31 +275,34 @@ modules:
             - "RBI Digital Payment Security Controls"
           global:
             - "OWASP Top 10: A02 Cryptographic Failures"
+            - "OWASP WSTG v4.2: WSTG-CONF-07, WSTG-CRYP-01, WSTG-CRYP-03"
             - "PCI DSS v4.0: Req. 4.2.1"
             - "ISO 27001:2022: A.8.24"
             - "SOC 2: CC6.7"
 
       - id: "WEB-CRY-002"
-        title: "Data-at-Rest Encryption, Password Hashing & PII Masking"
+        title: "Encryption at Rest, Modern Password Hashing & Cryptographic Key Management"
         category: "Cryptographic Failures"
         severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["semgrep_crypto", "trufflehog", "manual_review"]
+        tool_binding: ["trivy_sca", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify passwords use Argon2id, bcrypt, or scrypt (reject MD5, SHA-1, unsalted SHA-256)."
-          - "Confirm PII/PHI and financial records are encrypted, masked, or tokenized at rest."
-          - "Verify Cache-Control: no-store on sensitive responses and no PII/tokens in URLs or browser storage."
+          - "Verify sensitive databases, file storage, and backups are encrypted at rest."
+          - "Confirm passwords are hashed using Argon2id, bcrypt, or scrypt with strong work factors (reject MD5, SHA-1, or unsalted hashes)."
+          - "Verify cryptographic keys are not hardcoded in source code or config files and follow documented key rotation and KMS separation."
         compliance:
           india:
             - "DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation, Masking, Virtual Tokens)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)"
             - "RBI Card Data Tokenisation Guidelines"
           global:
             - "OWASP Top 10: A02 Cryptographic Failures"
-            - "PCI DSS v4.0: Req. 3.5, 3.6"
-            - "ISO 27001:2022: A.8.24, A.8.11"
+            - "OWASP WSTG v4.2: WSTG-CRYP-04"
+            - "PCI DSS v4.0: Req. 3.5, 3.6, 3.7"
+            - "ISO 27001:2022: A.8.24"
             - "SOC 2: CC6.1"
-      
+
       - id: "WEB-CRY-003"
         title: "Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers & Logs)"
         category: "Cryptographic Failures / Data Privacy"
@@ -203,211 +320,477 @@ modules:
             - "RBI Digital Payment Security Controls"
           global:
             - "OWASP Top 10: A02 Cryptographic Failures"
+            - "OWASP WSTG v4.2: WSTG-ATHN-06, WSTG-SESS-04, WSTG-CLNT-12"
             - "PCI DSS v4.0: Req. 3.3, 3.4"
             - "ISO 27001:2022: A.8.11"
             - "SOC 2: CC6.1, P3.2"
-      
+
+      - id: "WEB-CRY-004"
+        title: "[WSTG-CRYP-02] Padding Oracle Resistance on Encrypted Cookies & Tokens"
+        category: "Cryptography"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Identify CBC-mode encrypted cookies, viewstates, or opaque tokens and verify ciphertext tampering returns uniform errors without padding oracle side-channels (prefer AEAD modes such as AES-GCM or ChaCha20-Poly1305)."
+        compliance:
+          india:
+            - "DPDP Rules 2025 - Rule 6(1)(a) (Cryptographic Safeguards)"
+            - "CERT-In CISG-2024-02 (CBOM Cryptographic Governance)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CRYP-02"
+            - "OWASP Top 10: A02 Cryptographic Failures"
+            - "PCI DSS v4.0: Req. 3.5, 4.2.1"
+            - "ISO 27001:2022: A.8.24"
+
+  # ============================================================================
+  # MODULE 3: INJECTION, PROTOCOL & CLIENT-SIDE PARSER ENGINE (9 Checks: WEB-INJ-001..009)
+  # ============================================================================
   - module_id: "TIR-INJECT"
     name: "Injection, Protocol & Client-Side Parser Engine"
     checks:
       - id: "WEB-INJ-001"
-        title: "SQL, NoSQL, OS Command, LDAP & SSTI Injection"
+        title: "SQL & NoSQL Injection (Parameterized Queries, Blind & Second-Order SQLi)"
         category: "Injection"
         severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["sqlmap", "zap_active", "semgrep_sast", "nuclei_injection"]
+        tool_binding: ["nuclei_injection", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Test all input vectors for error-based, boolean-blind, time-blind, and second-order SQLi."
-          - "Test OS command injection, SSTI ({{7*7}}), LDAP injection, and CRLF header injection."
-          - "Verify parameterized queries/prepared statements in SAST."
+          - "Verify all database queries use parameterized statements or prepared queries rather than string concatenation."
+          - "Test all input vectors for error-based, boolean-blind, time-blind, and second-order SQL/NoSQL injection."
+          - "Confirm database error messages do not leak schema, table names, or SQL syntax details."
         compliance:
           india:
             - "CERT-In CISG-2024-01 (Input Validation & Secure Coding)"
             - "CERT-In CISG-2026-02 (Defending against AI-Assisted Exploitation)"
           global:
             - "OWASP Top 10: A03 Injection"
+            - "OWASP WSTG v4.2: WSTG-INPV-04"
             - "PCI DSS v4.0: Req. 6.2.4 (formerly 6.5.1)"
             - "ISO 27001:2022: A.8.25, A.8.28"
             - "SOC 2: CC7.1"
 
       - id: "WEB-INJ-002"
-        title: "Cross-Site Scripting (Reflected, Stored, DOM & File-Upload XSS)"
+        title: "Cross-Site Scripting (Reflected, Stored, DOM, File-Upload XSS & Context Encoding)"
         category: "Injection"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["dalfox", "zap_dom_xss", "manual_proxy"]
+        tool_binding: ["nuclei_injection", "httpx_headers", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Test reflected, stored, and DOM-based XSS sinks across parameters, hash fragments, and rich-text editors."
-          - "Test SVG/HTML file uploads for embedded JavaScript execution."
-          - "Validate strict Content-Security-Policy (CSP) and HttpOnly/SameSite cookie flags."
+          - "Test all parameters, paths, user-generated content fields, and client-side DOM sinks for reflected, stored, and DOM-based XSS."
+          - "Verify context-aware output encoding is applied across HTML, JavaScript, URL, and CSS contexts."
+          - "Verify SVG and HTML file uploads sanitize or strip embedded scripts, and confirm CSP and HttpOnly session cookies are enforced."
         compliance:
           india:
-            - "CERT-In CISG-2024-01"
+            - "CERT-In CISG-2024-01 (Client-Side Injection Controls)"
           global:
             - "OWASP Top 10: A03 Injection"
+            - "OWASP WSTG v4.2: WSTG-INPV-01, WSTG-INPV-02, WSTG-CLNT-01, WSTG-CLNT-02, WSTG-CLNT-03"
             - "PCI DSS v4.0: Req. 6.2.4 (formerly 6.5.7)"
             - "ISO 27001:2022: A.8.26, A.8.28"
             - "SOC 2: CC7.1"
 
       - id: "WEB-INJ-003"
-        title: "Modern Protocol & Browser Attacks (Request Smuggling, Prototype Pollution, WebSockets, Cache Poisoning)"
-        category: "Advanced Protocol & Client-Side Security"
-        severity: "High"
-        execution_mode: "manual"
-        tool_binding: ["smuggler", "ppfuzz", "manual_proxy"]
-        profiles: ["core", "bfsi_fintech", "saas_multitenant"]
+        title: "OS Command, LDAP, SSTI, CRLF & Email Header Injection"
+        category: "Injection"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_injection", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Test HTTP Request Smuggling (CL.TE / TE.CL) between CDN/reverse proxy and origin server."
-          - "Audit Node.js/React/Vue payloads for client/server-side Prototype Pollution (__proto__, constructor.prototype)."
-          - "Test WebSockets/SSE for Cross-Site WebSocket Hijacking (CSWSH), missing Origin checks, and wss:// enforcement."
-          - "Test unkeyed headers (X-Forwarded-Host) for Web Cache Poisoning and Web Cache Deception."
+          - "Test system-interacting parameters for OS command injection and directory lookups for LDAP injection."
+          - "Test template-rendered user inputs for Server-Side Template Injection (SSTI)."
+          - "Test HTTP response headers for CRLF injection and contact/notification forms for email header injection."
         compliance:
           india:
-            - "CERT-In CISG-2026-02 (Protocol & Infrastructure Exposure Hardening)"
             - "CERT-In CISG-2024-01"
+            - "CERT-In CISG-2026-02"
           global:
-            - "OWASP Top 10: A04 Insecure Design / A05 Security Misconfiguration"
-            - "ISO 27001:2022: A.8.26, A.8.27"
+            - "OWASP Top 10: A03 Injection"
+            - "OWASP WSTG v4.2: WSTG-INPV-05, WSTG-INPV-09, WSTG-INPV-10, WSTG-INPV-11"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.28"
             - "SOC 2: CC7.1"
 
       - id: "WEB-INJ-004"
-        title: "XXE & Insecure Deserialization"
+        title: "XML External Entity (XXE) & Insecure Deserialization"
         category: "Injection / Software & Data Integrity"
         severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["semgrep_sast", "ysoserial_check", "manual_proxy"]
-        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii"]
+        tool_binding: ["nuclei_injection", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify external entity resolution (DTD) is disabled across all XML/SOAP/SAML parsers."
-          - "Inspect serialized blobs (Java, .NET, PHP, Python pickle) for signature verification and safe serialization formats."
+          - "Verify external entity resolution (DTD) and XInclude processing are disabled in all XML/SOAP/document parsers."
+          - "Verify serialized objects (Java, .NET, PHP, Python) passed in cookies or API payloads are rejected or cryptographically signed."
         compliance:
           india:
             - "CERT-In CISG-2024-01"
           global:
             - "OWASP Top 10: A05 Security Misconfiguration / A08 Integrity Failures"
+            - "OWASP WSTG v4.2: WSTG-INPV-06, WSTG-INPV-14"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.28"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-005"
+        title: "Modern Protocol & Browser Parser Attacks (Smuggling, Prototype Pollution, WebSockets, postMessage & Cache Poisoning)"
+        category: "Advanced Protocol & Client-Side Security"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "ecommerce"]
+        test_procedures:
+          - "Test reverse-proxy and backend boundaries for HTTP Request Smuggling (CL.TE / TE.CL) desynchronization."
+          - "Verify JavaScript/Node.js JSON and query parsers block Prototype Pollution (__proto__, constructor.prototype)."
+          - "Verify WebSocket/SSE connections enforce wss:// encryption, strict Origin checks (preventing CSWSH), and message-level authorization."
+          - "Audit window.postMessage handlers for strict event.origin validation and test unkeyed headers (X-Forwarded-Host) against Web Cache Poisoning and Cache Deception."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Protocol & Browser Exposure Hardening)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP Top 10: A04 Insecure Design / A05 Security Misconfiguration"
+            - "OWASP WSTG v4.2: WSTG-INPV-15, WSTG-INPV-16, WSTG-CLNT-10, WSTG-CLNT-11"
+            - "ISO 27001:2022: A.8.26, A.8.27"
+            - "SOC 2: CC7.1"
+
+      - id: "WEB-INJ-006"
+        title: "[WSTG-INPV-03] HTTP Parameter Pollution (HPP) Consistency"
+        category: "Input Validation Testing"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Send duplicate query/body parameters across WAF, reverse proxy, and backend handlers to verify consistent parameter precedence and prevent validation or business logic bypass."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Parsing Consistency)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-03"
+            - "OWASP Top 10: A03 Injection"
+            - "ISO 27001:2022: A.8.28"
+
+      - id: "WEB-INJ-007"
+        title: "[WSTG-INPV-07 / INPV-08] Server-Side Include (SSI) & XPath Injection"
+        category: "Input Validation Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify Server-Side Include directives (<!--#exec ...-->) are disabled on web servers and that XML/XPath queries use parameterized bindings rather than string interpolation."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Input Validation & Sanitization)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-07, WSTG-INPV-08"
+            - "OWASP Top 10: A03 Injection"
             - "PCI DSS v4.0: Req. 6.2.4"
             - "ISO 27001:2022: A.8.28"
 
-  - module_id: "TIR-LOGIC"
-    name: "Business Logic, SSRF & File Security Engine"
-    checks:
-      - id: "WEB-LOG-001"
-        title: "Financial & Workflow Business Logic Abuse (Tampering, Race Conditions, Step-Skipping)"
-        category: "Business Logic Testing / Payment Security"
+      - id: "WEB-INJ-008"
+        title: "[WSTG-INPV-12 / INPV-13] Memory Safety, Buffer Overflow & Format String Hardening"
+        category: "Input Validation Testing"
         severity: "Critical"
         execution_mode: "manual"
-        tool_binding: ["turbo_intruder", "manual_proxy"]
+        tool_binding: ["manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "For native C/C++/CGI modules, custom protocol parsers, or legacy binary connectors, verify oversized payloads and format specifiers (%x, %n, %s) are bounded and cannot trigger memory corruption or crashes."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Memory-Safe Input Handling)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INPV-12, WSTG-INPV-13"
+            - "OWASP Top 10: A03 Injection / A06 Vulnerable Components"
+            - "ISO 27001:2022: A.8.28"
+
+      - id: "WEB-INJ-009"
+        title: "[WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation & Legacy Flash"
+        category: "Client-Side Testing"
+        severity: "Medium"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_open_redirect", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify redirect parameters (next, url, redirect_uri) enforce strict relative-path or trusted-domain allowlists."
+          - "Verify user-supplied styling/CSS is sanitized against attribute-selector data exfiltration and that client-side script/iframe src attributes cannot be pointed to untrusted origins."
+          - "Confirm legacy Flash (.swf) components are completely removed."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Client-Side & Phishing Redirect Controls)"
+            - "DPDP Rules 2025 - Rule 6(1)(a)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CLNT-04, WSTG-CLNT-05, WSTG-CLNT-06, WSTG-CLNT-08"
+            - "OWASP Top 10: A01 Broken Access Control / A03 Injection"
+            - "ISO 27001:2022: A.8.26, A.8.28"
+
+  # ============================================================================
+  # MODULE 4: BUSINESS LOGIC, SSRF, FILE UPLOAD & SECTOR CONTROLS (6 Checks: WEB-LOG-001..006)
+  # ============================================================================
+  - module_id: "TIR-LOGIC"
+    name: "Business Logic, SSRF, File Security & Domain Controls Engine"
+    checks:
+      - id: "WEB-LOG-001"
+        title: "Secure Design Controls (Threat Modeling, Auth Rate Limits, Step-Up Verification & Safe Error Handling)"
+        category: "Insecure Design"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_review", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify threat models are documented for critical business workflows and trust boundaries."
+          - "Confirm strict rate limiting is enforced on authentication, registration, password reset, and OTP endpoints."
+          - "Verify business-critical actions require step-up re-authentication or out-of-band confirmation, and confirm error handlers suppress internal stack traces."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure Architecture & Design)"
+            - "RBI Digital Payment Security Controls (Step-Up Authentication)"
+          global:
+            - "OWASP Top 10: A04 Insecure Design"
+            - "OWASP WSTG v4.2: WSTG-ERRH-01, WSTG-ERRH-02, WSTG-BUSL-07"
+            - "PCI DSS v4.0: Req. 6.2.4"
+            - "ISO 27001:2022: A.8.25, A.8.26"
+            - "SOC 2: CC3.2, CC6.1"
+
+      - id: "WEB-LOG-002"
+        title: "Financial, E-Commerce & Subscription Business Logic Integrity"
+        category: "Business Logic & Payment Security"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
         profiles: ["bfsi_fintech", "ecommerce", "saas_multitenant"]
         test_procedures:
-          - "Test negative quantities, zero-price items, currency switching, and coupon/referral stacking."
-          - "Execute parallel concurrent requests (race conditions) on wallet transfers, redemptions, and refunds."
-          - "Attempt multi-step workflow bypasses (skipping payment or approval steps)."
+          - "Verify prices, item quantities (negative/zero values), currency codes, and inventory/reserved stock are validated server-side."
+          - "Test discount/coupon codes and referral rewards against reuse, stacking, expired codes, and self-referral loops."
+          - "Test concurrent parallel requests (race conditions) on wallet transfers, redemptions, and refunds to confirm transaction atomicity and prevent double-spending."
+          - "Verify refunds cannot exceed original payment amounts and subscription downgrades/trials immediately revoke premium entitlements."
         compliance:
           india:
             - "RBI Digital Payment Security Controls (Transaction Integrity & Anti-Tampering)"
-            - "CERT-In CISG-2024-01 (Secure Business Logic Design)"
+            - "CERT-In CISG-2024-01"
           global:
             - "OWASP Top 10: A04 Insecure Design"
+            - "OWASP WSTG v4.2: WSTG-BUSL-01, WSTG-BUSL-03, WSTG-BUSL-04, WSTG-BUSL-05"
             - "PCI DSS v4.0: Req. 6.2.4"
             - "ISO 27001:2022: A.8.26"
             - "SOC 2: PI1.1"
 
-      - id: "WEB-LOG-002"
-        title: "Server-Side Request Forgery (SSRF) & Cloud Metadata Isolation"
-        category: "SSRF"
-        severity: "Critical"
-        execution_mode: "hybrid"
-        tool_binding: ["nuclei_ssrf", "interactsh", "manual_proxy"]
+      - id: "WEB-LOG-003"
+        title: "Multi-Step Workflow, Approval Chain & Time-Window Enforcement"
+        category: "Business Logic Testing"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Test webhooks, PDF generators, URL previews, and file importers against internal IPs (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12)."
-          - "Verify cloud metadata endpoints (169.254.169.254 / IMDSv2) and non-HTTP schemes (file://, gopher://) are blocked."
+          - "Verify multi-step workflows (onboarding, checkout, KYC, approvals) enforce sequential state transitions and reject step-skipping or step-reordering."
+          - "Confirm users cannot self-approve requests or bypass multi-level approval chains via parameter tampering."
+          - "Verify time-bounded features and out-of-range business values are rejected server-side."
         compliance:
           india:
-            - "CERT-In CISG-2024-01"
+            - "CERT-In CISG-2024-01 (Workflow & State Integrity)"
+            - "RBI Digital Payment Security Controls (Maker-Checker / Approval Controls)"
+          global:
+            - "OWASP Top 10: A04 Insecure Design"
+            - "OWASP WSTG v4.2: WSTG-BUSL-02, WSTG-BUSL-06"
+            - "ISO 27001:2022: A.8.26"
+            - "SOC 2: PI1.1, CC6.3"
+
+      - id: "WEB-LOG-004"
+        title: "Server-Side Request Forgery (SSRF), Cloud Metadata & DNS Rebinding Protection"
+        category: "Server-Side Request Forgery (SSRF)"
+        severity: "Critical"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_ssrf", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify user-supplied URLs in webhooks, link previews, PDF generators, and URL importers are validated against an explicit domain allowlist."
+          - "Confirm internal/loopback networks (127.0.0.1, 10.0.0.0/8, 172.16.0.0/12, 169.254.0.0/16) and cloud metadata endpoints (169.254.169.254 / IMDSv2) are blocked."
+          - "Verify non-HTTP schemes (file://, gopher://, dict://) are disabled and DNS rebinding protections are enforced."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Network & Cloud Boundary Controls)"
             - "DPDP Rules 2025 - Rule 6(1)(b)"
           global:
-            - "OWASP Top 10: A10 SSRF"
+            - "OWASP Top 10: A10 Server-Side Request Forgery"
+            - "OWASP WSTG v4.2: WSTG-INPV-17"
             - "PCI DSS v4.0: Req. 6.2.4"
             - "ISO 27001:2022: A.8.22, A.8.26"
             - "SOC 2: CC6.6"
 
-      - id: "WEB-LOG-003"
-        title: "Unrestricted File Upload & Content Validation"
+      - id: "WEB-LOG-005"
+        title: "File Upload Security (Magic-Byte Validation, Malware Scanning & Storage Isolation)"
         category: "File Upload Security"
         severity: "High"
-        execution_mode: "hybrid"
-        tool_binding: ["fuxploider", "manual_proxy"]
+        execution_mode: "manual"
+        tool_binding: ["manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify server-side MIME/magic-byte validation, double-extension rejection (.php.jpg), and size limits."
-          - "Confirm uploaded files are stored outside web root, stripped of EXIF metadata, and scanned for malware."
+          - "Verify file extensions, Content-Type headers, and file magic bytes are validated server-side against an allowlist (rejecting double extensions like .php.jpg)."
+          - "Confirm upload size limits, malware/antivirus scanning, and image EXIF metadata stripping are enforced."
+          - "Verify uploaded files are stored outside the web root or on isolated object storage with non-executable headers."
         compliance:
           india:
-            - "CERT-In CISG-2024-01"
+            - "CERT-In CISG-2024-01 (File Handling Security)"
+            - "DPDP Rules 2025 - Rule 6(1)(c)"
           global:
             - "OWASP Top 10: A04 Insecure Design"
+            - "OWASP WSTG v4.2: WSTG-BUSL-08, WSTG-BUSL-09"
             - "PCI DSS v4.0: Req. 6.2.4"
             - "ISO 27001:2022: A.8.26"
+            - "SOC 2: CC7.1"
 
+      - id: "WEB-LOG-006"
+        title: "Regulated Sector Controls (BFSI Transaction Signing/KYC-AML & Healthcare PHI/Break-Glass)"
+        category: "Sector-Specific Compliance Controls"
+        severity: "Critical"
+        execution_mode: "manual"
+        tool_binding: ["manual_review", "manual_proxy"]
+        profiles: ["bfsi_fintech", "healthcare_pii"]
+        test_procedures:
+          - "For BFSI/Financial: verify cryptographic transaction signing, server-side daily/per-transaction velocity limits, account statement isolation, and KYC/AML PII protection."
+          - "For Healthcare: verify role-based need-to-know PHI access controls, cross-facility patient isolation, and tamper-evident audit logging for emergency 'break-glass' access."
+        compliance:
+          india:
+            - "RBI Digital Payment Security Controls & KYC Master Directions"
+            - "DPDP Rules 2025 - Rule 6 (Sensitive & Children/Healthcare Personal Data Safeguards)"
+          global:
+            - "PCI DSS v4.0: Req. 6.2.4, 7.2"
+            - "HIPAA Security Rule (45 CFR § 164.312)"
+            - "ISO 27001:2022: A.8.3, A.8.15"
+            - "SOC 2: CC6.1, P4.1"
+
+  # ============================================================================
+  # MODULE 5: INFRASTRUCTURE, DEVSECOPS, SUPPLY CHAIN & TELEMETRY (12 Checks: WEB-INF-001..012)
+  # ============================================================================
   - module_id: "TIR-INFRA"
     name: "Infrastructure, DevSecOps, Supply Chain & Telemetry Engine"
     checks:
       - id: "WEB-INF-001"
-        title: "Security Headers, CORS Policy & Build Artifact Exposure"
-        category: "Security Misconfiguration / Infrastructure"
+        title: "Web Server Hardening, Security Headers, CORS Policy & HTTP Method Restrictions"
+        category: "Security Misconfiguration"
         severity: "Medium"
         execution_mode: "automated"
-        tool_binding: ["nuclei_exposures", "zap_passive", "ffuf"]
+        tool_binding: ["httpx_headers", "httpx_cors", "nuclei_exposures"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Check CSP, X-Frame-Options/frame-ancestors, X-Content-Type-Options: nosniff, Referrer-Policy, Permissions-Policy."
-          - "Verify CORS does not reflect arbitrary Origins with Access-Control-Allow-Credentials: true."
-          - "Probe for exposed .git, .env, .bak, .sql, .js.map source maps, /actuator, and /swagger-ui endpoints."
+          - "Verify CSP, X-Frame-Options (or frame-ancestors), X-Content-Type-Options: nosniff, Referrer-Policy, and Permissions-Policy headers are present."
+          - "Verify CORS policies restrict Access-Control-Allow-Origin to trusted domains rather than wildcards or arbitrary reflected origins."
+          - "Confirm default credentials are removed, directory listing is disabled, unnecessary HTTP methods (TRACE, excessive OPTIONS) are blocked, and Server/X-Powered-By headers are obfuscated."
         compliance:
           india:
-            - "CERT-In CISG-2024-01 (Secure Deployment & Hardening)"
-            - "CERT-In CISG-2026-02 (Attack Surface Reduction)"
+            - "CERT-In CISG-2024-01 (Web Server & Application Hardening)"
+            - "CERT-In CISG-2026-02"
           global:
             - "OWASP Top 10: A05 Security Misconfiguration"
+            - "OWASP WSTG v4.2: WSTG-INFO-02, WSTG-INFO-08, WSTG-CONF-02, WSTG-CONF-06, WSTG-CONF-09, WSTG-CONF-12, WSTG-CLNT-07, WSTG-CLNT-09"
             - "PCI DSS v4.0: Req. 2.2, 6.4.1"
             - "ISO 27001:2022: A.8.9"
             - "SOC 2: CC6.6, CC7.1"
 
       - id: "WEB-INF-002"
-        title: "Software Composition Analysis (SCA), SBOM/CBOM & Subresource Integrity (SRI)"
-        category: "Vulnerable & Outdated Components / Supply Chain"
+        title: "Attack Surface, Build Artifacts, Source Maps & Admin Interface Exposure"
+        category: "Infrastructure & Deployment Exposure"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["trivy_sca", "syft_sbom", "gitleaks", "retirejs"]
+        tool_binding: ["nuclei_exposures"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Generate CycloneDX/SPDX SBOM & CBOM and scan dependencies for known critical/high CVEs."
-          - "Verify external third-party scripts (especially on payment/auth pages) enforce cryptographic SRI hashes."
-          - "Verify CI/CD pre-commit secret scanning and artifact signing."
+          - "Verify source repositories (.git, .svn), backup files (.bak, .old, .sql), and environment files (.env, web.config) are inaccessible over HTTP."
+          - "Confirm production JavaScript source maps (.js.map), debug/metrics endpoints (/actuator, /metrics, /swagger-ui), and sample files are removed."
+          - "Verify administrative panels are isolated on restricted networks/VPNs and robots.txt/sitemap.xml do not disclose sensitive internal routes."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Public Exposure & Attack Surface Reduction)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "OWASP WSTG v4.2: WSTG-CONF-03, WSTG-CONF-04, WSTG-CONF-05"
+            - "PCI DSS v4.0: Req. 2.2.4, 6.4.1"
+            - "ISO 27001:2022: A.8.9, A.8.31"
+            - "SOC 2: CC6.6"
+
+      - id: "WEB-INF-003"
+        title: "Software Composition Analysis (SCA), SBOM/CBOM & Dependency Hygiene"
+        category: "Vulnerable and Outdated Components"
+        severity: "High"
+        execution_mode: "automated"
+        tool_binding: ["trivy_sca"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Maintain a complete inventory (SBOM & CBOM) of server-side and client-side third-party components and scan for known CVEs."
+          - "Confirm zero critical known vulnerabilities exist in production and that a documented patching SLA is enforced."
+          - "Verify unused dependencies are removed and all packages originate from verified official registries (preventing dependency confusion)."
         compliance:
           india:
             - "CERT-In CISG-2024-02 (Technical Guidelines on SBOM, QBOM & CBOM v2.0)"
             - "CERT-In CISG-2025-02 (Comprehensive Cyber Security Audit Policy Guidelines)"
           global:
-            - "OWASP Top 10: A06 Vulnerable Components / A08 Integrity Failures"
-            - "PCI DSS v4.0: Req. 6.3.2, 6.4.3"
+            - "OWASP Top 10: A06 Vulnerable and Outdated Components"
+            - "OWASP WSTG v4.2: WSTG-INFO-09"
+            - "PCI DSS v4.0: Req. 6.3.2"
+            - "ISO 27001:2022: A.8.8, A.8.30"
+            - "SOC 2: CC7.1, CC8.1"
+
+      - id: "WEB-INF-004"
+        title: "Client-Side Supply Chain, Subresource Integrity (SRI) & Artifact Verification"
+        category: "Software and Data Integrity Failures"
+        severity: "High"
+        execution_mode: "hybrid"
+        tool_binding: ["nuclei_exposures", "manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify all externally hosted JavaScript/CSS assets (CDNs, analytics, payment widgets) enforce cryptographic Subresource Integrity (SRI) hashes."
+          - "Confirm third-party scripts and client-side API keys are audited for least privilege and supply chain risk."
+          - "Verify application updates and third-party libraries validate cryptographic checksums/signatures and never auto-update from unverified sources."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-02 (Software Supply Chain Integrity)"
+            - "RBI Digital Payment Security Controls (Payment Page Script Integrity)"
+          global:
+            - "OWASP Top 10: A08 Software and Data Integrity Failures"
+            - "PCI DSS v4.0: Req. 6.4.3 (Client-Side Script Integrity)"
             - "ISO 27001:2022: A.8.25, A.8.30"
             - "SOC 2: CC8.1"
 
-      - id: "WEB-INF-003"
-        title: "Tamper-Resistant Audit Logging, NTP Sync & Statutory Retention"
-        category: "Security Logging and Monitoring Failures"
+      - id: "WEB-INF-005"
+        title: "DevSecOps CI/CD Security Gates (Pre-Commit Secrets, SAST, Staging DAST & Cloud Hardening)"
+        category: "DevSecOps & Cloud-Native Security"
         severity: "High"
-        execution_mode: "hybrid"
-        tool_binding: ["siem_validator", "manual_review"]
+        execution_mode: "manual"
+        tool_binding: ["trivy_sca", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
-          - "Verify authentication, authorization failures, input validation rejections, and high-value transactions are logged."
-          - "Confirm logs exclude plaintext passwords, session tokens, and unmasked PII."
-          - "Validate NTP synchronization (NIC/NPL traceable), tamper protection, 180-day CERT-In retention, and 1-year DPDP breach-detection log retention."
+          - "Verify pre-commit secret scanning (Gitleaks/TruffleHog) and real-time security linting are active in developer workflows."
+          - "Confirm CI/CD pipelines enforce SAST (Semgrep/SonarQube), SCA gates, and automated staging DAST scans (ZAP/Nuclei) before release."
+          - "Verify CI/CD runners enforce least-privilege IAM roles and cloud storage buckets/security groups restrict public access."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Secure SDLC & DevSecOps)"
+            - "CERT-In CISG-2025-02 (Pre-Deployment VAPT Governance)"
+          global:
+            - "OWASP Top 10: A08 Software and Data Integrity Failures"
+            - "OWASP WSTG v4.2: WSTG-CONF-01, WSTG-CONF-11"
+            - "PCI DSS v4.0: Req. 6.3.1, 6.4.1"
+            - "ISO 27001:2022: A.8.25, A.8.29"
+            - "SOC 2: CC8.1"
+
+      - id: "WEB-INF-006"
+        title: "Tamper-Resistant Audit Logging, NTP Sync, Alerting & Statutory Retention"
+        category: "Security Logging and Monitoring Failures"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Verify authentication events, access control failures, input validation rejections, and high-value transactions are logged with timestamp, user ID, source IP, and event outcome."
+          - "Confirm logs are protected against tampering, exclude passwords/tokens/unmasked PII, and trigger automated alerting on anomalous patterns."
+          - "Verify NTP clock synchronization (NIC/NPL traceable), 180-day rolling log retention in Indian jurisdiction (CERT-In), and minimum 1-year retention for personal data breach detection (DPDP Rules)."
         compliance:
           india:
             - "CERT-In Directions u/s 70B IT Act (180-day log retention in India, NIC/NPL NTP sync, 6-hour incident reporting)"
@@ -417,3 +800,110 @@ modules:
             - "PCI DSS v4.0: Req. 10.2, 10.3, 10.5"
             - "ISO 27001:2022: A.8.15, A.8.17"
             - "SOC 2: CC7.2"
+
+      - id: "WEB-INF-007"
+        title: "[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain & Virtual Host Enumeration"
+        category: "Information Gathering"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Audit public search engine caches/indexes to ensure sensitive documents, admin URLs, and backup files are not indexed."
+          - "Enumerate DNS subdomains, virtual hosts, and exposed ports to ensure no shadow or unpatched staging applications are publicly reachable."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Attack Surface & Shadow Asset Governance)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-01, WSTG-INFO-04"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9"
+
+      - id: "WEB-INF-008"
+        title: "[WSTG-INFO-03 / CONF-08] Webserver Metafiles & Legacy RIA Cross-Domain Policy Audit"
+        category: "Information Gathering / Config Management"
+        severity: "Medium"
+        execution_mode: "automated"
+        tool_binding: ["httpx_metafiles"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Inspect /robots.txt, /sitemap.xml, and /.well-known/security.txt to verify sensitive internal or admin paths are not disclosed."
+          - "Verify /crossdomain.xml and /clientaccesspolicy.xml are absent or do not permit wildcard ('*') cross-origin access."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Public Metadata & Policy Hardening)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-03, WSTG-CONF-08"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9"
+
+      - id: "WEB-INF-009"
+        title: "[WSTG-INFO-05] Client-Side Source Code, HTML Comments & Downloadable File Metadata Audit"
+        category: "Information Gathering"
+        severity: "Medium"
+        execution_mode: "manual"
+        tool_binding: ["manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Inspect rendered HTML comments, bundled JavaScript assets, and downloadable PDF/Office documents (EXIF/author metadata) to confirm no internal endpoints, developer notes, or API secrets are exposed."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Information Leakage Prevention)"
+            - "DPDP Rules 2025 - Rule 6(1)(a)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-05"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9, A.8.12"
+
+      - id: "WEB-INF-010"
+        title: "[WSTG-INFO-10] Application Architecture, WAF & Reverse-Proxy Trust Boundary Mapping"
+        category: "Information Gathering"
+        severity: "Info"
+        execution_mode: "manual"
+        tool_binding: ["manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Map DNS, CDN, WAF, load balancer, and backend origin tiers to verify origin IPs cannot be bypassed directly around the WAF."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (Perimeter & Origin Isolation)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-INFO-10"
+            - "ISO 27001:2022: A.8.20, A.8.22"
+
+      - id: "WEB-INF-011"
+        title: "[WSTG-CONF-10] Subdomain Takeover & Dangling DNS Record Audit"
+        category: "Config & Deploy Management"
+        severity: "High"
+        execution_mode: "manual"
+        tool_binding: ["manual_review"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Audit all DNS CNAME/ALIAS records pointing to third-party cloud platforms (S3, Azure, GitHub Pages, Heroku, CloudFront) to ensure no unclaimed or dangling hostnames exist."
+        compliance:
+          india:
+            - "CERT-In CISG-2026-02 (DNS & Cloud Asset Hygiene)"
+            - "CERT-In CISG-2024-01"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-10"
+            - "OWASP Top 10: A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.9"
+
+      - id: "WEB-INF-012"
+        title: "[WSTG-CONF-13] URL Path Confusion & Reverse-Proxy Normalization Consistency"
+        category: "Config & Deploy Management"
+        severity: "Medium"
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_path_confusion", "manual_proxy"]
+        profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
+        test_procedures:
+          - "Test path normalization edge cases (/admin/..;/, URL-encoded slashes, trailing slashes, and case variations) to confirm reverse proxies, WAFs, and backend routers enforce identical access controls."
+        compliance:
+          india:
+            - "CERT-In CISG-2024-01 (Access Control & Routing Consistency)"
+            - "DPDP Rules 2025 - Rule 6(1)(b)"
+          global:
+            - "OWASP WSTG v4.2: WSTG-CONF-13"
+            - "OWASP Top 10: A01 Broken Access Control / A05 Security Misconfiguration"
+            - "ISO 27001:2022: A.8.3, A.8.26"

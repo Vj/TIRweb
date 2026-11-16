@@ -1,0 +1,30 @@
+# Python & Virtual Environments
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# TIRweb Scan Outputs & Sensitive Auth Session Files
+report.json
+report.html
+report.pdf
+tirweb_report.json
+tirweb_compliance_report.pdf
+tirweb_compliance_report.html
+reports/
+*auth*.yaml
+*auth*.json
+!rules/*.yaml
+
+# OS & IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
