@@ -4,7 +4,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 from jinja2 import Environment, FileSystemLoader, select_autoescape
-from weasyprint import HTML
 
 
 SEVERITY_ORDER = {"Critical": 0, "High": 1, "Medium": 2, "Low": 3, "Info": 4}
@@ -26,7 +25,7 @@ def build_compliance_matrix(results: list[dict[str, Any]]) -> dict[str, list[dic
     matrix: dict[str, list[dict[str, Any]]] = defaultdict(list)
 
     for item in results:
-        seen_pillars: set[str] = set()
+        seen_pillars: set[tuple[str, str, str]] = set()
         for tag in item.get("india_compliance", []):
             pillar = _classify_indian_framework(tag)
             entry_key = (pillar, item["check_id"], tag)
@@ -45,13 +44,12 @@ def build_compliance_matrix(results: list[dict[str, Any]]) -> dict[str, list[dic
     return dict(matrix)
 
 
-def generate_pdf_report(
+def render_report_html(
     report_json_path: Path,
-    output_pdf_path: Path,
     client_name: str = "Target Organization",
     auditor_org: str = "Security Assessment Team",
-) -> Path:
-    """Render tirweb_report.json into a styled WeasyPrint PDF compliance report."""
+) -> tuple[str, Path]:
+    """Render tirweb_report.json into a self-contained HTML string and return (html, template_dir)."""
     payload = json.loads(report_json_path.read_text(encoding="utf-8"))
     results: list[dict[str, Any]] = payload.get("results", [])
 
@@ -88,7 +86,63 @@ def generate_pdf_report(
         compliance_matrix=compliance_matrix,
         results=sorted_results,
     )
+    return rendered_html, template_dir
 
-    output_pdf_path.parent.mkdir(parents=True, exist_ok=True)
-    HTML(string=rendered_html, base_url=str(template_dir)).write_pdf(str(output_pdf_path))
-    return output_pdf_path
+
+def generate_compliance_report(
+    report_json_path: Path,
+    output_path: Path,
+    client_name: str = "Target Organization",
+    auditor_org: str = "Security Assessment Team",
+    allow_html_fallback: bool = True,
+) -> tuple[Path, str, str | None]:
+    """
+    Export TIRweb JSON results as PDF (via WeasyPrint) or self-contained HTML.
+
+    Returns:
+        (actual_output_path, format_used ['pdf' | 'html'], warning_message_or_none)
+    """
+    rendered_html, template_dir = render_report_html(
+        report_json_path=report_json_path,
+        client_name=client_name,
+        auditor_org=auditor_org,
+    )
+
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+
+    if output_path.suffix.lower() in {".html", ".htm"}:
+        output_path.write_text(rendered_html, encoding="utf-8")
+        return output_path, "html", None
+
+    try:
+        from weasyprint import HTML  # Lazy import avoids startup crashes on Windows without GTK3
+
+        HTML(string=rendered_html, base_url=str(template_dir)).write_pdf(str(output_path))
+        return output_path, "pdf", None
+    except (ImportError, OSError) as exc:
+        if not allow_html_fallback:
+            raise
+        fallback_html_path = output_path.with_suffix(".html")
+        fallback_html_path.write_text(rendered_html, encoding="utf-8")
+        warning = (
+            f"WeasyPrint native GTK3/Pango runtime unavailable ({exc}). "
+            f"Exported self-contained HTML report instead."
+        )
+        return fallback_html_path, "html", warning
+
+
+# Backward-compatible alias for any callers still importing generate_pdf_report
+def generate_pdf_report(
+    report_json_path: Path,
+    output_pdf_path: Path,
+    client_name: str = "Target Organization",
+    auditor_org: str = "Security Assessment Team",
+) -> Path:
+    actual_path, _, _ = generate_compliance_report(
+        report_json_path=report_json_path,
+        output_path=output_pdf_path,
+        client_name=client_name,
+        auditor_org=auditor_org,
+        allow_html_fallback=True,
+    )
+    return actual_path

@@ -9,6 +9,7 @@ from .dispatcher import ToolDispatcher
 from .models import AppProfile, AuthContext, ExecutionMode, TIRWebChecklist
 from .probes import ScanContext
 from .reporter import generate_pdf_report
+from .reporter import generate_compliance_report
 
 app = typer.Typer(
     name="tirweb",
@@ -188,6 +189,41 @@ def run_scan(
 
 
 @app.command("report")
+def export_report(
+    input_json: Annotated[
+        Path,
+        typer.Option("--input", "-i", exists=True, help="Path to TIRweb JSON report"),
+    ],
+    output: Annotated[
+        Path,
+        typer.Option("--out", "-o", help="Output path (.pdf or .html)"),
+    ] = Path("tirweb_compliance_report.pdf"),
+    client: Annotated[
+        str,
+        typer.Option("--client", help="Client or entity name for cover header"),
+    ] = "Target Organization",
+    auditor: Annotated[
+        str,
+        typer.Option("--auditor", help="Assessing organization name"),
+    ] = "Security Assessment Team",
+    strict_pdf: Annotated[
+        bool,
+        typer.Option("--strict-pdf", help="Fail instead of falling back to HTML if WeasyPrint/GTK3 is unavailable"),
+    ] = False,
+) -> None:
+    """Convert TIRweb JSON results into a CERT-In, RBI & DPDP Rules 2025 PDF or HTML report."""
+    actual_path, fmt, warning = generate_compliance_report(
+        report_json_path=input_json,
+        output_path=output,
+        client_name=client,
+        auditor_org=auditor,
+        allow_html_fallback=not strict_pdf,
+    )
+    if warning:
+        console.print(f"[bold yellow]Notice:[/bold yellow] {warning}")
+    console.print(f"[bold green]Compliance {fmt.upper()} generated:[/bold green] {actual_path.resolve()}")
+'''
+@app.command("report")
 def export_pdf_report(
     input_json: Annotated[
         Path,
@@ -214,7 +250,7 @@ def export_pdf_report(
         auditor_org=auditor,
     )
     console.print(f"[bold green]Compliance PDF generated:[/bold green] {pdf_path.resolve()}")
-
+'''
 
 if __name__ == "__main__":
     app()
