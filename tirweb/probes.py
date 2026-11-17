@@ -273,9 +273,10 @@ async def probe_cors_policy(
 ) -> tuple[bool, str]:
     """Assess CORS responses conservatively; reflection alone is not proof of data exposure."""
     canary_origin = "https://untrusted-origin-audit.example.invalid"
-    req_headers = ctx.primary_auth.to_http_headers()
-    req_headers["Origin"] = canary_origin
-    req_headers["Access-Control-Request-Method"] = "GET"
+    req_headers = {
+        "Origin": canary_origin,
+        "Access-Control-Request-Method": "GET",
+    }
     if ctx.primary_auth.is_authenticated:
         req_headers["Access-Control-Request-Headers"] = "authorization"
 
@@ -304,10 +305,10 @@ async def probe_cors_policy(
     }
 
     if acao == canary_origin and acac == "true":
-        return False, (
-            "CORS credentialed-origin reflection detected: an untrusted Origin was echoed "
-            "with Access-Control-Allow-Credentials: true. Confirm the endpoint returns "
-            "sensitive user-specific data before assigning impact."
+        return True, (
+            "INCONCLUSIVE_CORS_CREDENTIALS: An untrusted Origin was echoed with "
+            "Access-Control-Allow-Credentials: true. Verify that browser-credentialed "
+            "requests can reach sensitive user-specific response data before confirming impact."
         )
 
     if acao == canary_origin:
