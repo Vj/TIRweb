@@ -102,6 +102,14 @@ def run_scan(
         int,
         typer.Option("--concurrency", "-j", min=1, max=16, help="Max parallel tool executions"),
     ] = 4,
+    scan_timeout: Annotated[
+        int,
+        typer.Option("--scan-timeout", min=1, max=7200, help="Maximum total scan duration in seconds"),
+    ] = 900,
+    max_requests: Annotated[
+        int,
+        typer.Option("--max-requests", min=1, max=10000, help="Maximum outbound HTTP requests across native probes"),
+    ] = 500,
     out: Annotated[
         Optional[Path],
         typer.Option("--out", "-o", help="Single self-contained HTML report output path"),
@@ -133,6 +141,7 @@ def run_scan(
         primary_auth=auth_ctx,
         secondary_auth=secondary_ctx,
         probe_endpoints=endpoint,
+        max_requests=max_requests,
     )
 
     loaded = TIRWebChecklist.from_yaml(checklist)
@@ -158,9 +167,15 @@ def run_scan(
             )
             for mod, chk in selected
         ]
-        return await asyncio.gather(*tasks)
+        return await asyncio.wait_for(asyncio.gather(*tasks), timeout=scan_timeout)
 
-    results = asyncio.run(_orchestrate())
+    try:
+        results = asyncio.run(_orchestrate())
+    except TimeoutError:
+        console.print(
+            f"[bold red]Scan timed out:[/bold red] Maximum duration of {scan_timeout}s exceeded."
+        )
+        raise typer.Exit(code=124)
 
     table = Table(title=f"TIRweb Execution Summary ({profile.value})")
     table.add_column("Check ID", style="cyan", no_wrap=True)
