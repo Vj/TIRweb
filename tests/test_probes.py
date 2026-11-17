@@ -348,6 +348,7 @@ class TestProbeJwtSecurity:
                 "email": "vijay.user@example.in",
                 "pan_card": "ABCDE1234F",
                 "contact": "+91-9876543210",
+                "contacts": [{"email": "nested.person@example.in"}],
             },
             signature="",
         )
@@ -362,6 +363,7 @@ class TestProbeJwtSecurity:
         assert "Email address detected inside claim 'email'" in detail
         assert "Indian PAN-like identifier detected inside claim 'pan_card'" in detail
         assert "Indian mobile number detected inside claim 'contact'" in detail
+        assert "Email address detected inside claim 'contacts[0].email'" in detail
 
     async def test_algorithm_header_alone_is_inconclusive_without_verifier_evidence(
         self, dummy_check: ChecklistItem
