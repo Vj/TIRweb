@@ -7,6 +7,14 @@ runner = CliRunner()
 
 
 class TestCLI:
+    def test_scan_rejects_malformed_target_url(self, checklist_yaml_file: Path) -> None:
+        result = runner.invoke(
+            app,
+            ["scan", "--target", "https://www.http://testfire.net/", "--checklist", str(checklist_yaml_file)],
+        )
+        assert result.exit_code == 2
+        assert "Invalid target URL" in result.stdout
+
     def test_validate_command_succeeds(self, checklist_yaml_file: Path) -> None:
         result = runner.invoke(app, ["validate", "-c", str(checklist_yaml_file)])
         assert result.exit_code == 0
