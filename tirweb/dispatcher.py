@@ -46,10 +46,8 @@ async def _run_subprocess(cmd: list[str], timeout: int = 180) -> tuple[int, str]
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
         proc.kill()
-        stdout, stderr = await proc.communicate()
-        combined = (stdout.decode(errors="replace") + "\n" + stderr.decode(errors="replace")).strip()
-        detail = combined[-1500:] if combined else "No process output."
-        return 124, f"Command timed out after {timeout}s. {detail}"
+        await proc.wait()
+        return 124, f"Command timed out after {timeout}s"
     combined = (stdout.decode(errors="replace") + "\n" + stderr.decode(errors="replace")).strip()
     return proc.returncode or 0, combined[-1500:]
 
