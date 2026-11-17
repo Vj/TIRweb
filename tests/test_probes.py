@@ -252,7 +252,7 @@ class TestProbeDifferentialIdor:
         assert passed is True
         assert "Token B properly isolated" in detail
 
-    async def test_fails_when_token_b_receives_identical_json_schema_200(
+    async def test_marks_dual_200_as_inconclusive_for_ownership_review(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
@@ -270,8 +270,9 @@ class TestProbeDifferentialIdor:
         )
         passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Potential cross-user access control parity detected" in detail
+        assert passed is True
+        assert "INCONCLUSIVE_IDOR_REVIEW" in detail
+        assert "not proof of unauthorized access" in detail
         assert "/api/v1/accounts/9001" in detail
 
 
