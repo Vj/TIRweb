@@ -257,6 +257,7 @@ async def probe_cors_policy(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=req_headers,
     ) as client:
         resp = await client.options(target)
@@ -302,6 +303,7 @@ async def probe_metafiles_and_ria_policies(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
         # 1. Check robots.txt & sitemap.xml for sensitive disallowed/listed paths
@@ -343,6 +345,7 @@ async def probe_path_confusion(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
         for base_path in protected_candidates:
@@ -390,6 +393,7 @@ async def probe_open_redirect(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
         for param in redirect_params:
@@ -487,6 +491,7 @@ async def probe_graphql_security(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=headers,
     ) as client:
         for path in candidate_paths:
