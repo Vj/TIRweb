@@ -69,7 +69,8 @@ class TestProbeBindingIntegrity:
     ) -> None:
         checks = {
             check.id: check
-            for _, check in loaded_checklist.filter_checks(profile=AppProfile.CORE)
+            for module in loaded_checklist.modules
+            for check in module.checks
         }
 
         assert "httpx_headers" in checks["WEB-INF-001"].tool_binding
