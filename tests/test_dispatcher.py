@@ -173,5 +173,5 @@ class TestToolDispatcher:
         dispatcher = ToolDispatcher()
         res = await dispatcher.execute_check("https://slow.example.in", mod, chk)
 
-        assert res.status == "FAIL"
+        assert res.status == "ERROR"
         assert "timed out" in res.output_summary
