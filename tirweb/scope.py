@@ -30,6 +30,7 @@ def validate_scan_scope(target: str, endpoints: list[str] | None = None) -> tupl
         or base.fragment
         or base.query
         or "://" in base.path
+        or target.count("://") != 1
     ):
         raise ValueError("Use an absolute http(s) target URL without credentials, query, or fragment.")
     base_origin = _origin(base)
