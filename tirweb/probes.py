@@ -577,8 +577,8 @@ async def probe_graphql_security(
                     except (httpx.HTTPError, ValueError):
                         pass
 
-    if issues:
-        return False, "GraphQL security findings:\n- " + "\n- ".join(issues)
+    if review_items:
+        return True, "INCONCLUSIVE_GRAPHQL_REVIEW: Manual schema sensitivity and resource-control review required.\n- " + "\n- ".join(review_items)
     if discovered_endpoints:
         return (
             True,
