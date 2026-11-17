@@ -9,7 +9,7 @@ import base64
 import re
 from datetime import datetime, timezone
 from .models import AuthContext, ChecklistItem
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin, urlparse, urlunparse
 
 
 INSECURE_JWT_ALGS = {"none", "hs1", "rs1", "es1", "rsa1_5"}
@@ -45,6 +45,11 @@ PII_VALUE_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
 ]
 
 MAX_RECOMMENDED_TTL_SECONDS = 86400  # 24 hours
+
+
+def resolve_endpoint(target: str, endpoint: str) -> str:
+    """Resolve a previously validated endpoint against the target origin."""
+    return urljoin(target.rstrip("/") + "/", endpoint)
 
 
 def _b64url_decode_json(segment: str) -> dict[str, Any]:
@@ -324,7 +329,9 @@ async def probe_path_confusion(
     ) as client:
         for base_path in protected_candidates:
             clean_path = "/" + base_path.lstrip("/")
-            base_url = urljoin(target, clean_path)
+            base_url = resolve_endpoint(target, base_path)
+            parsed_base = urlparse(base_url)
+            clean_path = parsed_base.path or "/"
             baseline = await client.get(base_url)
 
             # Only test path confusion if the canonical endpoint is restricted (401/403)
@@ -338,7 +345,7 @@ async def probe_path_confusion(
                 clean_path.upper(),
             ]
             for variant in variants:
-                variant_url = f"{target.rstrip('/')}{variant}"
+                variant_url = urlunparse(parsed_base._replace(path=variant, params="", query="", fragment=""))
                 resp = await client.get(variant_url)
                 if resp.status_code == 200:
                     bypass_findings.append(
@@ -392,7 +399,7 @@ async def probe_differential_idor(
 
     async with httpx.AsyncClient(timeout=ctx.timeout, verify=ctx.verify_tls, follow_redirects=False) as client:
         for endpoint in endpoints:
-            url = endpoint if endpoint.startswith("http") else f"{target.rstrip('/')}/{endpoint.lstrip('/')}"
+            url = resolve_endpoint(target, endpoint)
             resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
             resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
 
@@ -460,7 +467,7 @@ async def probe_graphql_security(
         headers=headers,
     ) as client:
         for path in candidate_paths:
-            gql_url = urljoin(target, path)
+            gql_url = resolve_endpoint(target, path)
 
             # 1. Test Schema Introspection (__schema)
             try:
