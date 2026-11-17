@@ -523,7 +523,7 @@ modules:
         compliance:
           india:
             - "CERT-In CISG-2024-01 (Client-Side & Phishing Redirect Controls)"
-            - "DPDP Rules 2025 - Rule 6(1)(a)"
+            - "DPDP Rules 2025 - Rule 6(1)(g) (Technical and organisational security measures)"
           global:
             - "OWASP WSTG v4.2: WSTG-CLNT-04, WSTG-CLNT-05, WSTG-CLNT-06, WSTG-CLNT-08"
             - "OWASP Top 10: A01 Broken Access Control / A03 Injection"
@@ -615,7 +615,7 @@ modules:
         compliance:
           india:
             - "CERT-In CISG-2024-01 (Network & Cloud Boundary Controls)"
-            - "DPDP Rules 2025 - Rule 6(1)(b)"
+            - "DPDP Rules 2025 - Rule 6(1)(g) (Technical and organisational security measures)"
           global:
             - "OWASP Top 10: A10 Server-Side Request Forgery"
             - "OWASP WSTG v4.2: WSTG-INPV-17"
@@ -637,7 +637,7 @@ modules:
         compliance:
           india:
             - "CERT-In CISG-2024-01 (File Handling Security)"
-            - "DPDP Rules 2025 - Rule 6(1)(c)"
+            - "DPDP Rules 2025 - Rule 6(1)(g) (Technical and organisational security measures)"
           global:
             - "OWASP Top 10: A04 Insecure Design"
             - "OWASP WSTG v4.2: WSTG-BUSL-08, WSTG-BUSL-09"
@@ -794,7 +794,7 @@ modules:
         compliance:
           india:
             - "CERT-In Directions u/s 70B IT Act (180-day log retention in India, NIC/NPL NTP sync, 6-hour incident reporting)"
-            - "DPDP Rules 2025 - Rule 6(1)(c) & (e) (Minimum 1-year log retention for breach detection/investigation)"
+            - "DPDP Rules 2025 - Rule 6(1)(c) (Access logging, monitoring and review) and Rule 6(1)(e) (one-year retention)"
           global:
             - "OWASP Top 10: A09 Security Logging and Monitoring Failures"
             - "PCI DSS v4.0: Req. 10.2, 10.3, 10.5"
