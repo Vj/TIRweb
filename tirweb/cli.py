@@ -201,14 +201,22 @@ def run_scan(
             },
             "results": [r.model_dump() for r in results],
         }
-        html_path = out if out.suffix.lower() in {".html", ".htm"} else out.with_suffix(".html")
-        saved_html = generate_html_report(
-            payload=report_payload,
-            output_html_path=html_path,
-            client_name=client,
-            auditor_org=auditor,
-        )
-        console.print(f"\n[bold green]HTML Compliance Report exported to:[/bold green] {saved_html.resolve()}")
+        if out.suffix.lower() == ".json":
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(
+                __import__("json").dumps(report_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            console.print(f"\n[bold green]JSON scan results exported to:[/bold green] {out.resolve()}")
+        else:
+            html_path = out if out.suffix.lower() in {".html", ".htm"} else out.with_suffix(".html")
+            saved_html = generate_html_report(
+                payload=report_payload,
+                output_html_path=html_path,
+                client_name=client,
+                auditor_org=auditor,
+            )
+            console.print(f"\n[bold green]HTML Compliance Report exported to:[/bold green] {saved_html.resolve()}")
 
 
 @app.command("report")
