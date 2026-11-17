@@ -23,7 +23,7 @@ class CheckExecutionResult(BaseModel):
     title: str
     severity: str
     execution_mode: ExecutionMode
-    status: str  # PASS | FAIL | HYBRID_REVIEW | MANUAL_REQUIRED | TOOL_MISSING | DRY_RUN | ERROR
+    status: str  # PASS | FAIL | HYBRID_REVIEW | MANUAL_REQUIRED | TOOL_MISSING | INCONCLUSIVE | DRY_RUN | ERROR
     tools_invoked: list[str]
     output_summary: str
     india_compliance: list[str]
@@ -183,31 +183,49 @@ class ToolDispatcher:
 
         async with self.semaphore:
             logs: list[str] = []
-            overall_pass = True
+            observed_failure = False
             missing_tools: list[str] = []
+            execution_errors: list[str] = []
+            requires_manual_review = False
+            inconclusive = False
+            executed = 0
 
             for binding in check.tool_binding:
                 handler = self.registry.get(binding)
                 if not handler:
-                    logs.append(f"[{binding}] Manual/unregistered plugin hook.")
+                    requires_manual_review = True
+                    logs.append(f"[{binding}] MANUAL_REQUIRED: No executable adapter is registered.")
                     continue
                 try:
                     passed, detail = await handler(target, check, scan_ctx)
-                    overall_pass = overall_pass and passed
-                    logs.append(f"[{binding}] {'PASS' if passed else 'FAIL'}: {detail}")
+                    if "SKIPPED_" in detail or detail.lstrip().upper().startswith("SKIPPED"):
+                        inconclusive = True
+                        logs.append(f"[{binding}] INCONCLUSIVE: {detail}")
+                    else:
+                        executed += 1
+                        observed_failure = observed_failure or not passed
+                        logs.append(f"[{binding}] {'PASS' if passed else 'FAIL'}: {detail}")
                 except FileNotFoundError as exc:
                     missing_tools.append(binding)
-                    logs.append(f"[{binding}] SKIPPED: {exc}")
+                    logs.append(f"[{binding}] TOOL_MISSING: {exc}")
                 except Exception as exc:
-                    overall_pass = False
-                    logs.append(f"[{binding}] ERROR: {exc}")
+                    execution_errors.append(binding)
+                    logs.append(f"[{binding}] ERROR: {type(exc).__name__}: {exc}")
 
-            if missing_tools and len(missing_tools) == len(check.tool_binding):
-                status = "TOOL_MISSING"
-            elif not overall_pass:
+            # A FAIL requires affirmative evidence from an executed control.
+            # Network errors, skipped prerequisites and absent tools are not vulnerabilities.
+            if observed_failure:
                 status = "FAIL"
-            elif check.execution_mode == ExecutionMode.HYBRID:
+            elif execution_errors:
+                status = "ERROR"
+            elif missing_tools:
+                status = "TOOL_MISSING"
+            elif inconclusive:
+                status = "INCONCLUSIVE"
+            elif requires_manual_review or check.execution_mode == ExecutionMode.HYBRID:
                 status = "HYBRID_REVIEW"
+            elif executed == 0:
+                status = "MANUAL_REQUIRED"
             else:
                 status = "PASS"
 
