@@ -187,6 +187,10 @@ def run_scan(
                 "fail": sum(1 for r in results if r.status == "FAIL"),
                 "hybrid_review": sum(1 for r in results if r.status == "HYBRID_REVIEW"),
                 "manual_required": sum(1 for r in results if r.status == "MANUAL_REQUIRED"),
+                "tool_missing": sum(1 for r in results if r.status == "TOOL_MISSING"),
+                "inconclusive": sum(1 for r in results if r.status == "INCONCLUSIVE"),
+                "errors": sum(1 for r in results if r.status == "ERROR"),
+                "dry_run": sum(1 for r in results if r.status == "DRY_RUN"),
             },
             "results": [r.model_dump() for r in results],
         }
