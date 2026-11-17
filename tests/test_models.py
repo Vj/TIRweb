@@ -63,6 +63,20 @@ class TestSchemaValidation:
         assert "Duplicate check ID detected: WEB-IAM-001" in str(exc_info.value)
 
 
+class TestProbeBindingIntegrity:
+    def test_security_headers_probe_is_only_bound_to_header_hardening(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        checks = {
+            check.id: check
+            for _, check in loaded_checklist.filter_checks(profile=AppProfile.CORE)
+        }
+
+        assert "httpx_headers" in checks["WEB-INF-001"].tool_binding
+        for check_id in ("WEB-CRY-001", "WEB-CRY-003", "WEB-IAM-006", "WEB-INJ-002"):
+            assert "httpx_headers" not in checks[check_id].tool_binding
+
+
 class TestProfileFiltering:
     def test_bfsi_profile_includes_core_and_bfsi_checks(
         self, loaded_checklist: TIRWebChecklist
