@@ -576,6 +576,7 @@ async def probe_graphql_security(
                 try:
                     body = resp.json()
                 except ValueError:
+                    probe_errors.append(f"[{path}] HTTP 200 response was not valid JSON.")
                     continue
 
                 if isinstance(body, dict) and ("data" in body or "errors" in body):
@@ -602,8 +603,12 @@ async def probe_graphql_security(
                                 review_items.append(
                                     f"[{path}] Server accepted {len(batch_payload)} batched operations; this does not establish missing rate limits or resource exhaustion controls."
                                 )
-                    except (httpx.HTTPError, ValueError):
-                        pass
+                    except (httpx.HTTPError, ValueError) as exc:
+                        probe_errors.append(f"[{path}] Batch-control check incomplete: {type(exc).__name__}.")
+                else:
+                    probe_errors.append(f"[{path}] HTTP 200 response did not match a GraphQL response shape.")
+            elif resp.status_code not in {401, 403, 404, 405}:
+                probe_errors.append(f"[{path}] Unexpected HTTP status {resp.status_code}.")
 
     if review_items or probe_errors:
         evidence = review_items + probe_errors
