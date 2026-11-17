@@ -78,6 +78,15 @@ def _scan_claims_for_pii(claims: dict[str, Any], prefix: str = "") -> list[str]:
                     findings.append(f"{label} detected inside claim '{full_key}'")
         elif isinstance(value, dict):
             findings.extend(_scan_claims_for_pii(value, prefix=full_key))
+        elif isinstance(value, list):
+            for index, item in enumerate(value):
+                item_key = f"{full_key}[{index}]"
+                if isinstance(item, dict):
+                    findings.extend(_scan_claims_for_pii(item, prefix=item_key))
+                elif isinstance(item, str):
+                    for label, pattern in PII_VALUE_PATTERNS:
+                        if pattern.search(item):
+                            findings.append(f"{label} detected inside claim '{item_key}'")
     return findings
 
 
