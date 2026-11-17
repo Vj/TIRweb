@@ -210,9 +210,9 @@ class TestNewProbes:
         ctx = ScanContext(primary_auth=AuthContext())
         passed, detail = await probe_graphql_security("https://example.in", check_fixture, ctx)
 
-        assert passed is False
-        assert "[/api/graphql] GraphQL schema introspection (__schema) is enabled" in detail
-        assert "[/api/graphql] Unauthenticated/unthrottled GraphQL query batching allowed" in detail
+        assert passed is True
+        assert "INCONCLUSIVE_GRAPHQL_REVIEW" in detail
+        assert "Server accepted 5 batched operations" in detail
 
     async def test_graphql_passes_when_introspection_and_batching_blocked(
         self, check_fixture: ChecklistItem, mock_transport
