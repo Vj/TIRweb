@@ -7,6 +7,7 @@ import pytest
 from tirweb.models import AppProfile, AuthContext, ChecklistItem, ComplianceMapping, ExecutionMode, Severity
 from tirweb.probes import (
     ScanContext,
+    RequestBudgetExceeded,
     probe_cors_policy,
     probe_differential_idor,
     probe_jwt_security,
@@ -62,6 +63,16 @@ def _make_jwt(header: dict, payload: dict, signature: str = "dummy_sig") -> str:
 # ==============================================================================
 # 1. Security Headers Probe Tests
 # ==============================================================================
+
+    async def test_scan_context_enforces_shared_request_budget(self) -> None:
+        ctx = ScanContext(primary_auth=AuthContext(), max_requests=1)
+        request = httpx.Request("GET", "https://example.in/")
+
+        await ctx.track_request(request)
+        assert ctx.request_count == 1
+        with pytest.raises(RequestBudgetExceeded, match="request budget exhausted"):
+            await ctx.track_request(request)
+
 class TestProbeSecurityHeaders:
     async def test_passes_with_complete_hardened_headers(
         self, dummy_check: ChecklistItem, patch_httpx_transport
