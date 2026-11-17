@@ -276,7 +276,7 @@ class TestProbeJwtSecurity:
         passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
         assert passed is True
-        assert "1 JWS token(s) verified clean" in detail
+        assert "structure inspection completed (1 JWS token(s))" in detail
 
     async def test_jwe_is_reported_as_inconclusive_not_clean(
         self, dummy_check: ChecklistItem
@@ -316,7 +316,7 @@ class TestProbeJwtSecurity:
         assert "Indian PAN-like identifier detected inside claim 'pan_card'" in detail
         assert "Indian mobile number detected inside claim 'contact'" in detail
 
-    async def test_flags_excessive_ttl_and_symmetric_hmac_alg(
+    async def test_flags_excessive_ttl_without_rejecting_hmac_alg(
         self, dummy_check: ChecklistItem
     ) -> None:
         now = datetime.now(timezone.utc)
@@ -333,7 +333,6 @@ class TestProbeJwtSecurity:
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
         passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is True
+        assert passed is False
         assert "Symmetric algorithm" not in detail
-        assert "signature validation is not performed" in detail
         assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail
