@@ -151,6 +151,25 @@ class TestToolDispatcher:
         assert result.status == "INCONCLUSIVE"
         assert "INCONCLUSIVE_SCAN_BUDGET" in result.output_summary
 
+    async def test_probe_review_marker_maps_to_inconclusive_status(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def review_required(target, check, ctx):
+            return True, "INCONCLUSIVE_JWT_REVIEW: Verify issuer and relying-party policy."
+
+        dispatcher.registry["testssl"] = review_required
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "INCONCLUSIVE"
+        assert "INCONCLUSIVE_JWT_REVIEW" in result.output_summary
+
     async def test_missing_binary_marks_check_tool_missing(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
     ) -> None:
