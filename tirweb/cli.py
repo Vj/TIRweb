@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
@@ -204,7 +205,7 @@ def run_scan(
         if out.suffix.lower() == ".json":
             out.parent.mkdir(parents=True, exist_ok=True)
             out.write_text(
-                __import__("json").dumps(report_payload, indent=2, ensure_ascii=False),
+                json.dumps(report_payload, indent=2, ensure_ascii=False),
                 encoding="utf-8",
             )
             console.print(f"\n[bold green]JSON scan results exported to:[/bold green] {out.resolve()}")
