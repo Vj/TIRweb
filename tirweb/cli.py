@@ -1,5 +1,4 @@
 import asyncio
-import json
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
@@ -8,8 +7,7 @@ from rich.table import Table
 from .dispatcher import ToolDispatcher
 from .models import AppProfile, AuthContext, ExecutionMode, TIRWebChecklist
 from .probes import ScanContext
-from .reporter import generate_pdf_report
-from .reporter import generate_compliance_report
+from .reporter import generate_compliance_report, generate_html_report
 
 app = typer.Typer(
     name="tirweb",
@@ -46,6 +44,14 @@ def run_scan(
         AppProfile,
         typer.Option("--profile", "-p", help="Application domain profile"),
     ] = AppProfile.CORE,
+    client: Annotated[
+        str,
+        typer.Option("--client", help="Client or entity name for the HTML report header"),
+    ] = "Target Organization",
+    auditor: Annotated[
+        str,
+        typer.Option("--auditor", help="Assessing team or organization name"),
+    ] = "Security Assessment Team",
     header: Annotated[
         Optional[list[str]],
         typer.Option("--header", "-H", help="Custom header in 'Name: Value' format (repeatable)"),
@@ -96,10 +102,10 @@ def run_scan(
     ] = 4,
     out: Annotated[
         Optional[Path],
-        typer.Option("--out", "-o", help="JSON output report path"),
-    ] = Path("tirweb_report.json"),
+        typer.Option("--out", "-o", help="Single self-contained HTML report output path"),
+    ] = Path("tirweb_report.html"),
 ) -> None:
-    """Filter checklist by profile and dispatch authenticated or unauthenticated security checks."""
+    """Run security checks and export a single self-contained HTML compliance report."""
     try:
         auth_ctx = AuthContext.from_inputs(
             raw_headers=header,
@@ -184,8 +190,14 @@ def run_scan(
             },
             "results": [r.model_dump() for r in results],
         }
-        out.write_text(json.dumps(report_payload, indent=2), encoding="utf-8")
-        console.print(f"\n[green]Report exported to:[/green] {out.resolve()}")
+        html_path = out if out.suffix.lower() in {".html", ".htm"} else out.with_suffix(".html")
+        saved_html = generate_html_report(
+            payload=report_payload,
+            output_html_path=html_path,
+            client_name=client,
+            auditor_org=auditor,
+        )
+        console.print(f"\n[bold green]HTML Compliance Report exported to:[/bold green] {saved_html.resolve()}")
 
 
 @app.command("report")
@@ -196,8 +208,8 @@ def export_report(
     ],
     output: Annotated[
         Path,
-        typer.Option("--out", "-o", help="Output path (.pdf or .html)"),
-    ] = Path("tirweb_compliance_report.pdf"),
+        typer.Option("--out", "-o", help="Output HTML path"),
+    ] = Path("tirweb_compliance_report.html"),
     client: Annotated[
         str,
         typer.Option("--client", help="Client or entity name for cover header"),
@@ -206,55 +218,15 @@ def export_report(
         str,
         typer.Option("--auditor", help="Assessing organization name"),
     ] = "Security Assessment Team",
-    strict_pdf: Annotated[
-        bool,
-        typer.Option("--strict-pdf", help="Fail instead of falling back to HTML if WeasyPrint/GTK3 is unavailable"),
-    ] = False,
 ) -> None:
-    """Convert TIRweb JSON results into a CERT-In, RBI & DPDP Rules 2025 PDF or HTML report."""
-    actual_path, fmt, warning = generate_compliance_report(
+    """Convert an existing JSON report into a standalone HTML compliance report."""
+    actual_path, _, _ = generate_compliance_report(
         report_json_path=input_json,
         output_path=output,
         client_name=client,
         auditor_org=auditor,
-        allow_html_fallback=not strict_pdf,
     )
-    if warning:
-        console.print(f"[bold yellow]Notice:[/bold yellow] {warning}")
-    console.print(f"[bold green]Compliance {fmt.upper()} generated:[/bold green] {actual_path.resolve()}")
-'''
-@app.command("report")
-def export_report(
-    input_json: Annotated[
-        Path,
-        typer.Option("--input", "-i", exists=True, help="Path to TIRweb JSON report"),
-    ],
-    output: Annotated[
-        Path,
-        typer.Option("--out", "-o", help="Output path (.pdf or .html)"),
-    ] = Path("tirweb_compliance_report.pdf"),
-    client: Annotated[
-        str,
-        typer.Option("--client", help="Client or entity name for cover header"),
-    ] = "Target Organization",
-    auditor: Annotated[
-        str,
-        typer.Option("--auditor", help="Assessing organization name"),
-    ] = "Security Assessment Team",
-    strict_pdf: Annotated[
-        bool,
-        typer.Option("--strict-pdf", help="Fail instead of falling back to HTML if WeasyPrint/GTK3 is unavailable"),
-    ] = False,
-) -> None:
-    """Convert TIRweb JSON results into a CERT-In, RBI & DPDP Rules 2025 PDF or HTML report."""
-    actual_path, fmt, warning = generate_compliance_report(
-        report_json_path=input_json,
-        output_path=output,
-        client_name=client,
-        auditor_org=auditor,
-        allow_html_fallback=not strict_pdf,
-    )
-    console.print(f"[bold green]Compliance PDF generated:[/bold green] {pdf_path.resolve()}")
+    console.print(f"[bold green]Compliance HTML generated:[/bold green] {actual_path.resolve()}")
 
 
 if __name__ == "__main__":

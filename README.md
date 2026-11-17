@@ -81,7 +81,15 @@ tirweb validate --checklist rules/tirweb_checklist_v1.yaml
 tirweb validate --checklist rules/tirweb_wstg_v42_full.yaml
 
 # Run an authenticated differential scan (bfsi_fintech profile)
-tirweb scan \
+tirweb scan
+
+tirweb scan --target https://www.http://testfire.net/ --checklist rules/tirweb_checklist_v1.yaml --client "test fire" --out report.html
+Start-Process .\report.html
+
+tirweb scan --target https://www.fortifysolutions.in --checklist rules/tirweb_checklist_v1.yaml --client "Fortify Solutions" --out reportfs.html
+Start-Process .\reportfs.html
+
+ \
   --target [https://staging.example.in](https://staging.example.in) \
   --checklist rules/tirweb_checklist_v1.yaml \
   --profile bfsi_fintech \
@@ -107,6 +115,6 @@ pytest -v
 Run these commands to generate and open the new interactive compliance report locally:
 
 ```powershell
-tirweb scan --target https://www.staarkeninfosec.com --checklist rules/tirweb_checklist_v1.yaml --out report.json
-tirweb report --input report.json --out report.html --client "Staarken InfoSec LLP"
+tirweb scan --target https://www.fortifysolutions.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
+tirweb report --input report.json --out report.html --client "Fortify Solutions"
 Start-Process .\report.html

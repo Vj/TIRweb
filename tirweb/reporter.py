@@ -44,17 +44,14 @@ def build_compliance_matrix(results: list[dict[str, Any]]) -> dict[str, list[dic
     return dict(matrix)
 
 
-def render_report_html(
-    report_json_path: Path,
-    output_pdf_path: Path,
+def render_payload_html(
+    payload: dict[str, Any],
     client_name: str = "Target Organization",
     auditor_org: str = "Security Assessment Team",
-) -> Path:
-    """Render tirweb_report.json into a styled WeasyPrint PDF compliance report."""
-    payload = json.loads(report_json_path.read_text(encoding="utf-8"))
+) -> str:
+    """Render an in-memory TIRweb scan payload dictionary directly into HTML."""
     results: list[dict[str, Any]] = payload.get("results", [])
 
-    # Sort findings by severity then check_id
     sorted_results = sorted(
         results,
         key=lambda r: (SEVERITY_ORDER.get(r.get("severity", "Info"), 99), r.get("check_id", "")),
@@ -74,7 +71,7 @@ def render_report_html(
     )
     template = env.get_template("audit_report.html")
 
-    rendered_html = template.render(
+    return template.render(
         client_name=client_name,
         auditor_org=auditor_org,
         generated_at=datetime.now(timezone.utc).strftime("%d %b %Y, %H:%M UTC"),
@@ -88,6 +85,38 @@ def render_report_html(
         results=sorted_results,
     )
 
-    output_pdf_path.parent.mkdir(parents=True, exist_ok=True)
-    HTML(string=rendered_html, base_url=str(template_dir)).write_pdf(str(output_pdf_path))
-    return output_pdf_path
+
+def generate_html_report(
+    payload: dict[str, Any],
+    output_html_path: Path,
+    client_name: str = "Target Organization",
+    auditor_org: str = "Security Assessment Team",
+) -> Path:
+    """Write a self-contained HTML compliance report directly from scan results."""
+    rendered_html = render_payload_html(
+        payload=payload,
+        client_name=client_name,
+        auditor_org=auditor_org,
+    )
+    output_html_path.parent.mkdir(parents=True, exist_ok=True)
+    output_html_path.write_text(rendered_html, encoding="utf-8")
+    return output_html_path
+
+
+def generate_compliance_report(
+    report_json_path: Path,
+    output_path: Path,
+    client_name: str = "Target Organization",
+    auditor_org: str = "Security Assessment Team",
+    allow_html_fallback: bool = True,
+) -> tuple[Path, str, str | None]:
+    """Convert an existing JSON report into HTML (or PDF if requested and GTK3 is available)."""
+    payload = json.loads(report_json_path.read_text(encoding="utf-8"))
+    html_out = output_path if output_path.suffix.lower() in {".html", ".htm"} else output_path.with_suffix(".html")
+    saved_path = generate_html_report(
+        payload=payload,
+        output_html_path=html_out,
+        client_name=client_name,
+        auditor_org=auditor_org,
+    )
+    return saved_path, "html", None

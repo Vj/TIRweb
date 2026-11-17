@@ -1,0 +1,1881 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TIRweb Compliance &amp; Security Audit Report — Fortify Solutions</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --surface: #ffffff;
+      --text: #0f172a;
+      --muted: #475569;
+      --border: #e2e8f0;
+      --primary: #1e3a8a;
+      --primary-light: #eff6ff;
+      --crit: #991b1b;
+      --crit-bg: #fee2e2;
+      --high: #9a3412;
+      --high-bg: #ffedd5;
+      --med: #92400e;
+      --med-bg: #fef3c7;
+      --low: #1e40af;
+      --low-bg: #dbeafe;
+      --pass: #166534;
+      --pass-bg: #dcfce7;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Liberation Sans", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+      font-size: 13px;
+    }
+
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 32px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
+    }
+
+    /* Header */
+    .report-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 18px;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+    .report-header h1 {
+      margin: 0 0 6px 0;
+      font-size: 22px;
+      color: var(--primary);
+    }
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 10px 20px;
+      background: var(--primary-light);
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 14px 18px;
+      margin-bottom: 24px;
+    }
+    .meta-item span {
+      display: block;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+    }
+    .meta-item strong { font-size: 13.5px; }
+
+    /* KPI Summary Cards */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+      margin-bottom: 28px;
+    }
+    .kpi-card {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      text-align: center;
+      background: #fff;
+    }
+    .kpi-card .num { font-size: 22px; font-weight: 700; }
+    .kpi-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .kpi-fail .num { color: var(--crit); }
+    .kpi-pass .num { color: var(--pass); }
+    .kpi-hybrid .num { color: var(--high); }
+    .kpi-manual .num { color: var(--low); }
+
+    h2 {
+      font-size: 16px;
+      color: var(--primary);
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 6px;
+      margin: 28px 0 14px 0;
+    }
+    h3 {
+      font-size: 14px;
+      margin: 18px 0 8px 0;
+      color: #1e293b;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .sev-Critical { background: var(--crit-bg); color: var(--crit); }
+    .sev-High { background: var(--high-bg); color: var(--high); }
+    .sev-Medium { background: var(--med-bg); color: var(--med); }
+    .sev-Low, .sev-Info { background: var(--low-bg); color: var(--low); }
+
+    .st-FAIL { background: var(--crit-bg); color: var(--crit); }
+    .st-PASS { background: var(--pass-bg); color: var(--pass); }
+    .st-HYBRID_REVIEW { background: var(--med-bg); color: var(--med); }
+    .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
+
+    /* Interactive Filter Toolbar (Hidden in Print/PDF) */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      background: #f1f5f9;
+      padding: 12px 14px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+    }
+    .filter-btn {
+      border: 1px solid #cbd5e1;
+      background: #fff;
+      color: var(--text);
+      padding: 5px 11px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .filter-btn.active {
+      background: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+    .search-input {
+      margin-left: auto;
+      padding: 6px 10px;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      font-size: 12px;
+      min-width: 220px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 18px;
+      font-size: 12px;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th {
+      background: #f1f5f9;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    /* Finding Cards */
+    .finding-card {
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 6px;
+      padding: 12px 14px;
+      margin-bottom: 12px;
+      background: #fff;
+      page-break-inside: avoid;
+    }
+    .finding-card[data-status="FAIL"] { border-left-color: var(--crit); }
+    .finding-card[data-status="PASS"] { border-left-color: var(--pass); }
+    .finding-card[data-status="HYBRID_REVIEW"] { border-left-color: #d97706; }
+
+    .finding-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .finding-title { font-weight: 700; font-size: 13px; }
+    .evidence-box {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 8px 10px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11.5px;
+      white-space: pre-wrap;
+      word-break: break-word;
+      margin-top: 8px;
+    }
+    .tag-row {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @media print {
+      body { background: #fff; padding: 0; }
+      .container { box-shadow: none; border: none; padding: 0; max-width: 100%; }
+      .no-print { display: none !important; }
+      .finding-card { display: block !important; }
+      @page { size: A4; margin: 14mm; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="report-header">
+      <div>
+        <h1>TIRweb — Web &amp; API Security Compliance Report</h1>
+        <div style="color: var(--muted);">OWASP WSTG v4.2, CERT-In, DPDP Rules 2025 &amp; RBI Regulatory Audit</div>
+      </div>
+      <div style="text-align: right; font-size: 12px; color: var(--muted);">
+        Schema v1.0.0<br />
+        Generated: 17 Nov 2026, 15:01 UTC
+      </div>
+    </div>
+
+    <div class="meta-grid">
+      <div class="meta-item"><span>Client / Entity</span><strong>Fortify Solutions</strong></div>
+      <div class="meta-item"><span>Target Scope</span><strong>https://www.fortifysolutions.in</strong></div>
+      <div class="meta-item"><span>Audit Profile</span><strong>CORE</strong></div>
+      <div class="meta-item"><span>Assessing Team</span><strong>Security Assessment Team</strong></div>
+    </div>
+
+    <div class="kpi-grid">
+      <div class="kpi-card"><div class="num">39</div><div class="lbl">Total Checks</div></div>
+      <div class="kpi-card kpi-fail"><div class="num">6</div><div class="lbl">Failed</div></div>
+      <div class="kpi-card kpi-pass"><div class="num">0</div><div class="lbl">Passed</div></div>
+      <div class="kpi-card kpi-hybrid"><div class="num">13</div><div class="lbl">Hybrid Review</div></div>
+      <div class="kpi-card kpi-manual"><div class="num">18</div><div class="lbl">Manual Playbook</div></div>
+    </div>
+
+    <h2>1. Failed Findings by Severity</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Critical</th>
+          <th>High</th>
+          <th>Medium</th>
+          <th>Low</th>
+          <th>Info</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><span class="badge sev-Critical">0</span></td>
+          <td><span class="badge sev-High">4</span></td>
+          <td><span class="badge sev-Medium">2</span></td>
+          <td><span class="badge sev-Low">0</span></td>
+          <td><span class="badge sev-Info">0</span></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <h2>2. Indian Statutory &amp; Regulatory Compliance Matrix</h2>
+    
+      <h3>DPDP Act 2023 &amp; DPDP Rules, 2025</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 115px;">Check ID</th>
+            <th style="width: 28%;">Regulatory Clause</th>
+            <th>Control Title</th>
+            <th style="width: 90px;">Severity</th>
+            <th style="width: 125px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><strong>WEB-CRY-002</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation, Masking, Virtual Tokens)</td>
+            <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-001</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(b) (Access Control Safeguards)</td>
+            <td>Horizontal Privilege Escalation (IDOR / BOLA), Identifier Entropy &amp; File Path Traversal</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-002</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(b) (Role-Based Access Enforcement)</td>
+            <td>Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-004</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(b)</td>
+            <td>Server-Side Request Forgery (SSRF), Cloud Metadata &amp; DNS Rebinding Protection</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-001</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a) (Encryption in Transit)</td>
+            <td>Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites &amp; HSTS)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-003</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a) &amp; (c) (PII Masking &amp; Exposure Prevention)</td>
+            <td>Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-004</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a) (Cryptographic Safeguards)</td>
+            <td>[WSTG-CRYP-02] Padding Oracle Resistance on Encrypted Cookies &amp; Tokens</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-007</strong></td>
+            <td>DPDP Act 2023 Sec 12 &amp; DPDP Rules 2025 (Right to Erasure &amp; Correction)</td>
+            <td>Account Lifecycle, Password Reset Security &amp; DPDP Right to Erasure</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-006</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(c) &amp; (e) (Minimum 1-year log retention for breach detection/investigation)</td>
+            <td>Tamper-Resistant Audit Logging, NTP Sync, Alerting &amp; Statutory Retention</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-005</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(c)</td>
+            <td>File Upload Security (Magic-Byte Validation, Malware Scanning &amp; Storage Isolation)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-009</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a) &amp; (b)</td>
+            <td>[WSTG-ATHN-05 / ATHN-08] Remember-Me Token Security &amp; Security Question Hygiene</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-009</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a)</td>
+            <td>[WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-012</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(b)</td>
+            <td>[WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-009</strong></td>
+            <td>DPDP Rules 2025 - Rule 6(1)(a)</td>
+            <td>[WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    
+      <h3>CERT-In Directions (Sec 70B) &amp; Technical Guidelines</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 115px;">Check ID</th>
+            <th style="width: 28%;">Regulatory Clause</th>
+            <th>Control Title</th>
+            <th style="width: 90px;">Severity</th>
+            <th style="width: 125px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><strong>WEB-CRY-002</strong></td>
+            <td>CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)</td>
+            <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-001</strong></td>
+            <td>CERT-In CISG-2024-01 (Secure Access Control)</td>
+            <td>Horizontal Privilege Escalation (IDOR / BOLA), Identifier Entropy &amp; File Path Traversal</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-002</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-005</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-001</strong></td>
+            <td>CERT-In CISG-2024-01 (Input Validation &amp; Secure Coding)</td>
+            <td>SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-001</strong></td>
+            <td>CERT-In CISG-2026-02 (Defending against AI-Assisted Exploitation)</td>
+            <td>SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-003</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-003</strong></td>
+            <td>CERT-In CISG-2026-02</td>
+            <td>OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-004</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>XML External Entity (XXE) &amp; Insecure Deserialization</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-008</strong></td>
+            <td>CERT-In CISG-2024-01 (Memory-Safe Input Handling)</td>
+            <td>[WSTG-INPV-12 / INPV-13] Memory Safety, Buffer Overflow &amp; Format String Hardening</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-004</strong></td>
+            <td>CERT-In CISG-2024-01 (Network &amp; Cloud Boundary Controls)</td>
+            <td>Server-Side Request Forgery (SSRF), Cloud Metadata &amp; DNS Rebinding Protection</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-001</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites &amp; HSTS)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-004</strong></td>
+            <td>CERT-In CISG-2024-02 (CBOM Cryptographic Governance)</td>
+            <td>[WSTG-CRYP-02] Padding Oracle Resistance on Encrypted Cookies &amp; Tokens</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-004</strong></td>
+            <td>CERT-In CISG-2024-01 (Authentication Controls)</td>
+            <td>Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-006</strong></td>
+            <td>CERT-In CISG-2024-01 (Session Management)</td>
+            <td>Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-007</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>Account Lifecycle, Password Reset Security &amp; DPDP Right to Erasure</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-008</strong></td>
+            <td>CERT-In CISG-2024-01 (API Security)</td>
+            <td>Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-010</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>[WSTG-ATHN-10] Alternative Channel Authentication Parity (Mobile, Legacy &amp; Partner APIs)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-002</strong></td>
+            <td>CERT-In CISG-2026-02 (Public Exposure &amp; Attack Surface Reduction)</td>
+            <td>Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-TOOL_MISSING">TOOL_MISSING</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-002</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-TOOL_MISSING">TOOL_MISSING</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-003</strong></td>
+            <td>CERT-In CISG-2024-02 (Technical Guidelines on SBOM, QBOM &amp; CBOM v2.0)</td>
+            <td>Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-TOOL_MISSING">TOOL_MISSING</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-003</strong></td>
+            <td>CERT-In CISG-2025-02 (Comprehensive Cyber Security Audit Policy Guidelines)</td>
+            <td>Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-TOOL_MISSING">TOOL_MISSING</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-004</strong></td>
+            <td>CERT-In CISG-2024-02 (Software Supply Chain Integrity)</td>
+            <td>Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-005</strong></td>
+            <td>CERT-In CISG-2024-01 (Secure SDLC &amp; DevSecOps)</td>
+            <td>DevSecOps CI/CD Security Gates (Pre-Commit Secrets, SAST, Staging DAST &amp; Cloud Hardening)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-005</strong></td>
+            <td>CERT-In CISG-2025-02 (Pre-Deployment VAPT Governance)</td>
+            <td>DevSecOps CI/CD Security Gates (Pre-Commit Secrets, SAST, Staging DAST &amp; Cloud Hardening)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-006</strong></td>
+            <td>CERT-In Directions u/s 70B IT Act (180-day log retention in India, NIC/NPL NTP sync, 6-hour incident reporting)</td>
+            <td>Tamper-Resistant Audit Logging, NTP Sync, Alerting &amp; Statutory Retention</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-011</strong></td>
+            <td>CERT-In CISG-2026-02 (DNS &amp; Cloud Asset Hygiene)</td>
+            <td>[WSTG-CONF-10] Subdomain Takeover &amp; Dangling DNS Record Audit</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-011</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>[WSTG-CONF-10] Subdomain Takeover &amp; Dangling DNS Record Audit</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-002</strong></td>
+            <td>CERT-In CISG-2024-01 (Client-Side Injection Controls)</td>
+            <td>Cross-Site Scripting (Reflected, Stored, DOM, File-Upload XSS &amp; Context Encoding)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-005</strong></td>
+            <td>CERT-In CISG-2026-02 (Protocol &amp; Browser Exposure Hardening)</td>
+            <td>Modern Protocol &amp; Browser Parser Attacks (Smuggling, Prototype Pollution, WebSockets, postMessage &amp; Cache Poisoning)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-005</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>Modern Protocol &amp; Browser Parser Attacks (Smuggling, Prototype Pollution, WebSockets, postMessage &amp; Cache Poisoning)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-007</strong></td>
+            <td>CERT-In CISG-2024-01 (Input Validation &amp; Sanitization)</td>
+            <td>[WSTG-INPV-07 / INPV-08] Server-Side Include (SSI) &amp; XPath Injection</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-001</strong></td>
+            <td>CERT-In CISG-2024-01 (Secure Architecture &amp; Design)</td>
+            <td>Secure Design Controls (Threat Modeling, Auth Rate Limits, Step-Up Verification &amp; Safe Error Handling)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-003</strong></td>
+            <td>CERT-In CISG-2024-01 (Workflow &amp; State Integrity)</td>
+            <td>Multi-Step Workflow, Approval Chain &amp; Time-Window Enforcement</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-005</strong></td>
+            <td>CERT-In CISG-2024-01 (File Handling Security)</td>
+            <td>File Upload Security (Magic-Byte Validation, Malware Scanning &amp; Storage Isolation)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-009</strong></td>
+            <td>CERT-In CISG-2024-01 (Credential &amp; Token Hygiene)</td>
+            <td>[WSTG-ATHN-05 / ATHN-08] Remember-Me Token Security &amp; Security Question Hygiene</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-011</strong></td>
+            <td>CERT-In CISG-2024-01 (Session State Integrity)</td>
+            <td>[WSTG-SESS-08] Session Puzzling &amp; Cross-Module Session Variable Isolation</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-001</strong></td>
+            <td>CERT-In CISG-2024-01 (Web Server &amp; Application Hardening)</td>
+            <td>Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-001</strong></td>
+            <td>CERT-In CISG-2026-02</td>
+            <td>Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-007</strong></td>
+            <td>CERT-In CISG-2026-02 (Attack Surface &amp; Shadow Asset Governance)</td>
+            <td>[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-007</strong></td>
+            <td>CERT-In CISG-2024-01</td>
+            <td>[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-008</strong></td>
+            <td>CERT-In CISG-2026-02 (Public Metadata &amp; Policy Hardening)</td>
+            <td>[WSTG-INFO-03 / CONF-08] Webserver Metafiles &amp; Legacy RIA Cross-Domain Policy Audit</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-009</strong></td>
+            <td>CERT-In CISG-2024-01 (Information Leakage Prevention)</td>
+            <td>[WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-012</strong></td>
+            <td>CERT-In CISG-2024-01 (Access Control &amp; Routing Consistency)</td>
+            <td>[WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-006</strong></td>
+            <td>CERT-In CISG-2024-01 (Input Parsing Consistency)</td>
+            <td>[WSTG-INPV-03] HTTP Parameter Pollution (HPP) Consistency</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INJ-009</strong></td>
+            <td>CERT-In CISG-2024-01 (Client-Side &amp; Phishing Redirect Controls)</td>
+            <td>[WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</td>
+            <td><span class="badge sev-Medium">Medium</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-010</strong></td>
+            <td>CERT-In CISG-2026-02 (Perimeter &amp; Origin Isolation)</td>
+            <td>[WSTG-INFO-10] Application Architecture, WAF &amp; Reverse-Proxy Trust Boundary Mapping</td>
+            <td><span class="badge sev-Info">Info</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    
+      <h3>RBI Digital Payment &amp; Cyber Security Directions</h3>
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 115px;">Check ID</th>
+            <th style="width: 28%;">Regulatory Clause</th>
+            <th>Control Title</th>
+            <th style="width: 90px;">Severity</th>
+            <th style="width: 125px;">Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          
+          <tr>
+            <td><strong>WEB-CRY-002</strong></td>
+            <td>RBI Card Data Tokenisation Guidelines</td>
+            <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-001</strong></td>
+            <td>RBI Digital Payment Security Controls (Customer Data Isolation)</td>
+            <td>Horizontal Privilege Escalation (IDOR / BOLA), Identifier Entropy &amp; File Path Traversal</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-005</strong></td>
+            <td>RBI Digital Payment Security Controls (Mandatory 2FA / Additional Factor of Authentication)</td>
+            <td>MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</td>
+            <td><span class="badge sev-Critical">Critical</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-001</strong></td>
+            <td>RBI Digital Payment Security Controls</td>
+            <td>Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites &amp; HSTS)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-CRY-003</strong></td>
+            <td>RBI Digital Payment Security Controls</td>
+            <td>Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-004</strong></td>
+            <td>RBI Digital Payment Security Controls (Credential Hygiene)</td>
+            <td>Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-006</strong></td>
+            <td>RBI Digital Payment Security Controls (Session Timeout &amp; Binding)</td>
+            <td>Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-008</strong></td>
+            <td>RBI Digital Payment Security Controls (API Gateway &amp; Microservice Security)</td>
+            <td>Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-IAM-010</strong></td>
+            <td>RBI Digital Payment Security Controls (Multi-Channel Authentication Parity)</td>
+            <td>[WSTG-ATHN-10] Alternative Channel Authentication Parity (Mobile, Legacy &amp; Partner APIs)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-INF-004</strong></td>
+            <td>RBI Digital Payment Security Controls (Payment Page Script Integrity)</td>
+            <td>Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-001</strong></td>
+            <td>RBI Digital Payment Security Controls (Step-Up Authentication)</td>
+            <td>Secure Design Controls (Threat Modeling, Auth Rate Limits, Step-Up Verification &amp; Safe Error Handling)</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+          <tr>
+            <td><strong>WEB-LOG-003</strong></td>
+            <td>RBI Digital Payment Security Controls (Maker-Checker / Approval Controls)</td>
+            <td>Multi-Step Workflow, Approval Chain &amp; Time-Window Enforcement</td>
+            <td><span class="badge sev-High">High</span></td>
+            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+          </tr>
+          
+        </tbody>
+      </table>
+    
+
+    <h2>3. Detailed Technical Audit Results</h2>
+
+    <div class="filter-bar no-print" id="filterBar">
+      <button class="filter-btn active" data-filter="ALL">All (39)</button>
+      <button class="filter-btn" data-filter="FAIL">Failed (6)</button>
+      <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review (13)</button>
+      <button class="filter-btn" data-filter="PASS">Passed (0)</button>
+      <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual (18)</button>
+      <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, or keyword..." />
+    </div>
+
+    <div id="findingsList">
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-cry-002 encryption at rest, modern password hashing &amp; cryptographic key management [trivy_sca] skipped: binary &#39;trivy&#39; not found in path
+[manual_review] manual/unregistered plugin hook. dpdp rules 2025 - rule 6(1)(a) (encryption, obfuscation, masking, virtual tokens) cert-in cisg-2024-02 (cbom cryptographic inventory) rbi card data tokenisation guidelines">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-CRY-002] Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-CRYPTO &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> trivy_sca, manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation, Masking, Virtual Tokens) ; CERT-In CISG-2024-02 (CBOM Cryptographic Inventory) ; RBI Card Data Tokenisation Guidelines
+        </div>
+        
+        <div class="evidence-box">[trivy_sca] SKIPPED: Binary &#39;trivy&#39; not found in PATH
+[manual_review] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-001 horizontal privilege escalation (idor / bola), identifier entropy &amp; file path traversal [httpx_idor_diff] pass: skipped_secondary_auth: provide --secondary-auth-file to run differential idor comparison.
+[nuclei_bola] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. dpdp rules 2025 - rule 6(1)(b) (access control safeguards) cert-in cisg-2024-01 (secure access control) rbi digital payment security controls (customer data isolation)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-001] Horizontal Privilege Escalation (IDOR / BOLA), Identifier Entropy &amp; File Path Traversal</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_idor_diff, nuclei_bola, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(b) (Access Control Safeguards) ; CERT-In CISG-2024-01 (Secure Access Control) ; RBI Digital Payment Security Controls (Customer Data Isolation)
+        </div>
+        
+        <div class="evidence-box">[httpx_idor_diff] PASS: SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file to run differential IDOR comparison.
+[nuclei_bola] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-002 vertical privilege escalation, bfla, http method tampering &amp; forced admin browsing [nuclei_bfla] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. dpdp rules 2025 - rule 6(1)(b) (role-based access enforcement) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-002] Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_bfla, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(b) (Role-Based Access Enforcement) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">[nuclei_bfla] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-005 mfa enforcement &amp; enterprise sso integrity (oauth 2.0 / oidc / saml) [nuclei_auth] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. rbi digital payment security controls (mandatory 2fa / additional factor of authentication) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-005] MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_auth, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> RBI Digital Payment Security Controls (Mandatory 2FA / Additional Factor of Authentication) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">[nuclei_auth] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-001 sql &amp; nosql injection (parameterized queries, blind &amp; second-order sqli) [nuclei_injection] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (input validation &amp; secure coding) cert-in cisg-2026-02 (defending against ai-assisted exploitation)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-001] SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_injection, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Input Validation &amp; Secure Coding) ; CERT-In CISG-2026-02 (Defending against AI-Assisted Exploitation)
+        </div>
+        
+        <div class="evidence-box">[nuclei_injection] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-003 os command, ldap, ssti, crlf &amp; email header injection [nuclei_injection] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 cert-in cisg-2026-02">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-003] OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_injection, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 ; CERT-In CISG-2026-02
+        </div>
+        
+        <div class="evidence-box">[nuclei_injection] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-004 xml external entity (xxe) &amp; insecure deserialization [nuclei_injection] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-004] XML External Entity (XXE) &amp; Insecure Deserialization</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_injection, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">[nuclei_injection] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inj-008 [wstg-inpv-12 / inpv-13] memory safety, buffer overflow &amp; format string hardening queued for manual pentest playbook verification. cert-in cisg-2024-01 (memory-safe input handling)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-008] [WSTG-INPV-12 / INPV-13] Memory Safety, Buffer Overflow &amp; Format String Hardening</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Memory-Safe Input Handling)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-log-004 server-side request forgery (ssrf), cloud metadata &amp; dns rebinding protection [nuclei_ssrf] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (network &amp; cloud boundary controls) dpdp rules 2025 - rule 6(1)(b)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-LOG-004] Server-Side Request Forgery (SSRF), Cloud Metadata &amp; DNS Rebinding Protection</div>
+          <div>
+            <span class="badge sev-Critical">Critical</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-LOGIC &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_ssrf, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Network &amp; Cloud Boundary Controls) ; DPDP Rules 2025 - Rule 6(1)(b)
+        </div>
+        
+        <div class="evidence-box">[nuclei_ssrf] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-cry-001 transport layer hardening (https enforcement, tls 1.2/1.3, cipher suites &amp; hsts) [testssl] skipped: binary &#39;testssl.sh&#39; not found in path
+[httpx_headers] fail: header audit findings:
+- referrer-policy header missing
+- permissions-policy header missing
+- version/stack disclosure header present: server=hcdn
+- version/stack disclosure header present: x-powered-by=hostingerwebsitebuilder dpdp rules 2025 - rule 6(1)(a) (encryption in transit) cert-in cisg-2024-01 rbi digital payment security controls">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-CRY-001] Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites &amp; HSTS)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-CRYPTO &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.AUTOMATED &nbsp;|&nbsp;
+          <strong>Bindings:</strong> testssl, httpx_headers
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(a) (Encryption in Transit) ; CERT-In CISG-2024-01 ; RBI Digital Payment Security Controls
+        </div>
+        
+        <div class="evidence-box">[testssl] SKIPPED: Binary &#39;testssl.sh&#39; not found in PATH
+[httpx_headers] FAIL: Header audit findings:
+- Referrer-Policy header missing
+- Permissions-Policy header missing
+- Version/stack disclosure header present: server=hcdn
+- Version/stack disclosure header present: x-powered-by=HostingerWebsiteBuilder</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-cry-003 sensitive data exposure prevention (urls, client storage, cache headers &amp; logs) [httpx_jwt] pass: skipped_no_jwt: no bearer_token configured in authcontext.
+[httpx_headers] fail: header audit findings:
+- referrer-policy header missing
+- permissions-policy header missing
+- version/stack disclosure header present: server=hcdn
+- version/stack disclosure header present: x-powered-by=hostingerwebsitebuilder
+[manual_proxy] manual/unregistered plugin hook. dpdp rules 2025 - rule 6(1)(a) &amp; (c) (pii masking &amp; exposure prevention) rbi digital payment security controls">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-CRY-003] Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-CRYPTO &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_jwt, httpx_headers, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(a) &amp; (c) (PII Masking &amp; Exposure Prevention) ; RBI Digital Payment Security Controls
+        </div>
+        
+        <div class="evidence-box">[httpx_jwt] PASS: SKIPPED_NO_JWT: No bearer_token configured in AuthContext.
+[httpx_headers] FAIL: Header audit findings:
+- Referrer-Policy header missing
+- Permissions-Policy header missing
+- Version/stack disclosure header present: server=hcdn
+- Version/stack disclosure header present: x-powered-by=HostingerWebsiteBuilder
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-cry-004 [wstg-cryp-02] padding oracle resistance on encrypted cookies &amp; tokens queued for manual pentest playbook verification. dpdp rules 2025 - rule 6(1)(a) (cryptographic safeguards) cert-in cisg-2024-02 (cbom cryptographic governance)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-CRY-004] [WSTG-CRYP-02] Padding Oracle Resistance on Encrypted Cookies &amp; Tokens</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-CRYPTO &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Rules 2025 - Rule 6(1)(a) (Cryptographic Safeguards) ; CERT-In CISG-2024-02 (CBOM Cryptographic Governance)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-004 authentication hardening (brute-force, password policy, breach screening &amp; enumeration) [nuclei_auth] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (authentication controls) rbi digital payment security controls (credential hygiene)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-004] Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_auth, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Authentication Controls) ; RBI Digital Payment Security Controls (Credential Hygiene)
+        </div>
+        
+        <div class="evidence-box">[nuclei_auth] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-iam-006 session lifecycle management, token entropy &amp; fixation resistance [httpx_jwt] pass: skipped_no_jwt: no bearer_token configured in authcontext.
+[httpx_headers] fail: header audit findings:
+- referrer-policy header missing
+- permissions-policy header missing
+- version/stack disclosure header present: server=hcdn
+- version/stack disclosure header present: x-powered-by=hostingerwebsitebuilder
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (session management) rbi digital payment security controls (session timeout &amp; binding)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-006] Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_jwt, httpx_headers, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Session Management) ; RBI Digital Payment Security Controls (Session Timeout &amp; Binding)
+        </div>
+        
+        <div class="evidence-box">[httpx_jwt] PASS: SKIPPED_NO_JWT: No bearer_token configured in AuthContext.
+[httpx_headers] FAIL: Header audit findings:
+- Referrer-Policy header missing
+- Permissions-Policy header missing
+- Version/stack disclosure header present: server=hcdn
+- Version/stack disclosure header present: x-powered-by=HostingerWebsiteBuilder
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-iam-007 account lifecycle, password reset security &amp; dpdp right to erasure queued for manual pentest playbook verification. dpdp act 2023 sec 12 &amp; dpdp rules 2025 (right to erasure &amp; correction) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-007] Account Lifecycle, Password Reset Security &amp; DPDP Right to Erasure</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> DPDP Act 2023 Sec 12 &amp; DPDP Rules 2025 (Right to Erasure &amp; Correction) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-008 advanced api &amp; microservice authorization (mass assignment, graphql, versioning &amp; grpc) [httpx_graphql] pass: no exposed graphql endpoints detected at standard paths (/graphql, /api/graphql).
+[nuclei_bola] skipped: binary &#39;nuclei&#39; not found in path
+[nuclei_bfla] skipped: binary &#39;nuclei&#39; not found in path
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (api security) rbi digital payment security controls (api gateway &amp; microservice security)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-008] Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_graphql, nuclei_bola, nuclei_bfla, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (API Security) ; RBI Digital Payment Security Controls (API Gateway &amp; Microservice Security)
+        </div>
+        
+        <div class="evidence-box">[httpx_graphql] PASS: No exposed GraphQL endpoints detected at standard paths (/graphql, /api/graphql).
+[nuclei_bola] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[nuclei_bfla] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-iam-010 [wstg-athn-10] alternative channel authentication parity (mobile, legacy &amp; partner apis) queued for manual pentest playbook verification. rbi digital payment security controls (multi-channel authentication parity) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-010] [WSTG-ATHN-10] Alternative Channel Authentication Parity (Mobile, Legacy &amp; Partner APIs)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> RBI Digital Payment Security Controls (Multi-Channel Authentication Parity) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="TOOL_MISSING" data-search="web-inf-002 attack surface, build artifacts, source maps &amp; admin interface exposure [nuclei_exposures] skipped: binary &#39;nuclei&#39; not found in path cert-in cisg-2026-02 (public exposure &amp; attack surface reduction) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-002] Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-TOOL_MISSING">TOOL_MISSING</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.AUTOMATED &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_exposures
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (Public Exposure &amp; Attack Surface Reduction) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">[nuclei_exposures] SKIPPED: Binary &#39;nuclei&#39; not found in PATH</div>
+      </div>
+      
+      <div class="finding-card" data-status="TOOL_MISSING" data-search="web-inf-003 software composition analysis (sca), sbom/cbom &amp; dependency hygiene [trivy_sca] skipped: binary &#39;trivy&#39; not found in path cert-in cisg-2024-02 (technical guidelines on sbom, qbom &amp; cbom v2.0) cert-in cisg-2025-02 (comprehensive cyber security audit policy guidelines)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-003] Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-TOOL_MISSING">TOOL_MISSING</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.AUTOMATED &nbsp;|&nbsp;
+          <strong>Bindings:</strong> trivy_sca
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-02 (Technical Guidelines on SBOM, QBOM &amp; CBOM v2.0) ; CERT-In CISG-2025-02 (Comprehensive Cyber Security Audit Policy Guidelines)
+        </div>
+        
+        <div class="evidence-box">[trivy_sca] SKIPPED: Binary &#39;trivy&#39; not found in PATH</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inf-004 client-side supply chain, subresource integrity (sri) &amp; artifact verification [nuclei_exposures] skipped: binary &#39;nuclei&#39; not found in path
+[manual_review] manual/unregistered plugin hook. cert-in cisg-2024-02 (software supply chain integrity) rbi digital payment security controls (payment page script integrity)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-004] Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_exposures, manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-02 (Software Supply Chain Integrity) ; RBI Digital Payment Security Controls (Payment Page Script Integrity)
+        </div>
+        
+        <div class="evidence-box">[nuclei_exposures] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[manual_review] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-005 devsecops ci/cd security gates (pre-commit secrets, sast, staging dast &amp; cloud hardening) queued for manual pentest playbook verification. cert-in cisg-2024-01 (secure sdlc &amp; devsecops) cert-in cisg-2025-02 (pre-deployment vapt governance)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-005] DevSecOps CI/CD Security Gates (Pre-Commit Secrets, SAST, Staging DAST &amp; Cloud Hardening)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> trivy_sca, manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Secure SDLC &amp; DevSecOps) ; CERT-In CISG-2025-02 (Pre-Deployment VAPT Governance)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-006 tamper-resistant audit logging, ntp sync, alerting &amp; statutory retention queued for manual pentest playbook verification. cert-in directions u/s 70b it act (180-day log retention in india, nic/npl ntp sync, 6-hour incident reporting) dpdp rules 2025 - rule 6(1)(c) &amp; (e) (minimum 1-year log retention for breach detection/investigation)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-006] Tamper-Resistant Audit Logging, NTP Sync, Alerting &amp; Statutory Retention</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In Directions u/s 70B IT Act (180-day log retention in India, NIC/NPL NTP sync, 6-hour incident reporting) ; DPDP Rules 2025 - Rule 6(1)(c) &amp; (e) (Minimum 1-year log retention for breach detection/investigation)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-011 [wstg-conf-10] subdomain takeover &amp; dangling dns record audit queued for manual pentest playbook verification. cert-in cisg-2026-02 (dns &amp; cloud asset hygiene) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-011] [WSTG-CONF-10] Subdomain Takeover &amp; Dangling DNS Record Audit</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (DNS &amp; Cloud Asset Hygiene) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-inj-002 cross-site scripting (reflected, stored, dom, file-upload xss &amp; context encoding) [nuclei_injection] skipped: binary &#39;nuclei&#39; not found in path
+[httpx_headers] fail: header audit findings:
+- referrer-policy header missing
+- permissions-policy header missing
+- version/stack disclosure header present: server=hcdn
+- version/stack disclosure header present: x-powered-by=hostingerwebsitebuilder
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (client-side injection controls)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-002] Cross-Site Scripting (Reflected, Stored, DOM, File-Upload XSS &amp; Context Encoding)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> nuclei_injection, httpx_headers, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Client-Side Injection Controls)
+        </div>
+        
+        <div class="evidence-box">[nuclei_injection] SKIPPED: Binary &#39;nuclei&#39; not found in PATH
+[httpx_headers] FAIL: Header audit findings:
+- Referrer-Policy header missing
+- Permissions-Policy header missing
+- Version/stack disclosure header present: server=hcdn
+- Version/stack disclosure header present: x-powered-by=HostingerWebsiteBuilder
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inj-005 modern protocol &amp; browser parser attacks (smuggling, prototype pollution, websockets, postmessage &amp; cache poisoning) queued for manual pentest playbook verification. cert-in cisg-2026-02 (protocol &amp; browser exposure hardening) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-005] Modern Protocol &amp; Browser Parser Attacks (Smuggling, Prototype Pollution, WebSockets, postMessage &amp; Cache Poisoning)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (Protocol &amp; Browser Exposure Hardening) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inj-007 [wstg-inpv-07 / inpv-08] server-side include (ssi) &amp; xpath injection queued for manual pentest playbook verification. cert-in cisg-2024-01 (input validation &amp; sanitization)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-007] [WSTG-INPV-07 / INPV-08] Server-Side Include (SSI) &amp; XPath Injection</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Input Validation &amp; Sanitization)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-log-001 secure design controls (threat modeling, auth rate limits, step-up verification &amp; safe error handling) queued for manual pentest playbook verification. cert-in cisg-2024-01 (secure architecture &amp; design) rbi digital payment security controls (step-up authentication)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-LOG-001] Secure Design Controls (Threat Modeling, Auth Rate Limits, Step-Up Verification &amp; Safe Error Handling)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-LOGIC &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Secure Architecture &amp; Design) ; RBI Digital Payment Security Controls (Step-Up Authentication)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-log-003 multi-step workflow, approval chain &amp; time-window enforcement queued for manual pentest playbook verification. cert-in cisg-2024-01 (workflow &amp; state integrity) rbi digital payment security controls (maker-checker / approval controls)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-LOG-003] Multi-Step Workflow, Approval Chain &amp; Time-Window Enforcement</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-LOGIC &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Workflow &amp; State Integrity) ; RBI Digital Payment Security Controls (Maker-Checker / Approval Controls)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-log-005 file upload security (magic-byte validation, malware scanning &amp; storage isolation) queued for manual pentest playbook verification. cert-in cisg-2024-01 (file handling security) dpdp rules 2025 - rule 6(1)(c)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-LOG-005] File Upload Security (Magic-Byte Validation, Malware Scanning &amp; Storage Isolation)</div>
+          <div>
+            <span class="badge sev-High">High</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-LOGIC &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (File Handling Security) ; DPDP Rules 2025 - Rule 6(1)(c)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-iam-009 [wstg-athn-05 / athn-08] remember-me token security &amp; security question hygiene queued for manual pentest playbook verification. cert-in cisg-2024-01 (credential &amp; token hygiene) dpdp rules 2025 - rule 6(1)(a) &amp; (b)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-009] [WSTG-ATHN-05 / ATHN-08] Remember-Me Token Security &amp; Security Question Hygiene</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Credential &amp; Token Hygiene) ; DPDP Rules 2025 - Rule 6(1)(a) &amp; (b)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-iam-011 [wstg-sess-08] session puzzling &amp; cross-module session variable isolation queued for manual pentest playbook verification. cert-in cisg-2024-01 (session state integrity)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-IAM-011] [WSTG-SESS-08] Session Puzzling &amp; Cross-Module Session Variable Isolation</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-IAM &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Session State Integrity)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-001 web server hardening, security headers, cors policy &amp; http method restrictions [httpx_headers] fail: header audit findings:
+- referrer-policy header missing
+- permissions-policy header missing
+- version/stack disclosure header present: server=hcdn
+- version/stack disclosure header present: x-powered-by=hostingerwebsitebuilder
+[httpx_cors] pass: cors policy safe (acao=&#39;none&#39;, acac=&#39;none&#39;).
+[nuclei_exposures] skipped: binary &#39;nuclei&#39; not found in path cert-in cisg-2024-01 (web server &amp; application hardening) cert-in cisg-2026-02">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-001] Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.AUTOMATED &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_headers, httpx_cors, nuclei_exposures
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Web Server &amp; Application Hardening) ; CERT-In CISG-2026-02
+        </div>
+        
+        <div class="evidence-box">[httpx_headers] FAIL: Header audit findings:
+- Referrer-Policy header missing
+- Permissions-Policy header missing
+- Version/stack disclosure header present: server=hcdn
+- Version/stack disclosure header present: x-powered-by=HostingerWebsiteBuilder
+[httpx_cors] PASS: CORS policy safe (ACAO=&#39;none&#39;, ACAC=&#39;none&#39;).
+[nuclei_exposures] SKIPPED: Binary &#39;nuclei&#39; not found in PATH</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-007 [wstg-info-01 / info-04] search engine recon, subdomain &amp; virtual host enumeration queued for manual pentest playbook verification. cert-in cisg-2026-02 (attack surface &amp; shadow asset governance) cert-in cisg-2024-01">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-007] [WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (Attack Surface &amp; Shadow Asset Governance) ; CERT-In CISG-2024-01
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-008 [wstg-info-03 / conf-08] webserver metafiles &amp; legacy ria cross-domain policy audit [httpx_metafiles] fail: metafile / ria policy findings:
+- /sitemap.xml discloses sensitive path patterns: /internal cert-in cisg-2026-02 (public metadata &amp; policy hardening)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-008] [WSTG-INFO-03 / CONF-08] Webserver Metafiles &amp; Legacy RIA Cross-Domain Policy Audit</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-FAIL">FAIL</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.AUTOMATED &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_metafiles
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (Public Metadata &amp; Policy Hardening)
+        </div>
+        
+        <div class="evidence-box">[httpx_metafiles] FAIL: Metafile / RIA policy findings:
+- /sitemap.xml discloses sensitive path patterns: /internal</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-009 [wstg-info-05] client-side source code, html comments &amp; downloadable file metadata audit queued for manual pentest playbook verification. cert-in cisg-2024-01 (information leakage prevention) dpdp rules 2025 - rule 6(1)(a)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-009] [WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Information Leakage Prevention) ; DPDP Rules 2025 - Rule 6(1)(a)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inf-012 [wstg-conf-13] url path confusion &amp; reverse-proxy normalization consistency [httpx_path_confusion] pass: path normalization &amp; confusion checks passed (consistent acl enforcement).
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (access control &amp; routing consistency) dpdp rules 2025 - rule 6(1)(b)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-012] [WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_path_confusion, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Access Control &amp; Routing Consistency) ; DPDP Rules 2025 - Rule 6(1)(b)
+        </div>
+        
+        <div class="evidence-box">[httpx_path_confusion] PASS: Path normalization &amp; confusion checks passed (consistent ACL enforcement).
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inj-006 [wstg-inpv-03] http parameter pollution (hpp) consistency queued for manual pentest playbook verification. cert-in cisg-2024-01 (input parsing consistency)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-006] [WSTG-INPV-03] HTTP Parameter Pollution (HPP) Consistency</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Input Parsing Consistency)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-009 [wstg-clnt-04 / clnt-05 / clnt-06 / clnt-08] open redirect, css injection, client resource manipulation &amp; legacy flash [httpx_open_redirect] pass: open redirect parameter checks passed (no external location reflection).
+[manual_proxy] manual/unregistered plugin hook. cert-in cisg-2024-01 (client-side &amp; phishing redirect controls) dpdp rules 2025 - rule 6(1)(a)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INJ-009] [WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</div>
+          <div>
+            <span class="badge sev-Medium">Medium</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.HYBRID &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_open_redirect, manual_proxy
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2024-01 (Client-Side &amp; Phishing Redirect Controls) ; DPDP Rules 2025 - Rule 6(1)(a)
+        </div>
+        
+        <div class="evidence-box">[httpx_open_redirect] PASS: Open redirect parameter checks passed (no external Location reflection).
+[manual_proxy] Manual/unregistered plugin hook.</div>
+      </div>
+      
+      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-010 [wstg-info-10] application architecture, waf &amp; reverse-proxy trust boundary mapping queued for manual pentest playbook verification. cert-in cisg-2026-02 (perimeter &amp; origin isolation)">
+        <div class="finding-top">
+          <div class="finding-title">[WEB-INF-010] [WSTG-INFO-10] Application Architecture, WAF &amp; Reverse-Proxy Trust Boundary Mapping</div>
+          <div>
+            <span class="badge sev-Info">Info</span>
+            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+          </div>
+        </div>
+        <div class="tag-row">
+          <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
+          <strong>Mode:</strong> ExecutionMode.MANUAL &nbsp;|&nbsp;
+          <strong>Bindings:</strong> manual_review
+        </div>
+        
+        <div class="tag-row">
+          <strong>India Compliance:</strong> CERT-In CISG-2026-02 (Perimeter &amp; Origin Isolation)
+        </div>
+        
+        <div class="evidence-box">Queued for manual pentest playbook verification.</div>
+      </div>
+      
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const buttons = document.querySelectorAll(".filter-btn");
+      const searchInput = document.getElementById("searchInput");
+      const cards = document.querySelectorAll(".finding-card");
+      let activeStatus = "ALL";
+
+      function applyFilters() {
+        const query = (searchInput.value || "").trim().toLowerCase();
+        cards.forEach((card) => {
+          const matchesStatus = activeStatus === "ALL" || card.dataset.status === activeStatus;
+          const matchesText = !query || (card.dataset.search || "").includes(query);
+          card.style.display = matchesStatus && matchesText ? "block" : "none";
+        });
+      }
+
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          activeStatus = btn.dataset.filter;
+          applyFilters();
+        });
+      });
+
+      if (searchInput) {
+        searchInput.addEventListener("input", applyFilters);
+      }
+    })();
+  </script>
+</body>
+</html>
