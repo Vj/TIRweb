@@ -61,8 +61,24 @@ class TestNewProbes:
         passed, detail = await probe_metafiles_and_ria_policies("https://example.in", check_fixture, ctx)
 
         assert passed is False
-        assert "/robots.txt discloses sensitive path patterns" in detail
+        assert "/robots.txt lists sensitive-looking paths" in detail
+        assert "listing alone does not prove the resource is publicly accessible" in detail
         assert "/crossdomain.xml allows wildcard '*' cross-domain access" in detail
+
+    async def test_sitemap_path_listing_alone_is_inconclusive(
+        self, check_fixture: ChecklistItem, mock_transport
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path == "/sitemap.xml":
+                return httpx.Response(200, text="<urlset><loc>https://example.in/internal</loc></url></urlset>")
+            return httpx.Response(404)
+
+        mock_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext())
+        passed, detail = await probe_metafiles_and_ria_policies("https://example.in", check_fixture, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_METAFILE_REVIEW" in detail
 
     async def test_path_confusion_flags_bypass_when_variant_returns_200(
         self, check_fixture: ChecklistItem, mock_transport
