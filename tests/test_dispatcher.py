@@ -194,3 +194,45 @@ class TestToolDispatcher:
 
         assert res.status == "ERROR"
         assert "timed out" in res.output_summary
+
+    async def test_nonzero_testssl_exit_is_execution_error_not_vulnerability(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"testssl.sh": "/usr/bin/testssl.sh"},
+            returncode=2,
+            stderr=b"connection setup failed",
+        )
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        result = await ToolDispatcher().execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "connection setup failed" in result.output_summary
+        assert "FAIL:" not in result.output_summary
+
+    async def test_nonzero_nuclei_exit_is_execution_error_not_clean_scan(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"nuclei": "/usr/bin/nuclei"},
+            returncode=2,
+            stderr=b"template initialization failed",
+        )
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.BFSI_FINTECH)
+            if c.id == "WEB-LOG-001"
+        )
+        dispatcher = ToolDispatcher()
+        await dispatcher.initialize_dynamic_bindings()
+
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "template initialization failed" in result.output_summary
+        assert "No nuclei findings" not in result.output_summary
