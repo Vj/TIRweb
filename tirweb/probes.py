@@ -301,7 +301,7 @@ async def probe_cors_policy(
 
     if resp.is_redirect:
         return True, (
-            f"INCONCLUSIVE_CORS_REDIRECT: Preflight returned HTTP {resp.status_code}; "
+            f"INCONCLUSIVE_CORS_REDIRECT: CORS probe request returned HTTP {resp.status_code}; "
             "redirect was not followed."
         )
 
@@ -536,8 +536,8 @@ async def probe_graphql_security(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
     """
-    WSTG-APIT-01: Test GraphQL endpoints for enabled __schema introspection,
-    field suggestion leakage, and unrestricted query batching / alias amplification.
+    WSTG-APIT-01: Check standard GraphQL endpoints for schema introspection and
+    acceptance of a small, bounded batch of harmless __typename operations.
     """
     candidate_paths: list[str] = list(GRAPHQL_DEFAULT_PATHS)
     if ctx.probe_endpoints:
