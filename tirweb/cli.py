@@ -2,6 +2,7 @@ import asyncio
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
+from urllib.parse import urlsplit
 from rich.console import Console
 from rich.table import Table
 from .dispatcher import ToolDispatcher
@@ -106,6 +107,12 @@ def run_scan(
     ] = Path("tirweb_report.html"),
 ) -> None:
     """Run security checks and export a single self-contained HTML compliance report."""
+    parsed_target = urlsplit(target.strip())
+    if (parsed_target.scheme not in {"http", "https"} or not parsed_target.hostname
+            or parsed_target.username or parsed_target.password or parsed_target.fragment):
+        console.print("[bold red]Invalid target URL:[/bold red] Use an absolute http(s) URL with a hostname and no embedded credentials or fragment.")
+        raise typer.Exit(code=2)
+    target = target.strip().rstrip("/")
     try:
         auth_ctx = AuthContext.from_inputs(
             raw_headers=header,
