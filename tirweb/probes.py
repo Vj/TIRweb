@@ -248,35 +248,69 @@ async def probe_security_headers(
 async def probe_cors_policy(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
-    """Test whether the endpoint reflects untrusted Origin headers with credentials enabled."""
+    """Assess CORS responses conservatively; reflection alone is not proof of data exposure."""
     canary_origin = "https://untrusted-origin-audit.example.invalid"
     req_headers = ctx.primary_auth.to_http_headers()
     req_headers["Origin"] = canary_origin
+    req_headers["Access-Control-Request-Method"] = "GET"
+    if ctx.primary_auth.is_authenticated:
+        req_headers["Access-Control-Request-Headers"] = "authorization"
 
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
         event_hooks={"request": [ctx.track_request]},
-        headers=req_headers,
     ) as client:
-        resp = await client.options(target)
-        if resp.status_code >= 400:
-            resp = await client.get(target)
+        resp = await client.options(target, headers=req_headers)
 
-    acao = resp.headers.get("access-control-allow-origin", "")
-    acac = resp.headers.get("access-control-allow-credentials", "").lower()
+    if resp.is_redirect:
+        return True, (
+            f"INCONCLUSIVE_CORS_REDIRECT: Preflight returned HTTP {resp.status_code}; "
+            "redirect was not followed."
+        )
 
-    issues: list[str] = []
+    acao = resp.headers.get("access-control-allow-origin", "").strip()
+    acac = resp.headers.get("access-control-allow-credentials", "").strip().lower()
+    allowed_headers = {
+        item.strip().lower()
+        for item in resp.headers.get("access-control-allow-headers", "").split(",")
+        if item.strip()
+    }
+
+    if acao == canary_origin and acac == "true":
+        return False, (
+            "CORS credentialed-origin reflection detected: an untrusted Origin was echoed "
+            "with Access-Control-Allow-Credentials: true. Confirm the endpoint returns "
+            "sensitive user-specific data before assigning impact."
+        )
+
     if acao == canary_origin:
-        severity_note = "with Access-Control-Allow-Credentials: true" if acac == "true" else "(uncredentialed)"
-        issues.append(f"Arbitrary Origin reflected in Access-Control-Allow-Origin {severity_note}.")
-    elif acao == "*" and ctx.primary_auth.is_authenticated:
-        issues.append("Wildcard Access-Control-Allow-Origin: * returned on authenticated endpoint.")
+        return True, (
+            "INCONCLUSIVE_CORS_REFLECTION: An untrusted Origin was echoed, but credentialed "
+            "access was not enabled. Verify whether the endpoint exposes non-public data "
+            "and whether browser requests can supply required headers."
+        )
 
-    if issues:
-        return False, "CORS misconfiguration detected:\n- " + "\n- ".join(issues)
-    return True, f"CORS policy safe (ACAO='{acao or 'none'}', ACAC='{acac or 'none'}')."
+    if acao == "*" and ctx.primary_auth.is_authenticated:
+        return True, (
+            "INCONCLUSIVE_CORS_WILDCARD: Wildcard origin was returned in an authenticated "
+            "assessment context. Browsers do not permit wildcard ACAO with credentialed "
+            "requests; verify the actual endpoint data sensitivity and authentication mode."
+        )
+
+    if acao == "*" and "authorization" in allowed_headers:
+        return True, (
+            "INCONCLUSIVE_CORS_WILDCARD: Wildcard origin and Authorization header allowance "
+            "were observed. Browser credential rules and the endpoint's data sensitivity "
+            "must be reviewed before treating this as a vulnerability."
+        )
+
+    return True, (
+        f"CORS preflight did not demonstrate credentialed untrusted-origin access "
+        f"(ACAO='{acao or 'none'}', ACAC='{acac or 'none'}')."
+    )
+
 
 
 def _extract_structural_shape(payload: Any) -> Any:
