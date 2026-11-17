@@ -86,6 +86,24 @@ class TestProbeSecurityHeaders:
         assert passed is True
         assert "All baseline security headers verified" in detail
 
+
+    async def test_does_not_follow_redirect_outside_target_scope(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        requested_urls: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested_urls.append(str(request.url))
+            return httpx.Response(302, headers={"Location": "https://outside.example.invalid/"})
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext(bearer_token="scope-test-token"))
+        passed, detail = await probe_security_headers("https://app.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_REDIRECT" in detail
+        assert requested_urls == ["https://app.example.in/"]
+
     async def test_accepts_csp_frame_ancestors_instead_of_x_frame_options(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
