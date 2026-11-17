@@ -46,7 +46,10 @@ async def _run_subprocess(cmd: list[str], timeout: int = 180) -> tuple[int, str]
         stdout, stderr = await asyncio.wait_for(proc.communicate(), timeout=timeout)
     except asyncio.TimeoutError:
         proc.kill()
-        return 124, f"Command timed out after {timeout}s"
+        stdout, stderr = await proc.communicate()
+        combined = (stdout.decode(errors="replace") + "\n" + stderr.decode(errors="replace")).strip()
+        detail = combined[-1500:] if combined else "No process output."
+        return 124, f"Command timed out after {timeout}s. {detail}"
     combined = (stdout.decode(errors="replace") + "\n" + stderr.decode(errors="replace")).strip()
     return proc.returncode or 0, combined[-1500:]
 
@@ -60,7 +63,7 @@ async def bind_testssl(
     if code == 127:
         raise FileNotFoundError(out)
     if code != 0:
-        return False, out or f"testssl.sh exited with code {code}."
+        raise RuntimeError(out or f"testssl.sh exited with code {code}.")
     vulnerable = "VULNERABLE" in out or "NOT ok" in out
     return (not vulnerable), out or "TLS scan completed."
 
@@ -76,6 +79,8 @@ async def bind_nuclei(tag: str) -> ToolHandler:
         code, out = await _run_subprocess(cmd)
         if code == 127:
             raise FileNotFoundError(out)
+        if code != 0:
+            raise RuntimeError(out or f"nuclei exited with code {code}.")
         findings = [line for line in out.splitlines() if line.strip()]
         return (
             len(findings) == 0,
@@ -96,7 +101,7 @@ async def bind_trivy_sca(
     if code == 127:
         raise FileNotFoundError(out)
     if code != 0:
-        return False, out or f"trivy exited with code {code}."
+        raise RuntimeError(out or f"trivy exited with code {code}.")
     has_vulns = "Total:" in out and "Total: 0" not in out
     return (not has_vulns), out or "SCA check completed."
 
