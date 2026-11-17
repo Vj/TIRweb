@@ -182,7 +182,7 @@ class TestProbeCorsPolicy:
         passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
         assert passed is True
-        assert "CORS policy safe" in detail
+        assert "did not demonstrate credentialed untrusted-origin access" in detail
 
     async def test_fails_when_arbitrary_origin_reflected_with_credentials(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -202,8 +202,25 @@ class TestProbeCorsPolicy:
         passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
         assert passed is False
-        assert "Arbitrary Origin reflected" in detail
+        assert "credentialed-origin reflection detected" in detail
         assert "Access-Control-Allow-Credentials: true" in detail
+
+    async def test_marks_uncredentialed_origin_reflection_inconclusive(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                204,
+                headers={"Access-Control-Allow-Origin": request.headers.get("Origin", "")},
+            )
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext())
+        passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_CORS_REFLECTION" in detail
+        assert "credentialed access was not enabled" in detail
 
     async def test_fails_on_wildcard_origin_for_authenticated_request(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -215,8 +232,8 @@ class TestProbeCorsPolicy:
         ctx = ScanContext(primary_auth=AuthContext(bearer_token="user_jwt"))
         passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Wildcard Access-Control-Allow-Origin: *" in detail
+        assert passed is True
+        assert "INCONCLUSIVE_CORS_WILDCARD" in detail
 
 
 # ==============================================================================
