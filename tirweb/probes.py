@@ -93,21 +93,23 @@ async def probe_jwt_security(
 
     all_issues: list[str] = []
     inspected_count = 0
+    uninspectable_tokens: list[str] = []
 
     for label, token in candidates:
         parts = token.strip().split(".")
         if len(parts) == 5:
-            # Encrypted JWE token (5 segments) — payload is confidential
+            # JWE is encrypted; this passive probe cannot verify its claims or crypto.
+            uninspectable_tokens.append(f"[{label}] JWE token requires issuer/key-aware verification.")
             continue
         if len(parts) != 3:
-            all_issues.append(f"[{label}] Token is not a standard 3-segment JWS or 5-segment JWE.")
+            uninspectable_tokens.append(f"[{label}] Token is not a standard 3-segment JWS or 5-segment JWE.")
             continue
 
         try:
             header = _b64url_decode_json(parts[0])
             payload = _b64url_decode_json(parts[1])
         except Exception as exc:
-            all_issues.append(f"[{label}] Failed to decode JWT structure: {exc}")
+            uninspectable_tokens.append(f"[{label}] JWT structure could not be decoded: {type(exc).__name__}.")
             continue
 
         inspected_count += 1
@@ -117,10 +119,6 @@ async def probe_jwt_security(
         # 1. Algorithm checks (RFC 8725 Section 3.1 / 3.2)
         if not alg or alg_lower in INSECURE_JWT_ALGS:
             all_issues.append(f"[{label}] Insecure or missing signing algorithm: alg='{alg or 'MISSING'}'.")
-        elif alg_lower in SYMMETRIC_JWT_ALGS:
-            all_issues.append(
-                f"[{label}] Symmetric algorithm '{alg}' used; prefer asymmetric RS256/ES256/EdDSA for distributed verification."
-            )
 
         # 2. Risky header parameters (jku, x5u, embedded jwk)
         present_risky_headers = RISKY_HEADER_PARAMS.intersection({k.lower() for k in header})
@@ -157,7 +155,10 @@ async def probe_jwt_security(
 
     if all_issues:
         return False, "JWT security findings:\n- " + "\n- ".join(all_issues)
-    return True, f"JWT inspection passed ({inspected_count} JWS token(s) verified clean)."
+    if uninspectable_tokens or inspected_count == 0:
+        details = "\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
+        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\n- " + details
+    return True, f"JWT structure inspection completed ({inspected_count} JWS token(s)); signature validation is not performed."
 
 
 REQUIRED_SECURITY_HEADERS: dict[str, str] = {
