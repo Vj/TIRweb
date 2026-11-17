@@ -13,7 +13,34 @@ class TestCLI:
             ["scan", "--target", "https://www.http://testfire.net/", "--checklist", str(checklist_yaml_file)],
         )
         assert result.exit_code == 2
-        assert "Invalid target URL" in result.stdout
+        assert "Invalid scan scope" in result.stdout
+
+
+    def test_scan_rejects_endpoint_outside_target_origin(self, checklist_yaml_file: Path) -> None:
+        result = runner.invoke(
+            app,
+            ["scan", "--target", "https://staging.example.in", "--checklist",
+             str(checklist_yaml_file), "--endpoint", "https://other.example.in/private"],
+        )
+        assert result.exit_code == 2
+        assert "Invalid scan scope" in result.stdout
+
+    def test_scan_rejects_protocol_relative_endpoint(self, checklist_yaml_file: Path) -> None:
+        result = runner.invoke(
+            app,
+            ["scan", "--target", "https://staging.example.in", "--checklist",
+             str(checklist_yaml_file), "--endpoint", "//other.example.in/private"],
+        )
+        assert result.exit_code == 2
+        assert "Invalid scan scope" in result.stdout
+
+    def test_scan_accepts_relative_endpoint(self, checklist_yaml_file: Path) -> None:
+        result = runner.invoke(
+            app,
+            ["scan", "--target", "https://staging.example.in", "--checklist",
+             str(checklist_yaml_file), "--endpoint", "/api/v1/profile", "--dry-run"],
+        )
+        assert result.exit_code == 0
 
     def test_validate_command_succeeds(self, checklist_yaml_file: Path) -> None:
         result = runner.invoke(app, ["validate", "-c", str(checklist_yaml_file)])
