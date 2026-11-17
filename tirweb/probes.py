@@ -412,12 +412,12 @@ async def probe_open_redirect(
 async def probe_differential_idor(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
-    """Compare HTTP status and structural JSON response shapes across two AuthContext sessions."""
+    """Compare two authorized sessions and flag ambiguous dual-200 responses for review."""
     if not ctx.secondary_auth or not ctx.secondary_auth.is_authenticated:
         return True, "SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file to run differential IDOR comparison."
 
     endpoints = ctx.probe_endpoints or [target]
-    flagged: list[str] = []
+    ambiguous: list[str] = []
 
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
@@ -430,28 +430,34 @@ async def probe_differential_idor(
             resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
             resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
 
-            # If User A receives 200 OK and User B (different principal) also receives 200 OK
-            # with an identical structural schema/digest on a user-scoped resource, flag for review
+            # A dual-200 response or matching schema/digest cannot prove BOLA by itself:
+            # the resource may be public or legitimately shared. Require ownership-aware review.
             if resp_a.status_code == 200 and resp_b.status_code == 200:
-                digest_a = hashlib.sha256(resp_a.content).hexdigest()
-                digest_b = hashlib.sha256(resp_b.content).hexdigest()
-
                 try:
+                    digest_match = hashlib.sha256(resp_a.content).digest() == hashlib.sha256(resp_b.content).digest()
                     shape_a = _extract_structural_shape(resp_a.json())
                     shape_b = _extract_structural_shape(resp_b.json())
-                    same_schema = json.dumps(shape_a) == json.dumps(shape_b)
-                except ValueError:
-                    same_schema = False
+                    schema_match = json.dumps(shape_a) == json.dumps(shape_b)
+                except (ValueError, TypeError):
+                    digest_match = resp_a.content == resp_b.content
+                    schema_match = False
 
-                if digest_a == digest_b or same_schema:
-                    flagged.append(
-                        f"{url}: Both Token A and Token B received HTTP 200 with matching "
-                        f"{'byte digest' if digest_a == digest_b else 'JSON schema'}."
-                    )
+                evidence = []
+                if digest_match:
+                    evidence.append("identical response bytes")
+                if schema_match:
+                    evidence.append("matching JSON structure")
+                qualifier = f" ({', '.join(evidence)})" if evidence else ""
+                ambiguous.append(
+                    f"{url}: both authorized test sessions received HTTP 200{qualifier}; "
+                    "verify resource ownership and expected sharing manually."
+                )
 
-    if flagged:
-        return False, "Potential cross-user access control parity detected:\n- " + "\n- ".join(flagged)
-    return True, f"Differential access check passed across {len(endpoints)} endpoint(s) (Token B properly isolated)."
+    if ambiguous:
+        return True, "INCONCLUSIVE_IDOR_REVIEW: HTTP parity alone is not proof of unauthorized access.\\n- " + "\\n- ".join(ambiguous)
+    return True, f"Differential access check completed across {len(endpoints)} endpoint(s); no dual-200 response observed."
+
+
 
 GRAPHQL_DEFAULT_PATHS = ("/graphql", "/api/graphql", "/v1/graphql", "/graphql/console")
 
