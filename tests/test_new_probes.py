@@ -6,6 +6,8 @@ from tirweb.probes import (
     probe_metafiles_and_ria_policies,
     probe_open_redirect,
     probe_path_confusion,
+    probe_differential_idor,
+    resolve_endpoint,
 )
 
 
@@ -46,6 +48,54 @@ def mock_transport(monkeypatch: pytest.MonkeyPatch):
 
 
 class TestNewProbes:
+
+    def test_resolve_endpoint_handles_absolute_and_relative_paths(self) -> None:
+        assert resolve_endpoint("https://example.in", "/api/v1") == "https://example.in/api/v1"
+        assert resolve_endpoint(
+            "https://example.in", "https://example.in/api/v2"
+        ) == "https://example.in/api/v2"
+
+    async def test_idor_probe_resolves_absolute_endpoint_without_concatenation(
+        self, check_fixture: ChecklistItem, mock_transport
+    ) -> None:
+        requested: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested.append(str(request.url))
+            return httpx.Response(403)
+
+        mock_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="user-a"),
+            secondary_auth=AuthContext(bearer_token="user-b"),
+            probe_endpoints=["https://example.in/api/v1/profile"],
+        )
+        passed, detail = await probe_differential_idor("https://example.in", check_fixture, ctx)
+
+        assert passed is True
+        assert len(requested) == 2
+        assert all(url == "https://example.in/api/v1/profile" for url in requested)
+
+    async def test_path_confusion_preserves_absolute_endpoint_origin(
+        self, check_fixture: ChecklistItem, mock_transport
+    ) -> None:
+        requested: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested.append(str(request.url))
+            return httpx.Response(403)
+
+        mock_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(),
+            probe_endpoints=["https://example.in/api/v2/admin"],
+        )
+        passed, _ = await probe_path_confusion("https://example.in", check_fixture, ctx)
+
+        assert passed is True
+        assert requested[0] == "https://example.in/api/v2/admin"
+        assert all(url.startswith("https://example.in/") for url in requested)
+
     async def test_metafiles_detects_leaked_paths_and_wildcard_crossdomain(
         self, check_fixture: ChecklistItem, mock_transport
     ) -> None:
