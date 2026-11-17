@@ -110,7 +110,8 @@ def run_scan(
     """Run security checks and export a single self-contained HTML compliance report."""
     parsed_target = urlsplit(target.strip())
     if (parsed_target.scheme not in {"http", "https"} or not parsed_target.hostname
-            or parsed_target.username or parsed_target.password or parsed_target.fragment):
+            or parsed_target.username or parsed_target.password or parsed_target.fragment
+            or "://" in parsed_target.path):
         console.print("[bold red]Invalid target URL:[/bold red] Use an absolute http(s) URL with a hostname and no embedded credentials or fragment.")
         raise typer.Exit(code=2)
     target = target.strip().rstrip("/")
