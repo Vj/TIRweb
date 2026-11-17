@@ -520,7 +520,7 @@ async def probe_graphql_security(
     ]
 
     discovered_endpoints: list[str] = []
-    issues: list[str] = []
+    review_items: list[str] = []
 
     headers = {
         **ctx.primary_auth.to_http_headers(),
@@ -554,8 +554,8 @@ async def probe_graphql_security(
                     discovered_endpoints.append(path)
                     data_obj = body.get("data")
                     if isinstance(data_obj, dict) and data_obj.get("__schema"):
-                        issues.append(
-                            f"[{path}] GraphQL schema introspection (__schema) is enabled in response."
+                        review_items.append(
+                            f"[{path}] GraphQL schema introspection (__schema) is enabled; exposure alone does not prove sensitive schema or data access."
                         )
 
                     # 2. Test Query Batching Abuse (Array of operations in single HTTP POST)
@@ -571,8 +571,8 @@ async def probe_graphql_security(
                                     for item in batch_body
                                 )
                             ):
-                                issues.append(
-                                    f"[{path}] Unauthenticated/unthrottled GraphQL query batching allowed ({len(batch_payload)} batched operations executed)."
+                                review_items.append(
+                                    f"[{path}] Server accepted {len(batch_payload)} batched operations; this does not establish missing rate limits or resource exhaustion controls."
                                 )
                     except (httpx.HTTPError, ValueError):
                         pass
