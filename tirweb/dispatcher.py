@@ -198,7 +198,8 @@ class ToolDispatcher:
                     continue
                 try:
                     passed, detail = await handler(target, check, scan_ctx)
-                    if "SKIPPED_" in detail or detail.lstrip().upper().startswith("SKIPPED"):
+                    if ("SKIPPED_" in detail or detail.lstrip().upper().startswith("SKIPPED")
+                            or detail.lstrip().upper().startswith("INCONCLUSIVE_")):
                         inconclusive = True
                         logs.append(f"[{binding}] INCONCLUSIVE: {detail}")
                     else:
