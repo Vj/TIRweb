@@ -1,4 +1,5 @@
 from tirweb.dispatcher import ToolDispatcher
+from tirweb.probes import RequestBudgetExceeded
 from tirweb.models import AppProfile, TIRWebChecklist
 
 
@@ -130,6 +131,25 @@ class TestToolDispatcher:
 
         assert result.status == "ERROR"
         assert "getaddrinfo failed" in result.output_summary
+
+    async def test_request_budget_exhaustion_is_inconclusive_not_execution_error(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def budget_exhausted(target, check, ctx):
+            raise RequestBudgetExceeded("Scan request budget exhausted (1 requests).")
+
+        dispatcher.registry["testssl"] = budget_exhausted
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "INCONCLUSIVE"
+        assert "INCONCLUSIVE_SCAN_BUDGET" in result.output_summary
 
     async def test_missing_binary_marks_check_tool_missing(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
