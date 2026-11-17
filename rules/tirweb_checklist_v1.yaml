@@ -308,7 +308,7 @@ modules:
         category: "Cryptographic Failures / Data Privacy"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["httpx_jwt", "httpx_headers", "manual_proxy"]
+        tool_binding: ["httpx_jwt", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify session tokens, API keys, passwords, and PII are never transmitted in URL query parameters or exposed in unencrypted JWS payloads."
