@@ -268,6 +268,7 @@ async def probe_metafiles_and_ria_policies(
     """
     sensitive_keywords = ("/admin", "/internal", "/backup", "/config", "/.git", "/.env", "/swagger", "/actuator")
     issues: list[str] = []
+    potential_disclosures: list[str] = []
 
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
@@ -282,7 +283,10 @@ async def probe_metafiles_and_ria_policies(
                 lower_body = resp.text.lower()
                 leaked = [kw for kw in sensitive_keywords if kw in lower_body]
                 if leaked:
-                    issues.append(f"{meta_path} discloses sensitive path patterns: {', '.join(leaked)}")
+                    potential_disclosures.append(
+                        f"{meta_path} lists sensitive-looking paths: {', '.join(leaked)}; "
+                        "listing alone does not prove the resource is publicly accessible."
+                    )
 
         # 2. Check legacy RIA cross-domain XML policies for wildcard '*' access
         for ria_path in ("/crossdomain.xml", "/clientaccesspolicy.xml"):
@@ -292,6 +296,8 @@ async def probe_metafiles_and_ria_policies(
 
     if issues:
         return False, "Metafile / RIA policy findings:\n- " + "\n- ".join(issues)
+    if potential_disclosures:
+        return True, "INCONCLUSIVE_METAFILE_REVIEW: Manual access-control verification required.\n- " + "\n- ".join(potential_disclosures)
     return True, "Metafiles (robots.txt/sitemap.xml) and RIA cross-domain policies verified clean."
 
 
