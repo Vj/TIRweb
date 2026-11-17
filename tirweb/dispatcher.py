@@ -5,6 +5,7 @@ from typing import Awaitable, Callable
 from pydantic import BaseModel
 from .models import AuthContext, ChecklistItem, ChecklistModule, ExecutionMode
 from .probes import (
+    RequestBudgetExceeded,
     ScanContext,
     probe_cors_policy,
     probe_differential_idor,
@@ -209,6 +210,9 @@ class ToolDispatcher:
                         executed += 1
                         observed_failure = observed_failure or not passed
                         logs.append(f"[{binding}] {'PASS' if passed else 'FAIL'}: {detail}")
+                except RequestBudgetExceeded as exc:
+                    inconclusive = True
+                    logs.append(f"[{binding}] INCONCLUSIVE_SCAN_BUDGET: {exc}")
                 except FileNotFoundError as exc:
                     missing_tools.append(binding)
                     logs.append(f"[{binding}] TOOL_MISSING: {exc}")
