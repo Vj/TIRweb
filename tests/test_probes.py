@@ -222,7 +222,7 @@ class TestProbeCorsPolicy:
         assert "INCONCLUSIVE_CORS_REFLECTION" in detail
         assert "credentialed access was not enabled" in detail
 
-    async def test_fails_on_wildcard_origin_for_authenticated_request(
+    async def test_marks_wildcard_origin_inconclusive_for_authenticated_context(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
@@ -406,7 +406,7 @@ class TestProbeJwtSecurity:
         assert "'exp' claim is not a numeric NumericDate" in detail
         assert "'nbf' claim is in the future" in detail
 
-    async def test_flags_excessive_ttl_without_rejecting_hmac_alg(
+    async def test_marks_long_ttl_for_review_without_rejecting_hmac_alg(
         self, dummy_check: ChecklistItem
     ) -> None:
         now = datetime.now(timezone.utc)
