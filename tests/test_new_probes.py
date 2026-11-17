@@ -214,6 +214,22 @@ class TestNewProbes:
         assert "INCONCLUSIVE_GRAPHQL_REVIEW" in detail
         assert "Server accepted 5 batched operations" in detail
 
+    async def test_graphql_transport_errors_are_inconclusive_not_clean(
+        self, check_fixture: ChecklistItem, mock_transport
+    ) -> None:
+        from tirweb.probes import probe_graphql_security
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            raise httpx.ConnectError("connection refused", request=request)
+
+        mock_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext())
+        passed, detail = await probe_graphql_security("https://example.in", check_fixture, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_GRAPHQL_REVIEW" in detail
+        assert "Request failed: ConnectError" in detail
+
     async def test_graphql_passes_when_introspection_and_batching_blocked(
         self, check_fixture: ChecklistItem, mock_transport
     ) -> None:
