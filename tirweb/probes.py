@@ -191,10 +191,13 @@ async def probe_security_headers(
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
-        follow_redirects=True,
+        follow_redirects=False,
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
         resp = await client.get(target)
+
+    if resp.is_redirect:
+        return True, f"INCONCLUSIVE_REDIRECT: Target returned HTTP {resp.status_code}; redirect destination was not followed."
 
     headers = {k.lower(): v for k, v in resp.headers.items()}
     issues: list[str] = []
