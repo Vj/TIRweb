@@ -178,7 +178,7 @@ class TestToolDispatcher:
             return await orig_run(cmd, timeout=0.05)
 
         monkeypatch.setattr(disp_mod, "_run_subprocess", fast_timeout_run)
-        mock_subprocess_factory(
+        create_proc = mock_subprocess_factory(
             which_map={"testssl.sh": "/usr/bin/testssl.sh"},
             hang=True,
         )
