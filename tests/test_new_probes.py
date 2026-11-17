@@ -55,6 +55,25 @@ class TestNewProbes:
             "https://example.in", "https://example.in/api/v2"
         ) == "https://example.in/api/v2"
 
+    async def test_idor_dual_200_is_inconclusive_not_confirmed_vulnerability(
+        self, check_fixture: ChecklistItem, mock_transport
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(200, json={"status": "ok", "profile": {"name": "Example"}})
+
+        mock_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="user-a"),
+            secondary_auth=AuthContext(bearer_token="user-b"),
+            probe_endpoints=["/api/profile"],
+        )
+        passed, detail = await probe_differential_idor("https://example.in", check_fixture, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_IDOR_REVIEW" in detail
+        assert "not proof of unauthorized access" in detail
+        assert "verify resource ownership" in detail
+
     async def test_idor_probe_resolves_absolute_endpoint_without_concatenation(
         self, check_fixture: ChecklistItem, mock_transport
     ) -> None:
