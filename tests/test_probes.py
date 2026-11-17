@@ -363,6 +363,49 @@ class TestProbeJwtSecurity:
         assert "Indian PAN-like identifier detected inside claim 'pan_card'" in detail
         assert "Indian mobile number detected inside claim 'contact'" in detail
 
+    async def test_algorithm_header_alone_is_inconclusive_without_verifier_evidence(
+        self, dummy_check: ChecklistItem
+    ) -> None:
+        token = _make_jwt(
+            header={"alg": "none", "typ": "JWT"},
+            payload={
+                "sub": "usr_123",
+                "iss": "https://auth.example.in",
+                "aud": "api",
+                "iat": int(datetime.now(timezone.utc).timestamp()),
+                "exp": int((datetime.now(timezone.utc) + timedelta(minutes=10)).timestamp()),
+            },
+            signature="",
+        )
+        ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
+        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_JWT_REVIEW" in detail
+        assert "verify the issuer and relying-party algorithm allowlist" in detail
+
+    async def test_malformed_exp_and_future_nbf_are_inconclusive(
+        self, dummy_check: ChecklistItem
+    ) -> None:
+        now = datetime.now(timezone.utc)
+        token = _make_jwt(
+            header={"alg": "ES256", "typ": "JWT"},
+            payload={
+                "sub": "usr_123",
+                "iss": "https://auth.example.in",
+                "aud": "api",
+                "exp": "tomorrow",
+                "nbf": int((now + timedelta(hours=1)).timestamp()),
+            },
+        )
+        ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
+        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_JWT_REVIEW" in detail
+        assert "'exp' claim is not a numeric NumericDate" in detail
+        assert "'nbf' claim is in the future" in detail
+
     async def test_flags_excessive_ttl_without_rejecting_hmac_alg(
         self, dummy_check: ChecklistItem
     ) -> None:
