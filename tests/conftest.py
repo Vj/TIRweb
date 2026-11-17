@@ -130,6 +130,7 @@ def mock_subprocess_factory(monkeypatch: pytest.MonkeyPatch):
         mock_proc = MagicMock()
         mock_proc.returncode = returncode
         mock_proc.kill = MagicMock()
+        mock_proc.wait = AsyncMock(return_value=returncode)
 
         if hang:
             async def _hang():
