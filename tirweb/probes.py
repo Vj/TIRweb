@@ -1,8 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 import httpx
 import base64
@@ -180,6 +181,10 @@ REQUIRED_SECURITY_HEADERS: dict[str, str] = {
 SENSITIVE_HEADER_LEAKS = ("server", "x-powered-by", "x-aspnet-version", "x-aspnetmvc-version")
 
 
+class RequestBudgetExceeded(RuntimeError):
+    """Raised when a scan reaches its configured outbound HTTP request budget."""
+
+
 @dataclass
 class ScanContext:
     primary_auth: AuthContext
@@ -187,6 +192,18 @@ class ScanContext:
     probe_endpoints: list[str] | None = None
     timeout: float = 15.0
     verify_tls: bool = True
+    max_requests: int = 500
+    request_count: int = 0
+    _request_lock: asyncio.Lock = field(default_factory=asyncio.Lock, repr=False)
+
+    async def track_request(self, request: httpx.Request) -> None:
+        """Count outbound HTTP requests across all native probes in this scan."""
+        async with self._request_lock:
+            if self.request_count >= self.max_requests:
+                raise RequestBudgetExceeded(
+                    f"Scan request budget exhausted ({self.max_requests} requests)."
+                )
+            self.request_count += 1
 
 
 async def probe_security_headers(
@@ -197,6 +214,7 @@ async def probe_security_headers(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
         resp = await client.get(target)
@@ -397,7 +415,12 @@ async def probe_differential_idor(
     endpoints = ctx.probe_endpoints or [target]
     flagged: list[str] = []
 
-    async with httpx.AsyncClient(timeout=ctx.timeout, verify=ctx.verify_tls, follow_redirects=False) as client:
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
+    ) as client:
         for endpoint in endpoints:
             url = resolve_endpoint(target, endpoint)
             resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
