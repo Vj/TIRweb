@@ -455,7 +455,7 @@ async def probe_differential_idor(
                 )
 
     if ambiguous:
-        return True, "INCONCLUSIVE_IDOR_REVIEW: HTTP parity alone is not proof of unauthorized access.\\n- " + "\\n- ".join(ambiguous)
+        return True, "INCONCLUSIVE_IDOR_REVIEW: HTTP parity alone is not proof of unauthorized access.\n- " + "\n- ".join(ambiguous)
     return True, f"Differential access check completed across {len(endpoints)} endpoint(s); no dual-200 response observed."
 
 
