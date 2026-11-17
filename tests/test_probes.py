@@ -113,7 +113,7 @@ class TestProbeSecurityHeaders:
 
         assert passed is True
         assert "INCONCLUSIVE_REDIRECT" in detail
-        assert requested_urls == ["https://app.example.in/"]
+        assert requested_urls == ["https://app.example.in"]
 
     async def test_accepts_csp_frame_ancestors_instead_of_x_frame_options(
         self, dummy_check: ChecklistItem, patch_httpx_transport
