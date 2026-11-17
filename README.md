@@ -118,8 +118,8 @@ pytest -v
 Run these commands to generate and open the new interactive compliance report locally:
 
 ```powershell
-tirweb scan --target https://www.fortifysolutions.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
-tirweb report --input report.json --out report.html --client "Fortify Solutions"
+tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
+tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
 
 > **Assessment interpretation:** TIRweb distinguishes confirmed findings from assessment gaps. A check is marked **FAIL** only when an executed check produces affirmative evidence of a weakness. Missing tools, network errors, skipped prerequisites and manual-only controls are reported separately and must not be interpreted as vulnerabilities or as evidence of compliance. Run scans only against systems for which you have explicit authorization.
