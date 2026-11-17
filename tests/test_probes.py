@@ -278,6 +278,16 @@ class TestProbeJwtSecurity:
         assert passed is True
         assert "1 JWS token(s) verified clean" in detail
 
+    async def test_jwe_is_reported_as_inconclusive_not_clean(
+        self, dummy_check: ChecklistItem
+    ) -> None:
+        ctx = ScanContext(primary_auth=AuthContext(bearer_token="a.b.c.d.e"))
+        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_JWT" in detail
+        assert "JWE token requires issuer/key-aware verification" in detail
+
     async def test_detects_alg_none_risky_headers_missing_exp_and_pii(
         self, dummy_check: ChecklistItem
     ) -> None:
@@ -323,6 +333,7 @@ class TestProbeJwtSecurity:
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
         passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Symmetric algorithm 'HS256' used" in detail
+        assert passed is True
+        assert "Symmetric algorithm" not in detail
+        assert "signature validation is not performed" in detail
         assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail
