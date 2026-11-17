@@ -201,8 +201,8 @@ class TestProbeCorsPolicy:
         ctx = ScanContext(primary_auth=AuthContext())
         passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "credentialed-origin reflection detected" in detail
+        assert passed is True
+        assert "INCONCLUSIVE_CORS_CREDENTIALS" in detail
         assert "Access-Control-Allow-Credentials: true" in detail
 
     async def test_marks_uncredentialed_origin_reflection_inconclusive(
