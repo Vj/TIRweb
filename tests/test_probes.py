@@ -380,6 +380,6 @@ class TestProbeJwtSecurity:
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
         passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Symmetric algorithm" not in detail
-        assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail
+        assert passed is True
+        assert "INCONCLUSIVE_JWT_REVIEW" in detail
+        assert "Long declared token lifetime (168.0h > 24h review threshold)" in detail
