@@ -134,7 +134,7 @@ modules:
         category: "Session Management"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["httpx_jwt", "httpx_headers", "manual_proxy"]
+        tool_binding: ["httpx_jwt", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Confirm session identifiers and JWTs use strong cryptographic algorithms/entropy and are regenerated immediately upon authentication (preventing session fixation)."
@@ -262,7 +262,7 @@ modules:
         category: "Cryptographic Failures"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["testssl", "httpx_headers"]
+        tool_binding: ["testssl"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify all endpoints enforce HTTPS with no unencrypted HTTP fallback."
@@ -377,7 +377,7 @@ modules:
         category: "Injection"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_injection", "httpx_headers", "manual_proxy"]
+        tool_binding: ["nuclei_injection", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Test all parameters, paths, user-generated content fields, and client-side DOM sinks for reflected, stored, and DOM-based XSS."
