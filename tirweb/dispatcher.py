@@ -221,10 +221,10 @@ class ToolDispatcher:
                 status = "ERROR"
             elif missing_tools:
                 status = "TOOL_MISSING"
-            elif inconclusive:
-                status = "INCONCLUSIVE"
             elif requires_manual_review or check.execution_mode == ExecutionMode.HYBRID:
                 status = "HYBRID_REVIEW"
+            elif inconclusive:
+                status = "INCONCLUSIVE"
             elif executed == 0:
                 status = "MANUAL_REQUIRED"
             else:
