@@ -94,19 +94,19 @@ def _extract_candidate_tokens(ctx: ScanContext) -> list[tuple[str, str]]:
 async def probe_jwt_security(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
-    """Inspect configured JWT bearer tokens for RFC 8725 & DPDP Rules 2025 hygiene."""
+    """Passively inspect JWT structure; never claim signature or verifier validation."""
     candidates = _extract_candidate_tokens(ctx)
     if not candidates:
         return True, "SKIPPED_NO_JWT: No bearer_token configured in AuthContext."
 
-    all_issues: list[str] = []
+    review_items: list[str] = []
+    confirmed_exposures: list[str] = []
     inspected_count = 0
     uninspectable_tokens: list[str] = []
 
     for label, token in candidates:
         parts = token.strip().split(".")
         if len(parts) == 5:
-            # JWE is encrypted; this passive probe cannot verify its claims or crypto.
             uninspectable_tokens.append(f"[{label}] JWE token requires issuer/key-aware verification.")
             continue
         if len(parts) != 3:
@@ -124,49 +124,70 @@ async def probe_jwt_security(
         alg = str(header.get("alg", "")).strip()
         alg_lower = alg.lower()
 
-        # 1. Algorithm checks (RFC 8725 Section 3.1 / 3.2)
+        # A token header alone cannot prove that the relying party accepts a weak algorithm.
         if not alg or alg_lower in INSECURE_JWT_ALGS:
-            all_issues.append(f"[{label}] Insecure or missing signing algorithm: alg='{alg or 'MISSING'}'.")
-
-        # 2. Risky header parameters (jku, x5u, embedded jwk)
-        present_risky_headers = RISKY_HEADER_PARAMS.intersection({k.lower() for k in header})
-        if present_risky_headers:
-            all_issues.append(
-                f"[{label}] Untrusted key-location header parameter(s) present: {', '.join(sorted(present_risky_headers))}."
+            review_items.append(
+                f"[{label}] Weak or missing algorithm declaration: alg='{alg or 'MISSING'}'; "
+                "verify the issuer and relying-party algorithm allowlist."
             )
 
-        # 3. Expiration & lifetime checks
+        present_risky_headers = RISKY_HEADER_PARAMS.intersection({k.lower() for k in header})
+        if present_risky_headers:
+            review_items.append(
+                f"[{label}] Remote or embedded key reference present: "
+                f"{', '.join(sorted(present_risky_headers))}; verify trusted key resolution."
+            )
+
         exp = payload.get("exp")
         iat = payload.get("iat")
+        nbf = payload.get("nbf")
+        now_ts = datetime.now(timezone.utc).timestamp()
+
         if exp is None:
-            all_issues.append(f"[{label}] Missing 'exp' (expiration) claim — token never expires.")
-        elif isinstance(exp, (int, float)):
-            now_ts = datetime.now(timezone.utc).timestamp()
+            review_items.append(f"[{label}] Missing 'exp' (expiration) claim.")
+        elif not isinstance(exp, (int, float)) or isinstance(exp, bool):
+            review_items.append(f"[{label}] 'exp' claim is not a numeric NumericDate.")
+        else:
             if exp <= now_ts:
-                all_issues.append(f"[{label}] Token is already expired (exp={int(exp)}).")
-            if isinstance(iat, (int, float)) and (exp - iat) > MAX_RECOMMENDED_TTL_SECONDS:
-                ttl_hours = round((exp - iat) / 3600, 1)
-                all_issues.append(
-                    f"[{label}] Excessive token lifetime ({ttl_hours}h > 24h recommended maximum)."
-                )
+                review_items.append(f"[{label}] Token expiration is in the past.")
+            if isinstance(iat, (int, float)) and not isinstance(iat, bool):
+                if exp > iat and (exp - iat) > MAX_RECOMMENDED_TTL_SECONDS:
+                    ttl_hours = round((exp - iat) / 3600, 1)
+                    review_items.append(
+                        f"[{label}] Long declared token lifetime ({ttl_hours}h > 24h review threshold)."
+                    )
 
-        # 4. Audience & Issuer context checks
+        if isinstance(iat, (int, float)) and not isinstance(iat, bool) and iat > now_ts:
+            review_items.append(f"[{label}] 'iat' claim is in the future.")
+        if isinstance(nbf, (int, float)) and not isinstance(nbf, bool) and nbf > now_ts:
+            review_items.append(f"[{label}] 'nbf' claim is in the future; token is not yet valid.")
+
         if "aud" not in payload:
-            all_issues.append(f"[{label}] Missing 'aud' (audience) claim (cross-service token confusion risk).")
+            review_items.append(f"[{label}] Missing 'aud' (audience) claim.")
         if "iss" not in payload:
-            all_issues.append(f"[{label}] Missing 'iss' (issuer) claim.")
+            review_items.append(f"[{label}] Missing 'iss' (issuer) claim.")
 
-        # 5. Unencrypted PII / Secret exposure check (DPDP Rules 2025 Rule 6(1)(a))
-        pii_findings = _scan_claims_for_pii(payload)
-        for finding in pii_findings:
-            all_issues.append(f"[{label}] {finding} in unencrypted JWS payload.")
+        for finding in _scan_claims_for_pii(payload):
+            message = f"[{label}] {finding} in readable JWS payload."
+            if finding.startswith("Sensitive claim key present:"):
+                review_items.append(message)
+            else:
+                # The token payload is base64url-encoded, not encrypted. Avoid logging values.
+                confirmed_exposures.append(message)
 
-    if all_issues:
-        return False, "JWT security findings:\n- " + "\n- ".join(all_issues)
+    if confirmed_exposures:
+        return False, "JWT readable-payload data exposure:\\n- " + "\\n- ".join(confirmed_exposures)
+    if review_items:
+        return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\\n- " + "\\n- ".join(review_items)
     if uninspectable_tokens or inspected_count == 0:
-        details = "\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
-        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\n- " + details
-    return True, f"JWT structure inspection completed ({inspected_count} JWS token(s)); signature validation is not performed."
+        details = "\\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
+        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\\n- " + details
+    return True, (
+        f"JWT structure inspection completed ({inspected_count} JWS token(s)); "
+        "signature validation and relying-party acceptance are not tested."
+    )
+
+
 
 
 REQUIRED_SECURITY_HEADERS: dict[str, str] = {
