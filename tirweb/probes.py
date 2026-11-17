@@ -127,14 +127,14 @@ async def probe_jwt_security(
         # A token header alone cannot prove that the relying party accepts a weak algorithm.
         if not alg or alg_lower in INSECURE_JWT_ALGS:
             review_items.append(
-                f"[{label}] Weak or missing algorithm declaration: alg='{alg or 'MISSING'}'; "
+                f"[{label}] Insecure or missing signing algorithm: alg='{alg or 'MISSING'}'; "
                 "verify the issuer and relying-party algorithm allowlist."
             )
 
         present_risky_headers = RISKY_HEADER_PARAMS.intersection({k.lower() for k in header})
         if present_risky_headers:
             review_items.append(
-                f"[{label}] Remote or embedded key reference present: "
+                f"[{label}] Untrusted key-location header parameter(s) present: "
                 f"{', '.join(sorted(present_risky_headers))}; verify trusted key resolution."
             )
 
@@ -168,7 +168,7 @@ async def probe_jwt_security(
             review_items.append(f"[{label}] Missing 'iss' (issuer) claim.")
 
         for finding in _scan_claims_for_pii(payload):
-            message = f"[{label}] {finding} in readable JWS payload."
+            message = f"[{label}] {finding} in unencrypted JWS payload."
             if finding.startswith("Sensitive claim key present:"):
                 review_items.append(message)
             else:
@@ -176,12 +176,12 @@ async def probe_jwt_security(
                 confirmed_exposures.append(message)
 
     if confirmed_exposures:
-        return False, "JWT readable-payload data exposure:\\n- " + "\\n- ".join(confirmed_exposures)
+        return False, "JWT readable-payload data exposure:\n- " + "\n- ".join(confirmed_exposures)
     if review_items:
-        return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\\n- " + "\\n- ".join(review_items)
+        return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\n- " + "\n- ".join(review_items)
     if uninspectable_tokens or inspected_count == 0:
-        details = "\\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
-        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\\n- " + details
+        details = "\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
+        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\n- " + details
     return True, (
         f"JWT structure inspection completed ({inspected_count} JWS token(s)); "
         "signature validation and relying-party acceptance are not tested."
