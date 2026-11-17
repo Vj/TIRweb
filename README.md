@@ -83,21 +83,11 @@ tirweb validate --checklist rules/tirweb_wstg_v42_full.yaml
 # Run an authorized assessment against a staging environment
 tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --profile bfsi_fintech --out report.json
 
-tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --client "Example Organization" --out report.json
-
 # Convert JSON scan results into an interactive HTML report
 tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
 
 
- \
-  --target [https://staging.example.in](https://staging.example.in) \
-  --checklist rules/tirweb_checklist_v1.yaml \
-  --profile bfsi_fintech \
-  --auth-file auth_user_a.yaml \
-  --secondary-auth-file auth_user_b.yaml \
-  --endpoint "/api/v1/orders/ORD-101" \
-  --out report.json
 
 # Export interactive HTML report (works natively on Windows, macOS & Linux)
 tirweb report --input report.json --out report.html --client "Target Organization"
