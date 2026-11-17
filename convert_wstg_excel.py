@@ -325,10 +325,3 @@ if __name__ == "__main__":
 
     count = convert_excel_to_yaml(args.excel, args.out)
     print(f"Converted {count} WSTG v4.2 test cases into {args.out}")
-```[cite: 1]
-
-### Running It Locally in PowerShell
-
-1. Ensure `pandas` and `openpyxl` are installed in your `.venv`:
-   ```powershell
-   pip install pandas openpyxl
