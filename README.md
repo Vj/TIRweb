@@ -83,6 +83,9 @@ tirweb validate --checklist rules/tirweb_wstg_v42_full.yaml
 # Run an authorized assessment against a staging environment
 tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --profile bfsi_fintech --out report.json
 
+# Bound total scan duration and native HTTP probe traffic (defaults: 900s / 500 requests)
+tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --scan-timeout 900 --max-requests 500 --out report.json
+
 # Convert JSON scan results into an interactive HTML report
 tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
@@ -109,6 +112,8 @@ Run these commands to generate and open the new interactive compliance report lo
 tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
 tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
+
+> **Scan safety limits:** `--scan-timeout` caps total scan duration (1–7200 seconds), while `--max-requests` caps outbound requests made by native HTTP probes (1–10000). Exhausting the request budget is reported as inconclusive, not as a vulnerability or a clean result. Differential access checks that receive HTTP 200 for both test users are also inconclusive until resource ownership and sharing expectations are manually verified.
 
 > **Assessment interpretation:** TIRweb distinguishes confirmed findings from assessment gaps. A check is marked **FAIL** only when an executed check produces affirmative evidence of a weakness. Missing tools, network errors, skipped prerequisites and manual-only controls are reported separately and must not be interpreted as vulnerabilities or as evidence of compliance. Run scans only against systems for which you have explicit authorization.
 
