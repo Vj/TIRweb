@@ -176,7 +176,8 @@ async def probe_jwt_security(
                 confirmed_exposures.append(message)
 
     if confirmed_exposures:
-        return False, "JWT readable-payload data exposure:\n- " + "\n- ".join(confirmed_exposures)
+        evidence = confirmed_exposures + review_items
+        return False, "JWT readable-payload data exposure:\n- " + "\n- ".join(evidence)
     if review_items:
         return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\n- " + "\n- ".join(review_items)
     if uninspectable_tokens or inspected_count == 0:
