@@ -178,11 +178,12 @@ async def probe_jwt_security(
     if confirmed_exposures:
         evidence = confirmed_exposures + review_items
         return False, "JWT readable-payload data exposure:\n- " + "\n- ".join(evidence)
-    if review_items:
-        return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\n- " + "\n- ".join(review_items)
-    if uninspectable_tokens or inspected_count == 0:
-        details = "\n- ".join(uninspectable_tokens) or "No inspectable JWS token was supplied."
-        return True, "INCONCLUSIVE_JWT: Passive inspection incomplete.\n- " + details
+    if review_items or uninspectable_tokens:
+        review_items.extend(uninspectable_tokens)
+        if review_items:
+            return True, "INCONCLUSIVE_JWT_REVIEW: Issuer and verifier policy review required.\n- " + "\n- ".join(review_items)
+    if inspected_count == 0:
+        return True, "INCONCLUSIVE_JWT: No inspectable JWS token was supplied."
     return True, (
         f"JWT structure inspection completed ({inspected_count} JWS token(s)); "
         "signature validation and relying-party acceptance are not tested."
@@ -285,6 +286,8 @@ async def probe_cors_policy(
         event_hooks={"request": [ctx.track_request]},
     ) as client:
         resp = await client.options(target, headers=req_headers)
+        if resp.status_code >= 400 and not resp.is_redirect:
+            resp = await client.get(target, headers=ctx.primary_auth.to_http_headers() | {"Origin": canary_origin})
 
     if resp.is_redirect:
         return True, (
@@ -543,6 +546,7 @@ async def probe_graphql_security(
 
     discovered_endpoints: list[str] = []
     review_items: list[str] = []
+    probe_errors: list[str] = []
 
     headers = {
         **ctx.primary_auth.to_http_headers(),
@@ -563,7 +567,8 @@ async def probe_graphql_security(
             # 1. Test Schema Introspection (__schema)
             try:
                 resp = await client.post(gql_url, json=introspection_query)
-            except httpx.HTTPError:
+            except httpx.HTTPError as exc:
+                probe_errors.append(f"[{path}] Request failed: {type(exc).__name__}.")
                 continue
 
             if resp.status_code == 200:
@@ -599,8 +604,9 @@ async def probe_graphql_security(
                     except (httpx.HTTPError, ValueError):
                         pass
 
-    if review_items:
-        return True, "INCONCLUSIVE_GRAPHQL_REVIEW: Manual schema sensitivity and resource-control review required.\n- " + "\n- ".join(review_items)
+    if review_items or probe_errors:
+        evidence = review_items + probe_errors
+        return True, "INCONCLUSIVE_GRAPHQL_REVIEW: Manual schema sensitivity and resource-control review required.\n- " + "\n- ".join(evidence)
     if discovered_endpoints:
         return (
             True,
