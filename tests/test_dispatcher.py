@@ -112,6 +112,25 @@ class TestToolDispatcher:
         assert res.status == "MANUAL_REQUIRED"
         create_proc.assert_not_awaited()
 
+    async def test_network_error_is_not_reported_as_vulnerability(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def network_failure(target, check, ctx):
+            raise OSError("getaddrinfo failed")
+
+        dispatcher.registry["testssl"] = network_failure
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "getaddrinfo failed" in result.output_summary
+
     async def test_missing_binary_marks_check_tool_missing(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
     ) -> None:
