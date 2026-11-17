@@ -131,7 +131,7 @@
     .st-FAIL { background: var(--crit-bg); color: var(--crit); }
     .st-PASS { background: var(--pass-bg); color: var(--pass); }
     .st-HYBRID_REVIEW { background: var(--med-bg); color: var(--med); }
-    .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
+    .st-ERROR, .st-INCONCLUSIVE, .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
 
     /* Interactive Filter Toolbar (Hidden in Print/PDF) */
     .filter-bar {
@@ -261,7 +261,9 @@
       <div class="kpi-card kpi-pass"><div class="num">{{ summary.get('pass', 0) }}</div><div class="lbl">Passed</div></div>
       <div class="kpi-card kpi-hybrid"><div class="num">{{ summary.get('hybrid_review', 0) }}</div><div class="lbl">Hybrid Review</div></div>
       <div class="kpi-card kpi-manual"><div class="num">{{ summary.get('manual_required', 0) }}</div><div class="lbl">Manual Playbook</div></div>
+      <div class="kpi-card"><div class="num">{{ summary.get('inconclusive', 0) + summary.get('tool_missing', 0) + summary.get('errors', 0) }}</div><div class="lbl">Not Assessed</div></div>
     </div>
+    <p><strong>Result interpretation:</strong> FAIL requires affirmative evidence from an executed check. INCONCLUSIVE, TOOL_MISSING, ERROR and MANUAL_REQUIRED are assessment gaps, not evidence of a vulnerability or proof of compliance.</p>
 
     <h2>1. Failed Findings by Severity</h2>
     <table>
@@ -320,6 +322,9 @@
       <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review ({{ summary.get('hybrid_review', 0) }})</button>
       <button class="filter-btn" data-filter="PASS">Passed ({{ summary.get('pass', 0) }})</button>
       <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual ({{ summary.get('manual_required', 0) }})</button>
+      <button class="filter-btn" data-filter="INCONCLUSIVE">Inconclusive ({{ summary.get('inconclusive', 0) }})</button>
+      <button class="filter-btn" data-filter="TOOL_MISSING">Tool missing ({{ summary.get('tool_missing', 0) }})</button>
+      <button class="filter-btn" data-filter="ERROR">Errors ({{ summary.get('errors', 0) }})</button>
       <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, or keyword..." />
     </div>
 
