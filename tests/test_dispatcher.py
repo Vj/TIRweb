@@ -194,6 +194,7 @@ class TestToolDispatcher:
 
         assert res.status == "ERROR"
         assert "timed out" in res.output_summary
+        create_proc.return_value.wait.assert_awaited_once()
 
     async def test_nonzero_testssl_exit_is_execution_error_not_vulnerability(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
