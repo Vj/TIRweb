@@ -14,6 +14,7 @@ from .probes import (
     probe_open_redirect,
     probe_path_confusion,
     probe_security_headers,
+    probe_api_authentication,
 )
 
 
@@ -114,6 +115,7 @@ class ToolDispatcher:
             "httpx_path_confusion": probe_path_confusion,
             "httpx_open_redirect": probe_open_redirect,
             "httpx_graphql": probe_graphql_security,
+            "httpx_api_auth": probe_api_authentication,
             # External CLI scanners
             "testssl": bind_testssl,
             "trivy_sca": bind_trivy_sca,
