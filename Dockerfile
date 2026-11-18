@@ -5,7 +5,7 @@ FROM debian:bookworm-slim AS security-tools
 
 ARG TARGETARCH
 ARG NUCLEI_VERSION=3.3.7
-ARG TRIVY_VERSION=0.58.1
+ARG TRIVY_VERSION=0.76.2
 ARG TESTSSL_VERSION=3.2rc4
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
