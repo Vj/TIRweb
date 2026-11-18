@@ -316,6 +316,22 @@ class TestProbeDifferentialIdor:
         assert "404/not-found-or-hidden" in detail
         assert "No endpoint is classified as vulnerable" in detail
 
+    async def test_endpoint_query_credentials_are_not_echoed_in_evidence(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        patch_httpx_transport(lambda request: httpx.Response(403))
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="user_a"),
+            secondary_auth=AuthContext(bearer_token="user_b"),
+            probe_endpoints=["/api/v1/private?access_token=do-not-log-this"],
+        )
+        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "/api/v1/private" in detail
+        assert "access_token" not in detail
+        assert "do-not-log-this" not in detail
+
     async def test_redirect_is_not_followed_and_is_inconclusive(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
