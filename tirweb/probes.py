@@ -241,7 +241,17 @@ class ScanContext:
 async def probe_security_headers(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
-    """Verify presence of defensive HTTP response headers and absence of stack version leaks."""
+    """Verify response headers; assess HSTS only on the final HTTPS response.
+
+    Redirects are followed only when they remain on the same hostname and use
+    the same origin, or upgrade the default HTTP origin to default HTTPS.
+    Credentials are never forwarded to a different host or arbitrary port.
+    """
+    requested_url = httpx.URL(target)
+    current_url = requested_url
+    redirect_count = 0
+    max_redirects = 5
+
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
@@ -249,15 +259,55 @@ async def probe_security_headers(
         event_hooks={"request": [ctx.track_request]},
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
-        resp = await client.get(target)
+        while True:
+            resp = await client.get(current_url)
+            if not resp.is_redirect:
+                break
 
-    if resp.is_redirect:
-        return True, f"INCONCLUSIVE_REDIRECT: Target returned HTTP {resp.status_code}; redirect destination was not followed."
+            location = resp.headers.get("location")
+            if not location:
+                return True, (
+                    f"INCONCLUSIVE_REDIRECT: Requested URL={requested_url}; "
+                    f"HTTP {resp.status_code} returned no Location header."
+                )
+
+            next_url = resp.url.join(location)
+            same_host = (next_url.host or "").lower() == (resp.url.host or "").lower()
+            same_origin = (
+                same_host
+                and next_url.scheme == resp.url.scheme
+                and next_url.port == resp.url.port
+            )
+            default_http_upgrade = (
+                same_host
+                and resp.url.scheme == "http"
+                and resp.url.port in (None, 80)
+                and next_url.scheme == "https"
+                and next_url.port in (None, 443)
+            )
+            if next_url.scheme not in {"http", "https"} or not (same_origin or default_http_upgrade):
+                return True, (
+                    f"INCONCLUSIVE_REDIRECT: Requested URL={requested_url}; "
+                    f"redirect to {next_url} was not followed because it leaves the validated origin."
+                )
+
+            redirect_count += 1
+            if redirect_count > max_redirects:
+                return True, (
+                    f"INCONCLUSIVE_REDIRECT: Requested URL={requested_url}; "
+                    f"redirect limit ({max_redirects}) exceeded."
+                )
+            current_url = next_url
 
     headers = {k.lower(): v for k, v in resp.headers.items()}
+    final_url = resp.url
+    final_scheme = final_url.scheme
     issues: list[str] = []
 
     for header_name, failure_msg in REQUIRED_SECURITY_HEADERS.items():
+        if header_name == "strict-transport-security":
+            if final_scheme != "https":
+                continue
         if header_name == "x-frame-options" and "frame-ancestors" in headers.get(
             "content-security-policy", ""
         ):
@@ -272,9 +322,16 @@ async def probe_security_headers(
         if leak_hdr in headers:
             issues.append(f"Version/stack disclosure header present: {leak_hdr}={headers[leak_hdr]}")
 
+    evidence = (
+        f"Requested URL={requested_url}; Final URL={final_url}; "
+        f"Response scheme={final_scheme}; HTTP status={resp.status_code}."
+    )
+    if final_scheme != "https":
+        evidence += " HSTS=NOT_ASSESSED (HSTS is evaluated only on HTTPS responses)."
+
     if issues:
-        return False, "Header audit findings:\n- " + "\n- ".join(issues)
-    return True, f"All baseline security headers verified on {resp.url} (HTTP {resp.status_code})."
+        return False, evidence + "\nHeader audit findings:\n- " + "\n- ".join(issues)
+    return True, evidence + " All applicable baseline security headers verified."
 
 
 async def probe_cors_policy(
