@@ -533,6 +533,8 @@ async def probe_differential_idor(
     ) as client:
         for endpoint in endpoints:
             url = resolve_endpoint(target, endpoint)
+            parsed_url = urlparse(url)
+            display_url = urlunparse(parsed_url._replace(query="", fragment=""))
             try:
                 resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
                 resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
