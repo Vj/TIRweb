@@ -1,4 +1,6 @@
 import copy
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 from tirweb.models import AppProfile, ExecutionMode, TIRWebChecklist
@@ -65,7 +67,7 @@ class TestSchemaValidation:
 
 class TestProbeBindingIntegrity:
     def test_security_headers_probe_is_only_bound_to_header_hardening(
-        self, loaded_checklist: TIRWebChecklist
+        self
     ) -> None:
         production_checklist = TIRWebChecklist.from_yaml(
             Path(__file__).parents[1] / "rules" / "tirweb_checklist_v1.yaml"
