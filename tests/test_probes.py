@@ -11,6 +11,7 @@ from tirweb.probes import (
     probe_differential_idor,
     probe_jwt_security,
     probe_security_headers,
+    probe_api_authentication,
 )
 
 
@@ -326,3 +327,82 @@ class TestProbeJwtSecurity:
         assert passed is False
         assert "Symmetric algorithm 'HS256' used" in detail
         assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail
+
+# ==============================================================================
+# 5. API
+# ==============================================================================
+
+class TestProbeApiAuthentication:
+    async def test_observes_authentication_required(
+        self, dummy_check, patch_httpx_transport
+    ):
+        def handler(request):
+            if request.headers.get("Authorization") == "Bearer test-token":
+                return httpx.Response(200, json={"ok": True})
+            return httpx.Response(401)
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="test-token"),
+            probe_endpoints=["/api/profile"],
+        )
+
+        passed, detail = await probe_api_authentication(
+            "https://app.example.test", dummy_check, ctx
+        )
+
+        assert passed is True
+        assert "API_AUTH_OBSERVATION" in detail
+        assert "unauthenticated=401" in detail
+        assert "authenticated=200" in detail
+        assert "test-token" not in detail
+
+    async def test_missing_credentials_is_inconclusive(
+        self, dummy_check, patch_httpx_transport
+    ):
+        patch_httpx_transport(lambda request: httpx.Response(200))
+        ctx = ScanContext(
+            primary_auth=AuthContext(),
+            probe_endpoints=["/api/profile"],
+        )
+
+        passed, detail = await probe_api_authentication(
+            "https://app.example.test", dummy_check, ctx
+        )
+
+        assert passed is True
+        assert "INCONCLUSIVE_API_AUTH" in detail
+
+    async def test_missing_endpoint_is_skipped(self, dummy_check):
+        ctx = ScanContext(primary_auth=AuthContext())
+
+        passed, detail = await probe_api_authentication(
+            "https://app.example.test", dummy_check, ctx
+        )
+
+        assert passed is True
+        assert "SKIPPED_NO_ENDPOINTS" in detail
+
+    async def test_404_and_405_are_not_vulnerabilities(
+        self, dummy_check, patch_httpx_transport
+    ):
+        def handler(request):
+            return httpx.Response(
+                404 if request.url.path.endswith("missing") else 405
+            )
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="test-token"),
+            probe_endpoints=["/api/missing", "/api/unsupported"],
+        )
+
+        passed, detail = await probe_api_authentication(
+            "https://app.example.test", dummy_check, ctx
+        )
+
+        assert passed is True
+        assert "INCONCLUSIVE_API_AUTH" in detail
+        assert "unauthenticated=404" in detail
+        assert "authenticated=405" in detail
+
