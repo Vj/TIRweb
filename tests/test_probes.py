@@ -95,7 +95,7 @@ class TestProbeSecurityHeaders:
         passed, detail = await probe_security_headers("https://app.example.in", dummy_check, ctx)
 
         assert passed is True
-        assert "All baseline security headers verified" in detail
+        assert "All applicable baseline security headers verified" in detail
 
 
     async def test_does_not_follow_redirect_outside_target_scope(
