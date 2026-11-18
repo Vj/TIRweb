@@ -67,9 +67,12 @@ class TestProbeBindingIntegrity:
     def test_security_headers_probe_is_only_bound_to_header_hardening(
         self, loaded_checklist: TIRWebChecklist
     ) -> None:
+        production_checklist = TIRWebChecklist.from_yaml(
+            Path(__file__).parents[1] / "rules" / "tirweb_checklist_v1.yaml"
+        )
         checks = {
             check.id: check
-            for module in loaded_checklist.modules
+            for module in production_checklist.modules
             for check in module.checks
         }
 
