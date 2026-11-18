@@ -1,4 +1,5 @@
 from tirweb.dispatcher import ToolDispatcher
+from tirweb.probes import RequestBudgetExceeded
 from tirweb.models import AppProfile, TIRWebChecklist
 
 
@@ -112,6 +113,63 @@ class TestToolDispatcher:
         assert res.status == "MANUAL_REQUIRED"
         create_proc.assert_not_awaited()
 
+    async def test_network_error_is_not_reported_as_vulnerability(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def network_failure(target, check, ctx):
+            raise OSError("getaddrinfo failed")
+
+        dispatcher.registry["testssl"] = network_failure
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "getaddrinfo failed" in result.output_summary
+
+    async def test_request_budget_exhaustion_is_inconclusive_not_execution_error(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def budget_exhausted(target, check, ctx):
+            raise RequestBudgetExceeded("Scan request budget exhausted (1 requests).")
+
+        dispatcher.registry["testssl"] = budget_exhausted
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "INCONCLUSIVE"
+        assert "INCONCLUSIVE_SCAN_BUDGET" in result.output_summary
+
+    async def test_probe_review_marker_maps_to_inconclusive_status(
+        self, loaded_checklist: TIRWebChecklist
+    ) -> None:
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+        dispatcher = ToolDispatcher()
+
+        async def review_required(target, check, ctx):
+            return True, "INCONCLUSIVE_JWT_REVIEW: Verify issuer and relying-party policy."
+
+        dispatcher.registry["testssl"] = review_required
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "INCONCLUSIVE"
+        assert "INCONCLUSIVE_JWT_REVIEW" in result.output_summary
+
     async def test_missing_binary_marks_check_tool_missing(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
     ) -> None:
@@ -159,7 +217,7 @@ class TestToolDispatcher:
             return await orig_run(cmd, timeout=0.05)
 
         monkeypatch.setattr(disp_mod, "_run_subprocess", fast_timeout_run)
-        mock_subprocess_factory(
+        create_proc = mock_subprocess_factory(
             which_map={"testssl.sh": "/usr/bin/testssl.sh"},
             hang=True,
         )
@@ -173,5 +231,48 @@ class TestToolDispatcher:
         dispatcher = ToolDispatcher()
         res = await dispatcher.execute_check("https://slow.example.in", mod, chk)
 
-        assert res.status == "FAIL"
+        assert res.status == "ERROR"
         assert "timed out" in res.output_summary
+        create_proc.return_value.wait.assert_awaited_once()
+
+    async def test_nonzero_testssl_exit_is_execution_error_not_vulnerability(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"testssl.sh": "/usr/bin/testssl.sh"},
+            returncode=2,
+            stderr=b"connection setup failed",
+        )
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.CORE)
+            if c.id == "WEB-CRY-001"
+        )
+
+        result = await ToolDispatcher().execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "connection setup failed" in result.output_summary
+        assert "FAIL:" not in result.output_summary
+
+    async def test_nonzero_nuclei_exit_is_execution_error_not_clean_scan(
+        self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory
+    ) -> None:
+        mock_subprocess_factory(
+            which_map={"nuclei": "/usr/bin/nuclei"},
+            returncode=2,
+            stderr=b"template initialization failed",
+        )
+        mod, chk = next(
+            (m, c)
+            for m, c in loaded_checklist.filter_checks(AppProfile.BFSI_FINTECH)
+            if c.id == "WEB-LOG-001"
+        )
+        dispatcher = ToolDispatcher()
+        await dispatcher.initialize_dynamic_bindings()
+
+        result = await dispatcher.execute_check("https://example.in", mod, chk)
+
+        assert result.status == "ERROR"
+        assert "template initialization failed" in result.output_summary
+        assert "No nuclei findings" not in result.output_summary

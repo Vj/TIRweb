@@ -1,4 +1,6 @@
 import copy
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 from tirweb.models import AppProfile, ExecutionMode, TIRWebChecklist
@@ -61,6 +63,24 @@ class TestSchemaValidation:
         with pytest.raises(ValidationError) as exc_info:
             TIRWebChecklist.model_validate(data)
         assert "Duplicate check ID detected: WEB-IAM-001" in str(exc_info.value)
+
+
+class TestProbeBindingIntegrity:
+    def test_security_headers_probe_is_only_bound_to_header_hardening(
+        self
+    ) -> None:
+        production_checklist = TIRWebChecklist.from_yaml(
+            Path(__file__).parents[1] / "rules" / "tirweb_checklist_v1.yaml"
+        )
+        checks = {
+            check.id: check
+            for module in production_checklist.modules
+            for check in module.checks
+        }
+
+        assert "httpx_headers" in checks["WEB-INF-001"].tool_binding
+        for check_id in ("WEB-CRY-001", "WEB-CRY-003", "WEB-IAM-006", "WEB-INJ-002"):
+            assert "httpx_headers" not in checks[check_id].tool_binding
 
 
 class TestProfileFiltering:

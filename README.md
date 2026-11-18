@@ -80,23 +80,17 @@ pip install -e .
 tirweb validate --checklist rules/tirweb_checklist_v1.yaml
 tirweb validate --checklist rules/tirweb_wstg_v42_full.yaml
 
-# Run an authenticated differential scan (bfsi_fintech profile)
-tirweb scan
+# Run an authorized assessment against a staging environment
+tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --profile bfsi_fintech --out report.json
 
-tirweb scan --target https://www.http://testfire.net/ --checklist rules/tirweb_checklist_v1.yaml --client "test fire" --out report.html
+# Bound total scan duration and native HTTP probe traffic (defaults: 900s / 500 requests)
+tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --scan-timeout 900 --max-requests 500 --out report.json
+
+# Convert JSON scan results into an interactive HTML report
+tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
 
-tirweb scan --target https://www.fortifysolutions.in --checklist rules/tirweb_checklist_v1.yaml --client "Fortify Solutions" --out reportfs.html
-Start-Process .\reportfs.html
 
- \
-  --target [https://staging.example.in](https://staging.example.in) \
-  --checklist rules/tirweb_checklist_v1.yaml \
-  --profile bfsi_fintech \
-  --auth-file auth_user_a.yaml \
-  --secondary-auth-file auth_user_b.yaml \
-  --endpoint "/api/v1/orders/ORD-101" \
-  --out report.json
 
 # Export interactive HTML report (works natively on Windows, macOS & Linux)
 tirweb report --input report.json --out report.html --client "Target Organization"
@@ -115,6 +109,16 @@ pytest -v
 Run these commands to generate and open the new interactive compliance report locally:
 
 ```powershell
-tirweb scan --target https://www.fortifysolutions.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
-tirweb report --input report.json --out report.html --client "Fortify Solutions"
+tirweb scan --target https://staging.example.in --checklist rules/tirweb_checklist_v1.yaml --out report.json
+tirweb report --input report.json --out report.html --client "Example Organization"
 Start-Process .\report.html
+
+> **Scan safety limits:** `--scan-timeout` caps total scan duration (1–7200 seconds), while `--max-requests` caps outbound requests made by native HTTP probes (1–10000). Exhausting the request budget is reported as inconclusive, not as a vulnerability or a clean result. Differential access checks that receive HTTP 200 for both test users are also inconclusive until resource ownership and sharing expectations are manually verified.
+
+> **API and authentication interpretation:** CORS origin reflection (including credentialed reflection) and wildcard ACAO, GraphQL introspection, accepted query batching, JWT header/claim policy concerns, and two-session HTTP parity are review signals—not automatic vulnerabilities. JWT inspection is passive and does not validate signatures or relying-party acceptance. A confirmed JWT finding requires evidence such as sensitive values exposed in a readable token payload; verify API data sensitivity and access policy before escalating review signals.
+
+> **Endpoint-level access evidence:** When both `--auth-file` and `--secondary-auth-file` are configured, the differential access probe records each in-scope endpoint's HTTP status and a neutral outcome (success, authentication-required, forbidden, not-found-or-hidden, rate-limited, redirect-not-followed, server-error, or other). Credential types are summarized without printing token, cookie, or header values. A primary-session success paired with a secondary-session denial is recorded as an observed access restriction; dual-success, inverse access differences, 404s, rate limits, redirects, transport failures, and other ambiguous outcomes require review. HTTP status alone never confirms BOLA/IDOR, and redirects are not followed.
+
+> **Assessment interpretation:** TIRweb distinguishes confirmed findings from assessment gaps. A check is marked **FAIL** only when an executed check produces affirmative evidence of a weakness. Missing tools, network errors, skipped prerequisites and manual-only controls are reported separately and must not be interpreted as vulnerabilities or as evidence of compliance. Run scans only against systems for which you have explicit authorization.
+
+> **Regulatory scope:** DPDP Rules 2025 have phased commencement. Rule 6's commencement is scheduled 18 months after its Gazette publication on 13 November 2025; until effective, Rule 6 mappings are readiness guidance. RBI mappings are conditional on the assessed entity and activity falling within RBI's applicable regulatory scope. Confirm legal applicability with qualified counsel.

@@ -83,7 +83,7 @@
     /* KPI Summary Cards */
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
+      grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
       gap: 12px;
       margin-bottom: 28px;
     }
@@ -131,7 +131,7 @@
     .st-FAIL { background: var(--crit-bg); color: var(--crit); }
     .st-PASS { background: var(--pass-bg); color: var(--pass); }
     .st-HYBRID_REVIEW { background: var(--med-bg); color: var(--med); }
-    .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
+    .st-ERROR, .st-INCONCLUSIVE, .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
 
     /* Interactive Filter Toolbar (Hidden in Print/PDF) */
     .filter-bar {
@@ -261,7 +261,9 @@
       <div class="kpi-card kpi-pass"><div class="num">{{ summary.get('pass', 0) }}</div><div class="lbl">Passed</div></div>
       <div class="kpi-card kpi-hybrid"><div class="num">{{ summary.get('hybrid_review', 0) }}</div><div class="lbl">Hybrid Review</div></div>
       <div class="kpi-card kpi-manual"><div class="num">{{ summary.get('manual_required', 0) }}</div><div class="lbl">Manual Playbook</div></div>
+      <div class="kpi-card"><div class="num">{{ summary.get('inconclusive', 0) + summary.get('tool_missing', 0) + summary.get('errors', 0) }}</div><div class="lbl">Not Assessed</div></div>
     </div>
+    <p><strong>Result interpretation:</strong> FAIL requires affirmative evidence from an executed check. INCONCLUSIVE, TOOL_MISSING, ERROR and MANUAL_REQUIRED are assessment gaps, not evidence of a vulnerability or proof of compliance.</p>
 
     <h2>1. Failed Findings by Severity</h2>
     <table>
@@ -284,6 +286,8 @@
         </tr>
       </tbody>
     </table>
+
+    <p><strong>Regulatory applicability note:</strong> DPDP Rules 2025 have staggered commencement. Rule 6 is scheduled to commence 18 months after Gazette publication on 13 November 2025; until its commencement, mappings to Rule 6 should be read as readiness guidance, not a finding that the Rule is already in force. RBI mappings are conditional and must be assessed only where the entity, service or activity falls within the relevant RBI-regulated scope. This technical report is not a legal opinion.</p>
 
     <h2>2. Indian Statutory &amp; Regulatory Compliance Matrix</h2>
     {% for pillar, rows in compliance_matrix.items() %}
@@ -320,6 +324,9 @@
       <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review ({{ summary.get('hybrid_review', 0) }})</button>
       <button class="filter-btn" data-filter="PASS">Passed ({{ summary.get('pass', 0) }})</button>
       <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual ({{ summary.get('manual_required', 0) }})</button>
+      <button class="filter-btn" data-filter="INCONCLUSIVE">Inconclusive ({{ summary.get('inconclusive', 0) }})</button>
+      <button class="filter-btn" data-filter="TOOL_MISSING">Tool missing ({{ summary.get('tool_missing', 0) }})</button>
+      <button class="filter-btn" data-filter="ERROR">Errors ({{ summary.get('errors', 0) }})</button>
       <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, or keyword..." />
     </div>
 

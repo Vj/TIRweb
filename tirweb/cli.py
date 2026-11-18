@@ -1,4 +1,5 @@
 import asyncio
+import json
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
@@ -8,6 +9,7 @@ from .dispatcher import ToolDispatcher
 from .models import AppProfile, AuthContext, ExecutionMode, TIRWebChecklist
 from .probes import ScanContext
 from .reporter import generate_compliance_report, generate_html_report
+from .scope import validate_scan_scope
 
 app = typer.Typer(
     name="tirweb",
@@ -100,12 +102,25 @@ def run_scan(
         int,
         typer.Option("--concurrency", "-j", min=1, max=16, help="Max parallel tool executions"),
     ] = 4,
+    scan_timeout: Annotated[
+        int,
+        typer.Option("--scan-timeout", min=1, max=7200, help="Maximum total scan duration in seconds"),
+    ] = 900,
+    max_requests: Annotated[
+        int,
+        typer.Option("--max-requests", min=1, max=10000, help="Maximum outbound HTTP requests across native probes"),
+    ] = 500,
     out: Annotated[
         Optional[Path],
         typer.Option("--out", "-o", help="Single self-contained HTML report output path"),
     ] = Path("tirweb_report.html"),
 ) -> None:
     """Run security checks and export a single self-contained HTML compliance report."""
+    try:
+        target, endpoint = validate_scan_scope(target, endpoint)
+    except ValueError as exc:
+        console.print(f"[bold red]Invalid scan scope:[/bold red] {exc}")
+        raise typer.Exit(code=2)
     try:
         auth_ctx = AuthContext.from_inputs(
             raw_headers=header,
@@ -126,6 +141,7 @@ def run_scan(
         primary_auth=auth_ctx,
         secondary_auth=secondary_ctx,
         probe_endpoints=endpoint,
+        max_requests=max_requests,
     )
 
     loaded = TIRWebChecklist.from_yaml(checklist)
@@ -151,9 +167,15 @@ def run_scan(
             )
             for mod, chk in selected
         ]
-        return await asyncio.gather(*tasks)
+        return await asyncio.wait_for(asyncio.gather(*tasks), timeout=scan_timeout)
 
-    results = asyncio.run(_orchestrate())
+    try:
+        results = asyncio.run(_orchestrate())
+    except TimeoutError:
+        console.print(
+            f"[bold red]Scan timed out:[/bold red] Maximum duration of {scan_timeout}s exceeded."
+        )
+        raise typer.Exit(code=124)
 
     table = Table(title=f"TIRweb Execution Summary ({profile.value})")
     table.add_column("Check ID", style="cyan", no_wrap=True)
@@ -187,17 +209,29 @@ def run_scan(
                 "fail": sum(1 for r in results if r.status == "FAIL"),
                 "hybrid_review": sum(1 for r in results if r.status == "HYBRID_REVIEW"),
                 "manual_required": sum(1 for r in results if r.status == "MANUAL_REQUIRED"),
+                "tool_missing": sum(1 for r in results if r.status == "TOOL_MISSING"),
+                "inconclusive": sum(1 for r in results if r.status == "INCONCLUSIVE"),
+                "errors": sum(1 for r in results if r.status == "ERROR"),
+                "dry_run": sum(1 for r in results if r.status == "DRY_RUN"),
             },
             "results": [r.model_dump() for r in results],
         }
-        html_path = out if out.suffix.lower() in {".html", ".htm"} else out.with_suffix(".html")
-        saved_html = generate_html_report(
-            payload=report_payload,
-            output_html_path=html_path,
-            client_name=client,
-            auditor_org=auditor,
-        )
-        console.print(f"\n[bold green]HTML Compliance Report exported to:[/bold green] {saved_html.resolve()}")
+        if out.suffix.lower() == ".json":
+            out.parent.mkdir(parents=True, exist_ok=True)
+            out.write_text(
+                json.dumps(report_payload, indent=2, ensure_ascii=False),
+                encoding="utf-8",
+            )
+            console.print(f"\n[bold green]JSON scan results exported to:[/bold green] {out.resolve()}")
+        else:
+            html_path = out if out.suffix.lower() in {".html", ".htm"} else out.with_suffix(".html")
+            saved_html = generate_html_report(
+                payload=report_payload,
+                output_html_path=html_path,
+                client_name=client,
+                auditor_org=auditor,
+            )
+            console.print(f"\n[bold green]HTML Compliance Report exported to:[/bold green] {saved_html.resolve()}")
 
 
 @app.command("report")

@@ -46,7 +46,6 @@ packages = ["tirweb"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "rules" = "tirweb/rules"
-"tirweb/templates" = "tirweb/templates"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -56,3 +55,7 @@ asyncio_default_fixture_loop_scope = "function"
 [tool.ruff]
 line-length = 100
 target-version = "py312"
+
+[tool.ruff.lint]
+# Keep CI focused on correctness rules while legacy style modernization is tracked separately.
+select = ["E4", "E7", "E9", "F"]
