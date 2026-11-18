@@ -449,8 +449,17 @@ async def probe_differential_idor(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
     """Compare HTTP status and structural JSON response shapes across two AuthContext sessions."""
+    if not ctx.primary_auth.is_authenticated:
+        return True, (
+            "SKIPPED_PRIMARY_AUTH: Configure a primary test identity "
+            "before running differential access comparison."
+        )
+        
     if not ctx.secondary_auth or not ctx.secondary_auth.is_authenticated:
-        return True, "SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file to run differential IDOR comparison."
+        return True, (
+            "SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file "
+            "with a second test identity."
+        )
 
     endpoints = ctx.probe_endpoints or [target]
     flagged: list[str] = []
