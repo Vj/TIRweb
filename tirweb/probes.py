@@ -479,15 +479,51 @@ async def probe_open_redirect(
     return True, "Open redirect parameter checks passed (no external Location reflection)."
 
 
+def _auth_profile(auth: AuthContext) -> str:
+    """Describe configured credential types without exposing credential values."""
+    names = {name.lower() for name in auth.headers}
+    kinds = []
+    if auth.bearer_token or "authorization" in names:
+        kinds.append("bearer/authorization")
+    if auth.cookies or "cookie" in names:
+        kinds.append("cookie")
+    if any(name not in {"authorization", "cookie"} for name in names):
+        kinds.append("custom-header")
+    return "+".join(kinds) if kinds else "no-credentials"
+
+
+def _http_access_outcome(response: httpx.Response) -> str:
+    """Map HTTP outcomes to neutral access observations, never vulnerability labels."""
+    code = response.status_code
+    if 200 <= code < 300:
+        return "success"
+    if code == 401:
+        return "authentication-required"
+    if code == 403:
+        return "forbidden"
+    if code == 404:
+        return "not-found-or-hidden"
+    if code == 429:
+        return "rate-limited"
+    if response.is_redirect:
+        return "redirect-not-followed"
+    if 500 <= code < 600:
+        return "server-error"
+    return "other-http-status"
+
+
 async def probe_differential_idor(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
-    """Compare two authorized sessions and flag ambiguous dual-200 responses for review."""
+    """Compare two configured sessions and report endpoint-level access evidence."""
     if not ctx.secondary_auth or not ctx.secondary_auth.is_authenticated:
-        return True, "SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file to run differential IDOR comparison."
+        return True, "SKIPPED_SECONDARY_AUTH: Provide --secondary-auth-file to run differential access comparison."
 
     endpoints = ctx.probe_endpoints or [target]
-    ambiguous: list[str] = []
+    observations: list[str] = []
+    review_required = False
+    primary_profile = _auth_profile(ctx.primary_auth)
+    secondary_profile = _auth_profile(ctx.secondary_auth)
 
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
@@ -497,36 +533,58 @@ async def probe_differential_idor(
     ) as client:
         for endpoint in endpoints:
             url = resolve_endpoint(target, endpoint)
-            resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
-            resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
+            try:
+                resp_a = await client.get(url, headers=ctx.primary_auth.to_http_headers())
+                resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
+            except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                review_required = True
+                observations.append(f"{url}: request failed ({type(exc).__name__}); access outcome is unknown.")
+                continue
 
-            # A dual-200 response or matching schema/digest cannot prove BOLA by itself:
-            # the resource may be public or legitimately shared. Require ownership-aware review.
-            if resp_a.status_code == 200 and resp_b.status_code == 200:
+            outcome_a = _http_access_outcome(resp_a)
+            outcome_b = _http_access_outcome(resp_b)
+            evidence = f"primary={resp_a.status_code}/{outcome_a}, secondary={resp_b.status_code}/{outcome_b}"
+
+            if outcome_a == "success" and outcome_b == "success":
+                review_required = True
                 try:
-                    digest_match = hashlib.sha256(resp_a.content).digest() == hashlib.sha256(resp_b.content).digest()
-                    shape_a = _extract_structural_shape(resp_a.json())
-                    shape_b = _extract_structural_shape(resp_b.json())
-                    schema_match = json.dumps(shape_a) == json.dumps(shape_b)
+                    same_bytes = hashlib.sha256(resp_a.content).digest() == hashlib.sha256(resp_b.content).digest()
+                    same_shape = json.dumps(_extract_structural_shape(resp_a.json()), sort_keys=True) == json.dumps(
+                        _extract_structural_shape(resp_b.json()), sort_keys=True
+                    )
                 except (ValueError, TypeError):
-                    digest_match = resp_a.content == resp_b.content
-                    schema_match = False
-
-                evidence = []
-                if digest_match:
-                    evidence.append("identical response bytes")
-                if schema_match:
-                    evidence.append("matching JSON structure")
-                qualifier = f" ({', '.join(evidence)})" if evidence else ""
-                ambiguous.append(
-                    f"{url}: both authorized test sessions received HTTP 200{qualifier}; "
-                    "verify resource ownership and expected sharing manually."
+                    same_bytes = resp_a.content == resp_b.content
+                    same_shape = False
+                qualifiers = []
+                if same_bytes:
+                    qualifiers.append("identical-response-bytes")
+                if same_shape:
+                    qualifiers.append("matching-json-structure")
+                suffix = f"; evidence={','.join(qualifiers)}" if qualifiers else ""
+                observations.append(
+                    f"{url}: {evidence}{suffix}; ownership and sharing policy are not established."
+                )
+            elif outcome_a == "success" and outcome_b in {"authentication-required", "forbidden"}:
+                observations.append(
+                    f"{url}: {evidence}; secondary session was denied. This is consistent with an enforced restriction, not proof of a vulnerability."
+                )
+            elif outcome_a in {"authentication-required", "forbidden"} and outcome_b == "success":
+                review_required = True
+                observations.append(
+                    f"{url}: {evidence}; inverse access difference requires identity, role, and resource-policy review."
+                )
+            else:
+                review_required = True
+                observations.append(
+                    f"{url}: {evidence}; endpoint existence, authentication state, or policy remains ambiguous."
                 )
 
-    if ambiguous:
-        return True, "INCONCLUSIVE_IDOR_REVIEW: HTTP parity alone is not proof of unauthorized access.\n- " + "\n- ".join(ambiguous)
-    return True, f"Differential access check completed across {len(endpoints)} endpoint(s); no dual-200 response observed."
-
+    prefix = "INCONCLUSIVE_IDOR_REVIEW" if review_required else "ACCESS_CONTROL_OBSERVATION"
+    return True, (
+        f"{prefix}: Compared {len(endpoints)} endpoint(s) using primary auth={primary_profile} "
+        f"and secondary auth={secondary_profile}. No endpoint is classified as vulnerable from HTTP status alone.\n- "
+        + "\n- ".join(observations)
+    )
 
 
 GRAPHQL_DEFAULT_PATHS = ("/graphql", "/api/graphql", "/v1/graphql", "/graphql/console")
