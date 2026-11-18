@@ -540,7 +540,7 @@ async def probe_differential_idor(
                 resp_b = await client.get(url, headers=ctx.secondary_auth.to_http_headers())
             except (httpx.TimeoutException, httpx.NetworkError) as exc:
                 review_required = True
-                observations.append(f"{url}: request failed ({type(exc).__name__}); access outcome is unknown.")
+                observations.append(f"{display_url}: request failed ({type(exc).__name__}); access outcome is unknown.")
                 continue
 
             outcome_a = _http_access_outcome(resp_a)
@@ -564,21 +564,21 @@ async def probe_differential_idor(
                     qualifiers.append("matching-json-structure")
                 suffix = f"; evidence={','.join(qualifiers)}" if qualifiers else ""
                 observations.append(
-                    f"{url}: {evidence}{suffix}; ownership and sharing policy are not established."
+                    f"{display_url}: {evidence}{suffix}; ownership and sharing policy are not established."
                 )
             elif outcome_a == "success" and outcome_b in {"authentication-required", "forbidden"}:
                 observations.append(
-                    f"{url}: {evidence}; secondary session was denied. This is consistent with an enforced restriction, not proof of a vulnerability."
+                    f"{display_url}: {evidence}; secondary session was denied. This is consistent with an enforced restriction, not proof of a vulnerability."
                 )
             elif outcome_a in {"authentication-required", "forbidden"} and outcome_b == "success":
                 review_required = True
                 observations.append(
-                    f"{url}: {evidence}; inverse access difference requires identity, role, and resource-policy review."
+                    f"{display_url}: {evidence}; inverse access difference requires identity, role, and resource-policy review."
                 )
             else:
                 review_required = True
                 observations.append(
-                    f"{url}: {evidence}; endpoint existence, authentication state, or policy remains ambiguous."
+                    f"{display_url}: {evidence}; endpoint existence, authentication state, or policy remains ambiguous."
                 )
 
     prefix = "INCONCLUSIVE_IDOR_REVIEW" if review_required else "ACCESS_CONTROL_OBSERVATION"
