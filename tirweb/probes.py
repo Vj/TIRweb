@@ -368,6 +368,83 @@ async def probe_open_redirect(
     return True, "Open redirect parameter checks passed (no external Location reflection)."
 
 
+async def probe_api_authentication(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> tuple[bool, str]:
+    """Record endpoint authentication evidence without inferring vulnerabilities."""
+    if not ctx.probe_endpoints:
+        return True, (
+            "SKIPPED_NO_ENDPOINTS: Configure one or more in-scope "
+            "--endpoint values to assess API authentication."
+        )
+
+    auth_headers = ctx.primary_auth.to_http_headers()
+    has_auth_context = ctx.primary_auth.is_authenticated
+    observations: list[str] = []
+    inconclusive = False
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=False,
+        event_hooks={"request": [ctx.track_request]},
+    ) as client:
+        for endpoint in ctx.probe_endpoints:
+            url = resolve_endpoint(target, endpoint)
+            parsed = urlparse(url)
+            display_url = urlunparse(parsed._replace(query="", fragment=""))
+
+            try:
+                # Deliberately send no credentials in the first request.
+                unauth = await client.get(url)
+                unauth_outcome = _http_access_outcome(unauth)
+
+                if not has_auth_context:
+                    inconclusive = True
+                    observations.append(
+                        f"{display_url}: unauthenticated={unauth.status_code}/"
+                        f"{unauth_outcome}; authenticated comparison unavailable "
+                        "because no primary credentials were configured."
+                    )
+                    continue
+
+                authenticated = await client.get(url, headers=auth_headers)
+                auth_outcome = _http_access_outcome(authenticated)
+
+                if (
+                    unauth.status_code == 401
+                    and 200 <= authenticated.status_code < 300
+                ):
+                    observations.append(
+                        f"{display_url}: unauthenticated=401/"
+                        f"{unauth_outcome}; authenticated="
+                        f"{authenticated.status_code}/{auth_outcome}; "
+                        "authentication requirement observed for this request."
+                    )
+                else:
+                    inconclusive = True
+                    observations.append(
+                        f"{display_url}: unauthenticated={unauth.status_code}/"
+                        f"{unauth_outcome}; authenticated="
+                        f"{authenticated.status_code}/{auth_outcome}; "
+                        "authentication policy or endpoint behavior requires review."
+                    )
+
+            except (httpx.TimeoutException, httpx.NetworkError) as exc:
+                inconclusive = True
+                observations.append(
+                    f"{display_url}: request failed ({type(exc).__name__}); "
+                    "authentication outcome is unknown."
+                )
+
+    prefix = "INCONCLUSIVE_API_AUTH" if inconclusive else "API_AUTH_OBSERVATION"
+    return True, (
+        f"{prefix}: Assessed {len(observations)} configured endpoint(s). "
+        "HTTP status observations alone do not establish a vulnerability. "
+        "Response bodies and credential values are not included in evidence.\n- "
+        + "\n- ".join(observations)
+    )
+
 async def probe_differential_idor(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> tuple[bool, str]:
