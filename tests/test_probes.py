@@ -136,6 +136,70 @@ class TestProbeSecurityHeaders:
 
         assert passed is True
 
+    async def test_http_response_does_not_report_missing_hsts(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            return httpx.Response(
+                200,
+                headers={
+                    "Content-Security-Policy": "default-src 'self'",
+                    "X-Content-Type-Options": "nosniff",
+                    "X-Frame-Options": "DENY",
+                    "Referrer-Policy": "no-referrer",
+                    "Permissions-Policy": "camera=()",
+                },
+            )
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext())
+        passed, detail = await probe_security_headers(
+            "http://app.example.in", dummy_check, ctx
+        )
+
+        assert passed is True
+        assert "HSTS missing" not in detail
+        assert "HSTS=NOT_ASSESSED" in detail
+        assert "Response scheme=http" in detail
+
+    async def test_follows_same_host_http_to_https_upgrade_and_checks_hsts(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        requested_urls: list[str] = []
+
+        def handler(request: httpx.Request) -> httpx.Response:
+            requested_urls.append(str(request.url))
+            if request.url.scheme == "http":
+                return httpx.Response(
+                    301, headers={"Location": "https://app.example.in/"}
+                )
+            return httpx.Response(
+                200,
+                headers={
+                    "Content-Security-Policy": "default-src 'self'",
+                    "X-Content-Type-Options": "nosniff",
+                    "X-Frame-Options": "DENY",
+                    "Referrer-Policy": "no-referrer",
+                    "Permissions-Policy": "camera=()",
+                },
+            )
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(primary_auth=AuthContext())
+        passed, detail = await probe_security_headers(
+            "http://app.example.in", dummy_check, ctx
+        )
+
+        assert passed is False
+        assert "HSTS missing" in detail
+        assert "Requested URL=http://app.example.in" in detail
+        assert "Final URL=https://app.example.in/" in detail
+        assert "Response scheme=https" in detail
+        assert requested_urls == [
+            "http://app.example.in",
+            "https://app.example.in/",
+        ]
+
     async def test_fails_on_missing_headers_and_version_leaks(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
