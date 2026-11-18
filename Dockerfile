@@ -6,7 +6,7 @@ FROM debian:bookworm-slim AS security-tools
 ARG TARGETARCH
 ARG NUCLEI_VERSION=3.3.7
 ARG TRIVY_VERSION=0.76.2
-ARG TESTSSL_VERSION=v3.2.5
+ARG TESTSSL_VERSION=3.2
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
@@ -36,8 +36,8 @@ RUN ARCH=$([ "$TARGETARCH" = "arm64" ] && echo "ARM64" || echo "64bit") && \
     chmod +x trivy && \
     rm trivy.tar.gz
 
-# 3. Install testssl.sh
-RUN git clone --depth 1 --branch "${TESTSSL_VERSION}" https://github.com/drwetter/testssl.sh.git /opt/testssl.sh && \
+# 3. Install testssl.sh from its current upstream repository and stable branch
+RUN git clone --depth 1 --branch "${TESTSSL_VERSION}" https://github.com/testssl/testssl.sh.git /opt/testssl.sh && \
     rm -rf /opt/testssl.sh/.git
 
 
