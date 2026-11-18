@@ -249,48 +249,88 @@ class TestProbeDifferentialIdor:
         assert passed is True
         assert "SKIPPED_SECONDARY_AUTH" in detail
 
-    async def test_passes_when_token_b_gets_403_forbidden(
+    async def test_reports_primary_success_and_secondary_forbidden_as_restriction(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
-            auth_hdr = request.headers.get("Authorization", "")
-            if auth_hdr == "Bearer token_user_a":
-                return httpx.Response(200, json={"order_id": "ORD-101", "amount": 4500})
+            if request.headers.get("Authorization") == "Bearer token_user_a":
+                return httpx.Response(200, json={"status": "ok"})
             return httpx.Response(403, json={"error": "Forbidden"})
 
         patch_httpx_transport(handler)
         ctx = ScanContext(
             primary_auth=AuthContext(bearer_token="token_user_a"),
             secondary_auth=AuthContext(bearer_token="token_user_b"),
-            probe_endpoints=["/api/v1/orders/ORD-101"],
+            probe_endpoints=["/api/v1/profile"],
         )
         passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
 
         assert passed is True
-        assert "Token B properly isolated" in detail
+        assert "ACCESS_CONTROL_OBSERVATION" in detail
+        assert "primary=200/success" in detail
+        assert "secondary=403/forbidden" in detail
+        assert "not proof of a vulnerability" in detail
+        assert "token_user_a" not in detail
+        assert "token_user_b" not in detail
 
-    async def test_marks_dual_200_as_inconclusive_for_ownership_review(
+    async def test_dual_success_remains_inconclusive_with_endpoint_evidence(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
-        def handler(request: httpx.Request) -> httpx.Response:
-            # Simulates broken object-level authorization returning User A's record to User B
-            return httpx.Response(
-                200,
-                json={"account_id": 9001, "kyc_status": "VERIFIED", "balance": 125000.50},
-            )
-
-        patch_httpx_transport(handler)
+        patch_httpx_transport(
+            lambda request: httpx.Response(200, json={"account": "test-account"})
+        )
         ctx = ScanContext(
-            primary_auth=AuthContext(bearer_token="token_user_a"),
-            secondary_auth=AuthContext(bearer_token="token_user_b"),
-            probe_endpoints=["/api/v1/accounts/9001"],
+            primary_auth=AuthContext(bearer_token="user_a"),
+            secondary_auth=AuthContext(cookies={"sid": "user_b"}),
+            probe_endpoints=["/api/v1/accounts/test-account"],
         )
         passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
 
         assert passed is True
         assert "INCONCLUSIVE_IDOR_REVIEW" in detail
-        assert "not proof of unauthorized access" in detail
-        assert "/api/v1/accounts/9001" in detail
+        assert "primary=200/success" in detail
+        assert "secondary=200/success" in detail
+        assert "ownership and sharing policy are not established" in detail
+        assert "auth=bearer/authorization" in detail
+        assert "sid" not in detail
+
+    async def test_rate_limit_and_not_found_are_ambiguous_not_vulnerabilities(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        def handler(request: httpx.Request) -> httpx.Response:
+            if request.url.path.endswith("/limited"):
+                return httpx.Response(429)
+            return httpx.Response(404)
+
+        patch_httpx_transport(handler)
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="user_a"),
+            secondary_auth=AuthContext(bearer_token="user_b"),
+            probe_endpoints=["/api/limited", "/api/missing"],
+        )
+        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_IDOR_REVIEW" in detail
+        assert "429/rate-limited" in detail
+        assert "404/not-found-or-hidden" in detail
+        assert "No endpoint is classified as vulnerable" in detail
+
+    async def test_redirect_is_not_followed_and_is_inconclusive(
+        self, dummy_check: ChecklistItem, patch_httpx_transport
+    ) -> None:
+        patch_httpx_transport(lambda request: httpx.Response(302, headers={"Location": "https://outside.example/"}))
+        ctx = ScanContext(
+            primary_auth=AuthContext(bearer_token="user_a"),
+            secondary_auth=AuthContext(bearer_token="user_b"),
+            probe_endpoints=["/api/v1/private"],
+        )
+        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+
+        assert passed is True
+        assert "INCONCLUSIVE_IDOR_REVIEW" in detail
+        assert "302/redirect-not-followed" in detail
+        assert "outside.example" not in detail
 
 
 # ==============================================================================
