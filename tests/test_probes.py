@@ -34,7 +34,24 @@ def dummy_check() -> ChecklistItem:
         ),
     )
 
+@pytest.mark.asyncio
+async def test_idor_skips_when_primary_identity_is_missing(
+    dummy_check: ChecklistItem,
+) -> None:
+    ctx = ScanContext(
+        primary_auth=AuthContext(),
+        secondary_auth=AuthContext(bearer_token="test-user-b"),
+    )
 
+    passed, detail = await probe_differential_idor(
+        "https://app.example.in",
+        dummy_check,
+        ctx,
+    )
+
+    assert passed is True
+    assert "SKIPPED_PRIMARY_AUTH" in detail
+    
 @pytest.fixture
 def patch_httpx_transport(monkeypatch: pytest.MonkeyPatch):
     """Monkeypatch httpx.AsyncClient inside tirweb.probes to route via MockTransport."""
