@@ -46,7 +46,6 @@ packages = ["tirweb"]
 
 [tool.hatch.build.targets.wheel.force-include]
 "rules" = "tirweb/rules"
-"tirweb/templates" = "tirweb/templates"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
