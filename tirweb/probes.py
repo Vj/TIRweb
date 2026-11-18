@@ -394,7 +394,6 @@ async def probe_metafiles_and_ria_policies(
                 issues.append(f"{ria_path} allows wildcard '*' cross-domain access.")
 
     if issues:
-        details = issues + potential_disclosures
         return False, "Metafile / RIA policy findings:\n- " + "\n- ".join(issues)
     if potential_disclosures:
         return True, "INCONCLUSIVE_METAFILE_REVIEW: Manual access-control verification required.\n- " + "\n- ".join(potential_disclosures)
