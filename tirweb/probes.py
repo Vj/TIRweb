@@ -394,7 +394,8 @@ async def probe_metafiles_and_ria_policies(
                 issues.append(f"{ria_path} allows wildcard '*' cross-domain access.")
 
     if issues:
-        return False, "Metafile / RIA policy findings:\n- " + "\n- ".join(issues)
+        details = issues + potential_disclosures
+        return False, "Metafile / RIA policy findings:\n- " + "\n- ".join(details)
     if potential_disclosures:
         return True, "INCONCLUSIVE_METAFILE_REVIEW: Manual access-control verification required.\n- " + "\n- ".join(potential_disclosures)
     return True, "Metafiles (robots.txt/sitemap.xml) and RIA cross-domain policies verified clean."
@@ -583,7 +584,7 @@ async def probe_differential_idor(
     prefix = "INCONCLUSIVE_IDOR_REVIEW" if review_required else "ACCESS_CONTROL_OBSERVATION"
     return True, (
         f"{prefix}: Compared {len(endpoints)} endpoint(s) using primary auth={primary_profile} "
-        f"and secondary auth={secondary_profile}. No endpoint is classified as vulnerable from HTTP status alone.\n- "
+        f"and secondary auth={secondary_profile}. No endpoint is classified as vulnerable from HTTP status alone; matching responses are not proof of unauthorized access. Verify resource ownership and sharing policy.\n- "
         + "\n- ".join(observations)
     )
 
