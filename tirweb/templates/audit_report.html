@@ -37,7 +37,7 @@
     }
 
     .container {
-      max-width: 1120px;
+      max-width: 1140px;
       margin: 0 auto;
       background: var(--surface);
       border: 1px solid var(--border);
@@ -46,21 +46,31 @@
       box-shadow: 0 1px 4px rgba(15, 23, 42, 0.06);
     }
 
-    /* Header */
     .report-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
       border-bottom: 2px solid var(--primary);
-      padding-bottom: 18px;
-      margin-bottom: 24px;
+      padding-bottom: 16px;
+      margin-bottom: 20px;
       gap: 16px;
     }
     .report-header h1 {
-      margin: 0 0 6px 0;
+      margin: 0 0 4px 0;
       font-size: 22px;
       color: var(--primary);
     }
+    .conclusive-pill {
+      display: inline-block;
+      margin-top: 6px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      background: var(--primary);
+      color: #fff;
+      font-weight: 600;
+      font-size: 12px;
+    }
+
     .meta-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
@@ -69,7 +79,7 @@
       border: 1px solid #bfdbfe;
       border-radius: 8px;
       padding: 14px 18px;
-      margin-bottom: 24px;
+      margin-bottom: 20px;
     }
     .meta-item span {
       display: block;
@@ -80,26 +90,36 @@
     }
     .meta-item strong { font-size: 13.5px; }
 
-    /* KPI Summary Cards */
+    .profile-note {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 10px 14px;
+      margin-bottom: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
     .kpi-grid {
       display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 12px;
-      margin-bottom: 28px;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px;
+      margin-bottom: 26px;
     }
     .kpi-card {
       border: 1px solid var(--border);
       border-radius: 8px;
-      padding: 12px 14px;
+      padding: 12px 10px;
       text-align: center;
       background: #fff;
     }
-    .kpi-card .num { font-size: 22px; font-weight: 700; }
-    .kpi-card .lbl { font-size: 11px; color: var(--muted); text-transform: uppercase; }
+    .kpi-card .num { font-size: 21px; font-weight: 700; }
+    .kpi-card .lbl { font-size: 10.5px; color: var(--muted); text-transform: uppercase; }
     .kpi-fail .num { color: var(--crit); }
     .kpi-pass .num { color: var(--pass); }
     .kpi-hybrid .num { color: var(--high); }
     .kpi-manual .num { color: var(--low); }
+    .kpi-inc .num { color: #64748b; }
 
     h2 {
       font-size: 16px;
@@ -114,7 +134,6 @@
       color: #1e293b;
     }
 
-    /* Badges */
     .badge {
       display: inline-block;
       padding: 2px 8px;
@@ -129,11 +148,21 @@
     .sev-Low, .sev-Info { background: var(--low-bg); color: var(--low); }
 
     .st-FAIL { background: var(--crit-bg); color: var(--crit); }
-    .st-PASS { background: var(--pass-bg); color: var(--pass); }
+    .st-NO_ISSUES_FOUND { background: var(--pass-bg); color: var(--pass); }
     .st-HYBRID_REVIEW { background: var(--med-bg); color: var(--med); }
-    .st-MANUAL_REQUIRED, .st-TOOL_MISSING, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
+    .st-MANUAL_REQUIRED { background: var(--low-bg); color: var(--low); }
+    .st-INCONCLUSIVE, .st-DRY_RUN { background: #f1f5f9; color: #334155; }
 
-    /* Interactive Filter Toolbar (Hidden in Print/PDF) */
+    .cov-badge {
+      display: inline-block;
+      padding: 2px 7px;
+      border-radius: 4px;
+      background: #f1f5f9;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 500;
+    }
+
     .filter-bar {
       display: flex;
       flex-wrap: wrap;
@@ -165,10 +194,9 @@
       border: 1px solid #cbd5e1;
       border-radius: 6px;
       font-size: 12px;
-      min-width: 220px;
+      min-width: 240px;
     }
 
-    /* Tables */
     table {
       width: 100%;
       border-collapse: collapse;
@@ -187,28 +215,85 @@
       color: #1e293b;
     }
 
-    /* Finding Cards */
     .finding-card {
       border: 1px solid var(--border);
       border-left: 4px solid var(--primary);
       border-radius: 6px;
-      padding: 12px 14px;
-      margin-bottom: 12px;
+      padding: 14px 16px;
+      margin-bottom: 14px;
       background: #fff;
       page-break-inside: avoid;
     }
     .finding-card[data-status="FAIL"] { border-left-color: var(--crit); }
-    .finding-card[data-status="PASS"] { border-left-color: var(--pass); }
+    .finding-card[data-status="NO_ISSUES_FOUND"] { border-left-color: var(--pass); }
     .finding-card[data-status="HYBRID_REVIEW"] { border-left-color: #d97706; }
+    .finding-card[data-status="INCONCLUSIVE"] { border-left-color: #94a3b8; }
 
     .finding-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       gap: 10px;
       margin-bottom: 6px;
     }
-    .finding-title { font-weight: 700; font-size: 13px; }
+    .finding-title { font-weight: 700; font-size: 13.5px; }
+
+    .atomic-list {
+      margin: 10px 0 6px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .atomic-item {
+      border: 1px solid #fecaca;
+      background: #fffafa;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .atomic-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+    .atomic-meta {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .atomic-remediation {
+      font-size: 12px;
+      color: #1e293b;
+      margin-top: 4px;
+    }
+
+    .playbook-box {
+      margin-top: 10px;
+      border: 1px solid #cbd5e1;
+      background: #f8fafc;
+      border-radius: 6px;
+      padding: 10px 12px;
+    }
+    .playbook-box ol {
+      margin: 6px 0 10px 18px;
+      padding: 0;
+    }
+    .playbook-fields {
+      display: grid;
+      grid-template-columns: 1fr 180px 2fr;
+      gap: 8px;
+    }
+    .playbook-fields input, .playbook-fields select {
+      width: 100%;
+      padding: 5px 8px;
+      border: 1px solid #cbd5e1;
+      border-radius: 4px;
+      font-size: 12px;
+      background: #fff;
+    }
+
     .evidence-box {
       background: #f8fafc;
       border: 1px solid var(--border);
@@ -222,7 +307,7 @@
     }
     .tag-row {
       margin-top: 6px;
-      font-size: 11px;
+      font-size: 11.5px;
       color: var(--muted);
     }
 
@@ -241,6 +326,7 @@
       <div>
         <h1>{{ tool }} — Web &amp; API Security Compliance Report</h1>
         <div style="color: var(--muted);">OWASP WSTG v4.2, CERT-In, DPDP Rules 2025 &amp; RBI Regulatory Audit</div>
+        <div class="conclusive-pill">{{ summary.get('conclusive_label', '0 of 0 conclusively assessed') }}</div>
       </div>
       <div style="text-align: right; font-size: 12px; color: var(--muted);">
         Schema v{{ schema_version }}<br />
@@ -255,15 +341,27 @@
       <div class="meta-item"><span>Assessing Team</span><strong>{{ auditor_org }}</strong></div>
     </div>
 
+    {% if profile_selection and profile_selection.get('excluded_count', 0) > 0 %}
+    <div class="profile-note">
+      <strong>Profile Scope Transparency:</strong>
+      Selected <strong>{{ profile_selection.get('selected_count') }} of {{ profile_selection.get('total_available') }}</strong> checklist controls for the <strong>{{ profile }}</strong> profile.
+      Excluded {{ profile_selection.get('excluded_count') }} domain-specific control(s):
+      {% for ex in profile_selection.get('excluded_checks', []) %}
+        <code>{{ ex.check_id }}</code> ({{ ex.reason }}){% if not loop.last %}, {% endif %}
+      {% endfor %}.
+    </div>
+    {% endif %}
+
     <div class="kpi-grid">
-      <div class="kpi-card"><div class="num">{{ summary.get('total', results|length) }}</div><div class="lbl">Total Checks</div></div>
-      <div class="kpi-card kpi-fail"><div class="num">{{ summary.get('fail', 0) }}</div><div class="lbl">Failed</div></div>
-      <div class="kpi-card kpi-pass"><div class="num">{{ summary.get('pass', 0) }}</div><div class="lbl">Passed</div></div>
+      <div class="kpi-card"><div class="num">{{ summary.get('total', results|length) }}</div><div class="lbl">Controls Evaluated</div></div>
+      <div class="kpi-card kpi-fail"><div class="num">{{ summary.get('atomic_findings_total', 0) }}</div><div class="lbl">Atomic Findings</div></div>
+      <div class="kpi-card kpi-pass"><div class="num">{{ summary.get('no_issues_found', 0) }}</div><div class="lbl">No Issues Found</div></div>
       <div class="kpi-card kpi-hybrid"><div class="num">{{ summary.get('hybrid_review', 0) }}</div><div class="lbl">Hybrid Review</div></div>
       <div class="kpi-card kpi-manual"><div class="num">{{ summary.get('manual_required', 0) }}</div><div class="lbl">Manual Playbook</div></div>
+      <div class="kpi-card kpi-inc"><div class="num">{{ summary.get('inconclusive', 0) }}</div><div class="lbl">Inconclusive</div></div>
     </div>
 
-    <h2>1. Failed Findings by Severity</h2>
+    <h2>1. Atomic Findings by Severity</h2>
     <table>
       <thead>
         <tr>
@@ -285,17 +383,44 @@
       </tbody>
     </table>
 
-    <h2>2. Indian Statutory &amp; Regulatory Compliance Matrix</h2>
+    {% if tooling_gaps %}
+    <h2>2. Tooling Gaps &amp; Environment Coverage</h2>
+    <p style="color: var(--muted); margin-top: 0;">
+      Optional external scanners below were not present in the execution environment. Native Python HTTPx probes still executed for bound controls; missing binaries are consolidated here rather than reported as vulnerabilities.
+    </p>
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 150px;">Missing Binary</th>
+          <th style="width: 110px;">Affected Checks</th>
+          <th>Check IDs</th>
+          <th>Remediation</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for gap in tooling_gaps %}
+        <tr>
+          <td><strong>{{ gap.tool }}</strong></td>
+          <td>{{ gap.affected_checks_count }}</td>
+          <td>{{ gap.affected_check_ids | join(', ') }}</td>
+          <td>{{ gap.remediation }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+
+    <h2>3. Indian Statutory &amp; Regulatory Compliance Matrix</h2>
     {% for pillar, rows in compliance_matrix.items() %}
       <h3>{{ pillar }}</h3>
       <table>
         <thead>
           <tr>
-            <th style="width: 115px;">Check ID</th>
-            <th style="width: 28%;">Regulatory Clause</th>
+            <th style="width: 110px;">Check ID</th>
+            <th style="width: 26%;">Regulatory Clause</th>
             <th>Control Title</th>
-            <th style="width: 90px;">Severity</th>
-            <th style="width: 125px;">Status</th>
+            <th style="width: 145px;">Coverage</th>
+            <th style="width: 135px;">Status</th>
           </tr>
         </thead>
         <tbody>
@@ -304,7 +429,7 @@
             <td><strong>{{ row.check_id }}</strong></td>
             <td>{{ row.clause }}</td>
             <td>{{ row.title }}</td>
-            <td><span class="badge sev-{{ row.severity }}">{{ row.severity }}</span></td>
+            <td><span class="cov-badge">{{ row.coverage_label }}</span></td>
             <td><span class="badge st-{{ row.status }}">{{ row.status }}</span></td>
           </tr>
           {% endfor %}
@@ -312,15 +437,16 @@
       </table>
     {% endfor %}
 
-    <h2>3. Detailed Technical Audit Results</h2>
+    <h2>4. Detailed Technical Audit Results &amp; Manual Playbooks</h2>
 
     <div class="filter-bar no-print" id="filterBar">
       <button class="filter-btn active" data-filter="ALL">All ({{ results|length }})</button>
       <button class="filter-btn" data-filter="FAIL">Failed ({{ summary.get('fail', 0) }})</button>
       <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review ({{ summary.get('hybrid_review', 0) }})</button>
-      <button class="filter-btn" data-filter="PASS">Passed ({{ summary.get('pass', 0) }})</button>
+      <button class="filter-btn" data-filter="NO_ISSUES_FOUND">No Issues Found ({{ summary.get('no_issues_found', 0) }})</button>
       <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual ({{ summary.get('manual_required', 0) }})</button>
-      <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, or keyword..." />
+      <button class="filter-btn" data-filter="INCONCLUSIVE">Inconclusive ({{ summary.get('inconclusive', 0) }})</button>
+      <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, CWE/CVE, or keyword..." />
     </div>
 
     <div id="findingsList">
@@ -328,7 +454,8 @@
       <div class="finding-card" data-status="{{ item.status }}" data-search="{{ (item.check_id ~ ' ' ~ item.title ~ ' ' ~ item.output_summary ~ ' ' ~ (item.india_compliance|join(' ')))|lower }}">
         <div class="finding-top">
           <div class="finding-title">[{{ item.check_id }}] {{ item.title }}</div>
-          <div>
+          <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
+            <span class="cov-badge">{{ item.coverage_label }}</span>
             <span class="badge sev-{{ item.severity }}">{{ item.severity }}</span>
             <span class="badge st-{{ item.status }}">{{ item.status }}</span>
           </div>
@@ -343,6 +470,48 @@
           <strong>India Compliance:</strong> {{ item.india_compliance | join(' ; ') }}
         </div>
         {% endif %}
+
+        {% if item.findings %}
+        <div class="atomic-list">
+          {% for f in item.findings %}
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>{{ f.title }}</span>
+              <span>
+                {% if f.cve %}<span class="cov-badge">{{ f.cve }}</span>{% endif %}
+                {% if f.cwe %}<span class="cov-badge">{{ f.cwe }}</span>{% endif %}
+                <span class="badge sev-{{ f.severity }}">{{ f.severity }}</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>{{ f.rule_id }}</code> &nbsp;|&nbsp; Confidence: {{ f.confidence }}</div>
+            <div><strong>Evidence:</strong> {{ f.evidence }}</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> {{ f.remediation }}</div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if item.manual_playbook %}
+        <div class="playbook-box">
+          <strong>Manual Verification Playbook:</strong>
+          <ol>
+            {% for step in item.manual_playbook.steps %}
+            <li>{{ step }}</li>
+            {% endfor %}
+          </ol>
+          <div class="playbook-fields">
+            <input type="text" placeholder="Tester Name" value="{{ item.manual_playbook.tester_name }}" />
+            <select>
+              <option value="PENDING" {% if item.manual_playbook.verdict == 'PENDING' %}selected{% endif %}>Verdict: PENDING</option>
+              <option value="PASS" {% if item.manual_playbook.verdict == 'PASS' %}selected{% endif %}>Verdict: PASS</option>
+              <option value="FAIL" {% if item.manual_playbook.verdict == 'FAIL' %}selected{% endif %}>Verdict: FAIL</option>
+              <option value="NOT_APPLICABLE" {% if item.manual_playbook.verdict == 'NOT_APPLICABLE' %}selected{% endif %}>Verdict: N/A</option>
+            </select>
+            <input type="text" placeholder="Manual Evidence / Observation Notes" value="{{ item.manual_playbook.evidence_notes }}" />
+          </div>
+        </div>
+        {% endif %}
+
         <div class="evidence-box">{{ item.output_summary }}</div>
       </div>
       {% endfor %}

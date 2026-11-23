@@ -62,7 +62,45 @@ COPY rules ./rules
 RUN pip install --upgrade pip hatchling && \
     pip install .
 
+# ==============================================================================
+# Stage XX: additional
+# ==============================================================================
+FROM python:3.12-slim-bookworm
 
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    NUCLEI_VERSION=3.3.7 \
+    TRIVY_VERSION=0.58.1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    bash curl ca-certificates git unzip openssl dnsutils bsdmainutils \
+    libpango-1.0-0 libpangoft2-1.0-0 libharfbuzz0b libgdk-pixbuf-2.0-0 \
+    libffi8 shared-mime-info fonts-liberation \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Nuclei & default templates
+RUN curl -sSL "https://github.com/projectdiscovery/nuclei/releases/download/v${NUCLEI_VERSION}/nuclei_${NUCLEI_VERSION}_linux_amd64.zip" -o /tmp/nuclei.zip \
+    && unzip /tmp/nuclei.zip -d /usr/local/bin/ nuclei \
+    && rm /tmp/nuclei.zip \
+    && nuclei -update-templates -silent || true
+
+# Install Trivy SCA scanner
+RUN curl -sSL "https://github.com/aquasecurity/trivy/releases/download/v${TRIVY_VERSION}/trivy_${TRIVY_VERSION}_Linux-64bit.tar.gz" \
+    | tar -xz -C /usr/local/bin trivy
+
+# Install testssl.sh
+RUN git clone --depth 1 https://github.com/drwetter/testssl.sh.git /opt/testssl.sh \
+    && ln -s /opt/testssl.sh/testssl.sh /usr/local/bin/testssl.sh
+
+WORKDIR /workspace
+COPY pyproject.toml requirements.txt README.md ./
+COPY tirweb/ ./tirweb/
+COPY rules/ ./rules/
+
+RUN pip install --no-cache-dir -r requirements.txt && pip install --no-cache-dir --no-deps .
+
+ENTRYPOINT ["tirweb"]
+CMD ["doctor"]
 # ==============================================================================
 # Stage 3: Hardened Minimal Runtime Image with WeasyPrint & Scanners
 # ==============================================================================

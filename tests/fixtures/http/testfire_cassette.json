@@ -1,0 +1,21 @@
+{
+    "target": "http://demo.testfire.net",
+    "responses": {
+      "GET http://demo.testfire.net": {
+        "status_code": 200,
+        "headers": {
+          "Server": "Apache-Coyote/1.1",
+          "Content-Type": "text/html;charset=ISO-8859-1"
+        },
+        "body": "<html><head><title>Altoro Mutual</title></head><body><form method='post' action='/doLogin'><input type='text' name='uid'><input type='password' name='passw'></form></body></html>"
+      },
+      "GET http://demo.testfire.net/login.jsp": {
+        "status_code": 200,
+        "headers": {
+          "Server": "Apache-Coyote/1.1",
+          "Content-Type": "text/html;charset=ISO-8859-1"
+        },
+        "body": "<html><body><form method='post' action='/doLogin'><input type='password' name='passw'></form></body></html>"
+      }
+    }
+  }

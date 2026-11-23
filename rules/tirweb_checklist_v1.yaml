@@ -90,7 +90,7 @@ modules:
         category: "Identification and Authentication Failures"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_auth", "manual_proxy"]
+        tool_binding: ["httpx_auth_surface", "nuclei_auth", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify brute-force protections (progressive delay, CAPTCHA, or account lockout) are enforced on login endpoints."
@@ -134,7 +134,7 @@ modules:
         category: "Session Management"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["httpx_jwt", "httpx_headers", "manual_proxy"]
+        tool_binding: ["httpx_cookies", "httpx_csrf", "httpx_jwt", "httpx_headers", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Confirm session identifiers and JWTs use strong cryptographic algorithms/entropy and are regenerated immediately upon authentication (preventing session fixation)."
@@ -178,7 +178,7 @@ modules:
         category: "API-Specific & Microservices Security"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["httpx_graphql", "nuclei_bola", "nuclei_bfla", "manual_proxy"]        
+        tool_binding: ["httpx_graphql", "httpx_api_auth", "nuclei_bola", "nuclei_bfla", "manual_proxy"]        
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify JSON/form endpoints reject unexpected privileged fields (mass assignment / auto-binding) and avoid excessive data exposure beyond UI requirements."
@@ -262,7 +262,7 @@ modules:
         category: "Cryptographic Failures"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["testssl", "httpx_headers"]
+        tool_binding: ["httpx_tls", "testssl"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify all endpoints enforce HTTPS with no unencrypted HTTP fallback."
@@ -308,7 +308,7 @@ modules:
         category: "Cryptographic Failures / Data Privacy"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["httpx_jwt", "httpx_headers", "manual_proxy"]
+        tool_binding: ["httpx_cache", "httpx_client_assets", "httpx_jwt", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify session tokens, API keys, passwords, and PII are never transmitted in URL query parameters or exposed in unencrypted JWS payloads."
@@ -355,7 +355,7 @@ modules:
         category: "Injection"
         severity: "Critical"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_injection", "manual_proxy"]
+        tool_binding: ["httpx_canary_inj", "nuclei_injection", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify all database queries use parameterized statements or prepared queries rather than string concatenation."
@@ -377,7 +377,7 @@ modules:
         category: "Injection"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_injection", "httpx_headers", "manual_proxy"]
+        tool_binding: ["httpx_canary_inj", "nuclei_injection", "httpx_headers", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Test all parameters, paths, user-generated content fields, and client-side DOM sinks for reflected, stored, and DOM-based XSS."
@@ -462,7 +462,7 @@ modules:
         category: "Input Validation Testing"
         severity: "Medium"
         execution_mode: "manual"
-        tool_binding: ["manual_proxy"]
+        tool_binding: ["httpx_hpp_consistency", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Send duplicate query/body parameters across WAF, reverse proxy, and backend handlers to verify consistent parameter precedence and prevent validation or business logic bypass."
@@ -540,7 +540,7 @@ modules:
         category: "Insecure Design"
         severity: "High"
         execution_mode: "manual"
-        tool_binding: ["manual_review", "manual_proxy"]
+        tool_binding: ["httpx_errors", "manual_review", "manual_proxy"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify threat models are documented for critical business workflows and trust boundaries."
@@ -676,7 +676,7 @@ modules:
         category: "Security Misconfiguration"
         severity: "Medium"
         execution_mode: "automated"
-        tool_binding: ["httpx_headers", "httpx_cors", "nuclei_exposures"]
+        tool_binding: ["httpx_headers", "httpx_methods", "httpx_cors", "nuclei_exposures"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify CSP, X-Frame-Options (or frame-ancestors), X-Content-Type-Options: nosniff, Referrer-Policy, and Permissions-Policy headers are present."
@@ -698,7 +698,7 @@ modules:
         category: "Infrastructure & Deployment Exposure"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["nuclei_exposures"]
+        tool_binding: ["httpx_discovery", "httpx_exposed_artifacts", "nuclei_exposures"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify source repositories (.git, .svn), backup files (.bak, .old, .sql), and environment files (.env, web.config) are inaccessible over HTTP."
@@ -720,7 +720,7 @@ modules:
         category: "Vulnerable and Outdated Components"
         severity: "High"
         execution_mode: "automated"
-        tool_binding: ["trivy_sca"]
+        tool_binding: ["httpx_cve_fingerprint", "trivy_sca"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Maintain a complete inventory (SBOM & CBOM) of server-side and client-side third-party components and scan for known CVEs."
@@ -742,7 +742,7 @@ modules:
         category: "Software and Data Integrity Failures"
         severity: "High"
         execution_mode: "hybrid"
-        tool_binding: ["nuclei_exposures", "manual_review"]
+        tool_binding: ["httpx_client_assets", "nuclei_exposures", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Verify all externally hosted JavaScript/CSS assets (CDNs, analytics, payment widgets) enforce cryptographic Subresource Integrity (SRI) hashes."
@@ -805,8 +805,8 @@ modules:
         title: "[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain & Virtual Host Enumeration"
         category: "Information Gathering"
         severity: "Medium"
-        execution_mode: "manual"
-        tool_binding: ["manual_review"]
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_arch_and_dns", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Audit public search engine caches/indexes to ensure sensitive documents, admin URLs, and backup files are not indexed."
@@ -843,7 +843,7 @@ modules:
         category: "Information Gathering"
         severity: "Medium"
         execution_mode: "manual"
-        tool_binding: ["manual_review"]
+        tool_binding: ["httpx_source_metadata", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Inspect rendered HTML comments, bundled JavaScript assets, and downloadable PDF/Office documents (EXIF/author metadata) to confirm no internal endpoints, developer notes, or API secrets are exposed."
@@ -860,8 +860,8 @@ modules:
         title: "[WSTG-INFO-10] Application Architecture, WAF & Reverse-Proxy Trust Boundary Mapping"
         category: "Information Gathering"
         severity: "Info"
-        execution_mode: "manual"
-        tool_binding: ["manual_review"]
+        execution_mode: "hybrid"
+        tool_binding: ["httpx_arch_and_dns", "manual_review"]
         profiles: ["core", "bfsi_fintech", "saas_multitenant", "healthcare_pii", "ecommerce"]
         test_procedures:
           - "Map DNS, CDN, WAF, load balancer, and backend origin tiers to verify origin IPs cannot be bypassed directly around the WAF."

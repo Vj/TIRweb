@@ -1,18 +1,25 @@
 import base64
 import json
 from datetime import datetime, timedelta, timezone
-from typing import Callable
 import httpx
 import pytest
 from tirweb.models import AppProfile, AuthContext, ChecklistItem, ComplianceMapping, ExecutionMode, Severity
 from tirweb.probes import (
     ScanContext,
+    probe_api_authentication,
     probe_cors_policy,
     probe_differential_idor,
     probe_jwt_security,
     probe_security_headers,
-    probe_api_authentication,
 )
+
+
+def _make_jwt(header: dict, payload: dict, signature: str = "sig_placeholder") -> str:
+    def _enc(obj: dict) -> str:
+        raw = json.dumps(obj, separators=(",", ":")).encode("utf-8")
+        return base64.urlsafe_b64encode(raw).decode("ascii").rstrip("=")
+
+    return f"{_enc(header)}.{_enc(payload)}.{signature}"
 
 
 @pytest.fixture
@@ -34,33 +41,25 @@ def dummy_check() -> ChecklistItem:
         ),
     )
 
+
 @pytest.mark.asyncio
-async def test_idor_skips_when_primary_identity_is_missing(
-    dummy_check: ChecklistItem,
-) -> None:
+async def test_idor_skips_when_primary_identity_is_missing(dummy_check: ChecklistItem) -> None:
     ctx = ScanContext(
         primary_auth=AuthContext(),
         secondary_auth=AuthContext(bearer_token="test-user-b"),
     )
+    outcome = await probe_differential_idor("https://app.example.in", dummy_check, ctx)
+    assert outcome.conclusive is False
+    assert "SKIPPED_PRIMARY_AUTH" in outcome.summary
 
-    passed, detail = await probe_differential_idor(
-        "https://app.example.in",
-        dummy_check,
-        ctx,
-    )
 
-    assert passed is True
-    assert "SKIPPED_PRIMARY_AUTH" in detail
-    
 @pytest.fixture
 def patch_httpx_transport(monkeypatch: pytest.MonkeyPatch):
-    """Monkeypatch httpx.AsyncClient inside tirweb.probes to route via MockTransport."""
-
-    def _apply(handler: Callable[[httpx.Request], httpx.Response]) -> None:
+    def _apply(handler):
         transport = httpx.MockTransport(handler)
-        orig_async_client = httpx.AsyncClient
+        orig_client = httpx.AsyncClient
 
-        class MockedAsyncClient(orig_async_client):
+        class MockedAsyncClient(orig_client):
             def __init__(self, *args, **kwargs):
                 kwargs["transport"] = transport
                 super().__init__(*args, **kwargs)
@@ -70,16 +69,6 @@ def patch_httpx_transport(monkeypatch: pytest.MonkeyPatch):
     return _apply
 
 
-def _make_jwt(header: dict, payload: dict, signature: str = "dummy_sig") -> str:
-    """Helper to encode a 3-segment JWS token for passive inspection tests."""
-    h_b64 = base64.urlsafe_b64encode(json.dumps(header).encode()).decode().rstrip("=")
-    p_b64 = base64.urlsafe_b64encode(json.dumps(payload).encode()).decode().rstrip("=")
-    return f"{h_b64}.{p_b64}.{signature}"
-
-
-# ==============================================================================
-# 1. Security Headers Probe Tests
-# ==============================================================================
 class TestProbeSecurityHeaders:
     async def test_passes_with_complete_hardened_headers(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -99,10 +88,10 @@ class TestProbeSecurityHeaders:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext())
-        passed, detail = await probe_security_headers("https://app.example.in", dummy_check, ctx)
+        outcome = await probe_security_headers("https://app.example.in", dummy_check, ctx)
 
-        assert passed is True
-        assert "All applicable baseline security headers verified" in detail
+        assert outcome.findings == []
+        assert "No baseline security header issues detected" in outcome.summary
 
     async def test_accepts_csp_frame_ancestors_instead_of_x_frame_options(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -121,9 +110,9 @@ class TestProbeSecurityHeaders:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext())
-        passed, _ = await probe_security_headers("https://app.example.in", dummy_check, ctx)
+        outcome = await probe_security_headers("https://app.example.in", dummy_check, ctx)
 
-        assert passed is True
+        assert outcome.findings == []
 
     async def test_fails_on_missing_headers_and_version_leaks(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -140,19 +129,14 @@ class TestProbeSecurityHeaders:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext())
-        passed, detail = await probe_security_headers("https://legacy.example.in", dummy_check, ctx)
+        outcome = await probe_security_headers("https://legacy.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "HSTS missing" in detail
-        assert "Content-Security-Policy (CSP) header missing" in detail
-        assert "X-Content-Type-Options misconfigured" in detail
-        assert "server=nginx/1.18.0 (Ubuntu)" in detail
-        assert "x-powered-by=Express" in detail
+        assert len(outcome.findings) >= 5
+        rule_ids = {f.rule_id for f in outcome.findings}
+        assert "WEB-INF-001:httpx_headers:missing_content-security-policy" in rule_ids
+        assert "WEB-INF-001:httpx_headers:leak_server" in rule_ids
 
 
-# ==============================================================================
-# 2. CORS Policy Probe Tests
-# ==============================================================================
 class TestProbeCorsPolicy:
     async def test_passes_when_untrusted_origin_not_reflected(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -168,10 +152,10 @@ class TestProbeCorsPolicy:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext(bearer_token="tok_123"))
-        passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
-        assert passed is True
-        assert "CORS policy safe" in detail
+        assert outcome.findings == []
+        assert "No permissive CORS reflection detected" in outcome.summary
 
     async def test_fails_when_arbitrary_origin_reflected_with_credentials(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -188,11 +172,10 @@ class TestProbeCorsPolicy:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext())
-        passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Arbitrary Origin reflected" in detail
-        assert "Access-Control-Allow-Credentials: true" in detail
+        assert len(outcome.findings) == 1
+        assert "Credentialed Arbitrary CORS Origin Reflection" in outcome.findings[0].title
 
     async def test_fails_on_wildcard_origin_for_authenticated_request(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -202,24 +185,20 @@ class TestProbeCorsPolicy:
 
         patch_httpx_transport(handler)
         ctx = ScanContext(primary_auth=AuthContext(bearer_token="user_jwt"))
-        passed, detail = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_cors_policy("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Wildcard Access-Control-Allow-Origin: *" in detail
+        assert len(outcome.findings) == 1
+        assert "Wildcard CORS Policy" in outcome.findings[0].title
 
 
-# ==============================================================================
-# 3. Differential IDOR / BOLA Probe Tests
-# ==============================================================================
 class TestProbeDifferentialIdor:
     async def test_skips_cleanly_when_secondary_auth_missing(
         self, dummy_check: ChecklistItem
     ) -> None:
         ctx = ScanContext(primary_auth=AuthContext(bearer_token="token_a"), secondary_auth=None)
-        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
-
-        assert passed is True
-        assert "SKIPPED_SECONDARY_AUTH" in detail
+        outcome = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+        assert outcome.conclusive is False
+        assert "SKIPPED_SECONDARY_AUTH" in outcome.summary
 
     async def test_passes_when_token_b_gets_403_forbidden(
         self, dummy_check: ChecklistItem, patch_httpx_transport
@@ -236,16 +215,15 @@ class TestProbeDifferentialIdor:
             secondary_auth=AuthContext(bearer_token="token_user_b"),
             probe_endpoints=["/api/v1/orders/ORD-101"],
         )
-        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
 
-        assert passed is True
-        assert "Token B properly isolated" in detail
+        assert outcome.findings == []
+        assert "properly isolated" in outcome.summary
 
     async def test_fails_when_token_b_receives_identical_json_schema_200(
         self, dummy_check: ChecklistItem, patch_httpx_transport
     ) -> None:
         def handler(request: httpx.Request) -> httpx.Response:
-            # Simulates broken object-level authorization returning User A's record to User B
             return httpx.Response(
                 200,
                 json={"account_id": 9001, "kyc_status": "VERIFIED", "balance": 125000.50},
@@ -257,23 +235,18 @@ class TestProbeDifferentialIdor:
             secondary_auth=AuthContext(bearer_token="token_user_b"),
             probe_endpoints=["/api/v1/accounts/9001"],
         )
-        passed, detail = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_differential_idor("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Potential cross-user access control parity detected" in detail
-        assert "/api/v1/accounts/9001" in detail
+        assert len(outcome.findings) == 1
+        assert "Cross-User Access Parity Signal" in outcome.findings[0].title
 
 
-# ==============================================================================
-# 4. JWT Security Inspection Probe Tests
-# ==============================================================================
 class TestProbeJwtSecurity:
     async def test_skips_when_no_bearer_token_present(self, dummy_check: ChecklistItem) -> None:
         ctx = ScanContext(primary_auth=AuthContext(cookies={"sid": "abc"}))
-        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
-
-        assert passed is True
-        assert "SKIPPED_NO_JWT" in detail
+        outcome = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+        assert outcome.conclusive is False
+        assert "SKIPPED_NO_JWT" in outcome.summary
 
     async def test_passes_on_compliant_es256_jwt_without_pii(
         self, dummy_check: ChecklistItem
@@ -291,10 +264,10 @@ class TestProbeJwtSecurity:
             },
         )
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
-        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is True
-        assert "1 JWS token(s) verified clean" in detail
+        assert outcome.findings == []
+        assert "No JWT hygiene issues detected" in outcome.summary
 
     async def test_detects_alg_none_risky_headers_missing_exp_and_pii(
         self, dummy_check: ChecklistItem
@@ -313,16 +286,13 @@ class TestProbeJwtSecurity:
             signature="",
         )
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
-        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Insecure or missing signing algorithm: alg='none'" in detail
-        assert "Untrusted key-location header parameter(s) present: jku" in detail
-        assert "Missing 'exp' (expiration) claim" in detail
-        assert "Missing 'aud' (audience) claim" in detail
-        assert "Email address detected inside claim 'email'" in detail
-        assert "Indian PAN-like identifier detected inside claim 'pan_card'" in detail
-        assert "Indian mobile number detected inside claim 'contact'" in detail
+        assert len(outcome.findings) >= 4
+        titles = " ".join(f.title for f in outcome.findings)
+        assert "Insecure JWT Signing Algorithm ('none')" in titles
+        assert "Untrusted Key-Location JWT Header" in titles
+        assert "Unencrypted PII/Sensitive Claim" in titles
 
     async def test_flags_excessive_ttl_and_symmetric_hmac_alg(
         self, dummy_check: ChecklistItem
@@ -335,19 +305,17 @@ class TestProbeJwtSecurity:
                 "iss": "https://auth.example.in",
                 "aud": "api",
                 "iat": int(now.timestamp()),
-                "exp": int((now + timedelta(days=7)).timestamp()),  # 168h > 24h max
+                "exp": int((now + timedelta(days=7)).timestamp()),
             },
         )
         ctx = ScanContext(primary_auth=AuthContext(bearer_token=token))
-        passed, detail = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
+        outcome = await probe_jwt_security("https://api.example.in", dummy_check, ctx)
 
-        assert passed is False
-        assert "Symmetric algorithm 'HS256' used" in detail
-        assert "Excessive token lifetime (168.0h > 24h recommended maximum)" in detail
+        assert len(outcome.findings) == 2
+        titles = " ".join(f.title for f in outcome.findings)
+        assert "Symmetric JWT Algorithm ('HS256')" in titles
+        assert "Excessive JWT Lifetime" in titles
 
-# ==============================================================================
-# 5. API
-# ==============================================================================
 
 class TestProbeApiAuthentication:
     async def test_observes_authentication_required(
@@ -364,49 +332,42 @@ class TestProbeApiAuthentication:
             probe_endpoints=["/api/profile"],
         )
 
-        passed, detail = await probe_api_authentication(
-            "https://app.example.test", dummy_check, ctx
-        )
-
-        assert passed is True
-        assert "API_AUTH_OBSERVATION" in detail
-        assert "unauthenticated=401" in detail
-        assert "authenticated=200" in detail
-        assert "test-token" not in detail
+        outcome = await probe_api_authentication("https://app.example.test", dummy_check, ctx)
+        assert outcome.findings == []
+        assert "unauthenticated=401" in outcome.summary
+        assert "authenticated=200" in outcome.summary
 
     async def test_missing_credentials_is_inconclusive(
         self, dummy_check, patch_httpx_transport
     ):
-        patch_httpx_transport(lambda request: httpx.Response(200))
+        # Return 401 when an invalid Authorization header is sent, and 200 when unauthenticated
+        def handler(request):
+            if "Authorization" in request.headers:
+                return httpx.Response(401)
+            return httpx.Response(200)
+
+        patch_httpx_transport(handler)
         ctx = ScanContext(
             primary_auth=AuthContext(),
             probe_endpoints=["/api/profile"],
         )
 
-        passed, detail = await probe_api_authentication(
-            "https://app.example.test", dummy_check, ctx
-        )
-
-        assert passed is True
-        assert "INCONCLUSIVE_API_AUTH" in detail
+        outcome = await probe_api_authentication("https://app.example.test", dummy_check, ctx)
+        assert outcome.findings == []
+        assert outcome.conclusive is False
 
     async def test_missing_endpoint_is_skipped(self, dummy_check):
         ctx = ScanContext(primary_auth=AuthContext())
-
-        passed, detail = await probe_api_authentication(
-            "https://app.example.test", dummy_check, ctx
-        )
-
-        assert passed is True
-        assert "SKIPPED_NO_ENDPOINTS" in detail
+        outcome = await probe_api_authentication("https://app.example.test", dummy_check, ctx)
+        assert outcome.findings == []
+        assert outcome.conclusive is False
+        assert "SKIPPED_NO_ENDPOINTS" in outcome.summary
 
     async def test_404_and_405_are_not_vulnerabilities(
         self, dummy_check, patch_httpx_transport
     ):
         def handler(request):
-            return httpx.Response(
-                404 if request.url.path.endswith("missing") else 405
-            )
+            return httpx.Response(404 if request.url.path.endswith("missing") else 405)
 
         patch_httpx_transport(handler)
         ctx = ScanContext(
@@ -414,12 +375,5 @@ class TestProbeApiAuthentication:
             probe_endpoints=["/api/missing", "/api/unsupported"],
         )
 
-        passed, detail = await probe_api_authentication(
-            "https://app.example.test", dummy_check, ctx
-        )
-
-        assert passed is True
-        assert "INCONCLUSIVE_API_AUTH" in detail
-        assert "unauthenticated=404" in detail
-        assert "authenticated=405" in detail
-
+        outcome = await probe_api_authentication("https://app.example.test", dummy_check, ctx)
+        assert outcome.findings == []

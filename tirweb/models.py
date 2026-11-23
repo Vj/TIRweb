@@ -1,5 +1,4 @@
 import json
-
 from enum import Enum
 from pathlib import Path
 from typing import Literal
@@ -29,6 +28,16 @@ class ExecutionMode(str, Enum):
     MANUAL = "manual"
 
 
+CheckStatus = Literal[
+    "FAIL",             # Affirmative evidence of a vulnerability or misconfiguration
+    "NO_ISSUES_FOUND",  # Executed cleanly; no issues detected within probe scope
+    "HYBRID_REVIEW",    # Automated probes clean; manual verification steps required
+    "MANUAL_REQUIRED",  # Manual playbook check with structured tester worksheet
+    "INCONCLUSIVE",     # Budget exhausted, prerequisite missing, or zero bindings executable
+    "DRY_RUN",          # Preview mode without executing probes
+]
+
+
 class ComplianceMapping(BaseModel):
     india: list[str] = Field(..., min_length=1)
     global_: list[str] = Field(..., alias="global", min_length=1)
@@ -55,6 +64,45 @@ class ChecklistModule(BaseModel):
 class ChecklistMetadata(BaseModel):
     description: str
     supported_profiles: list[AppProfile]
+
+
+class ProfileSelectionSummary(BaseModel):
+    profile: AppProfile
+    total_available: int
+    selected_count: int
+    excluded_count: int
+    excluded_checks: list[dict[str, str]] = Field(default_factory=list)
+
+
+class ProbeFinding(BaseModel):
+    """Individual atomic security finding with independent severity and remediation."""
+
+    rule_id: str
+    title: str
+    severity: Literal["Critical", "High", "Medium", "Low", "Info"]
+    evidence: str
+    remediation: str
+    cwe: str | None = None
+    cve: str | None = None
+    confidence: Literal["CONFIRMED", "SIGNAL"] = "CONFIRMED"
+
+
+class ProbeOutcome(BaseModel):
+    """Structured outcome returned by native probes and external tool adapters."""
+
+    findings: list[ProbeFinding] = Field(default_factory=list)
+    summary: str
+    conclusive: bool = True
+    not_detected_scope: str | None = None
+
+
+class ManualPlaybookEntry(BaseModel):
+    """Structured manual verification worksheet for manual_proxy and manual_review."""
+
+    steps: list[str]
+    tester_name: str = ""
+    evidence_notes: str = ""
+    verdict: Literal["PENDING", "PASS", "FAIL", "NOT_APPLICABLE"] = "PENDING"
 
 
 class TIRWebChecklist(BaseModel):
@@ -100,6 +148,51 @@ class TIRWebChecklist(BaseModel):
                 matched.append((module, check))
         return matched
 
+    def explain_profile_selection(
+        self,
+        profile: AppProfile,
+        include_core: bool = True,
+        modes: set[ExecutionMode] | None = None,
+    ) -> ProfileSelectionSummary:
+        """Summarize selected vs. excluded checks so report totals match checklist totals transparently."""
+        allowed_profiles = {profile}
+        if include_core:
+            allowed_profiles.add(AppProfile.CORE)
+
+        total_available = 0
+        selected_count = 0
+        excluded: list[dict[str, str]] = []
+
+        for module in self.modules:
+            for check in module.checks:
+                total_available += 1
+                if not allowed_profiles.intersection(check.profiles):
+                    excluded.append(
+                        {
+                            "check_id": check.id,
+                            "title": check.title,
+                            "reason": f"Restricted to profiles: {', '.join(p.value for p in check.profiles)}",
+                        }
+                    )
+                    continue
+                if modes and check.execution_mode not in modes:
+                    excluded.append(
+                        {
+                            "check_id": check.id,
+                            "title": check.title,
+                            "reason": f"Filtered out by execution mode ({check.execution_mode.value})",
+                        }
+                    )
+                    continue
+                selected_count += 1
+
+        return ProfileSelectionSummary(
+            profile=profile,
+            total_available=total_available,
+            selected_count=selected_count,
+            excluded_count=len(excluded),
+            excluded_checks=excluded,
+        )
 
 
 class AuthContext(BaseModel):
@@ -119,7 +212,6 @@ class AuthContext(BaseModel):
         merged_cookies: dict[str, str] = {}
         token: str | None = None
 
-        # 1. Load optional auth config file first (CLI flags override file values)
         if auth_file:
             content = auth_file.read_text(encoding="utf-8")
             parsed = (
@@ -131,14 +223,12 @@ class AuthContext(BaseModel):
             merged_cookies.update(parsed.get("cookies", {}))
             token = parsed.get("bearer_token")
 
-        # 2. Parse repeatable --header "Key: Value" flags
         for item in raw_headers or []:
             if ":" not in item:
                 raise ValueError(f"Invalid header format '{item}'. Expected 'Name: Value'.")
             key, val = item.split(":", 1)
             merged_headers[key.strip()] = val.strip()
 
-        # 3. Parse repeatable --cookie "name=value" or "a=1; b=2" flags
         for item in raw_cookies or []:
             for pair in item.split(";"):
                 pair = pair.strip()
@@ -149,14 +239,12 @@ class AuthContext(BaseModel):
                 c_key, c_val = pair.split("=", 1)
                 merged_cookies[c_key.strip()] = c_val.strip()
 
-        # 4. Explicit --bearer-token takes precedence
         if bearer_token:
             token = bearer_token.strip()
 
         return cls(headers=merged_headers, bearer_token=token, cookies=merged_cookies)
 
     def to_http_headers(self) -> dict[str, str]:
-        """Compile all credentials into standard HTTP header key-value pairs."""
         compiled = dict(self.headers)
         if self.bearer_token:
             compiled["Authorization"] = f"Bearer {self.bearer_token}"
@@ -167,7 +255,6 @@ class AuthContext(BaseModel):
         return compiled
 
     def to_cli_header_strings(self) -> list[str]:
-        """Format headers as ['Name: Value', ...] for CLI scanners like nuclei -H."""
         return [f"{k}: {v}" for k, v in self.to_http_headers().items()]
 
     @property
@@ -175,7 +262,6 @@ class AuthContext(BaseModel):
         return bool(self.headers or self.bearer_token or self.cookies)
 
     def redacted_summary(self) -> dict[str, object]:
-        """Safe metadata representation for JSON/PDF reports without leaking secrets."""
         return {
             "authenticated": self.is_authenticated,
             "header_names": list(self.headers.keys()),

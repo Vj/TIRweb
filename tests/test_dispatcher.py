@@ -22,7 +22,7 @@ class TestToolDispatcher:
         await dispatcher.initialize_dynamic_bindings()
         res = await dispatcher.execute_check("https://example.in", mod, chk)
 
-        assert res.status == "PASS"
+        assert res.status == "NO_ISSUES_FOUND"
         assert res.check_id == "WEB-CRY-001"
         assert "TLS 1.3 offered" in res.output_summary
         create_proc.assert_awaited_once()
@@ -126,8 +126,9 @@ class TestToolDispatcher:
         dispatcher = ToolDispatcher()
         res = await dispatcher.execute_check("https://example.in", mod, chk)
 
-        assert res.status == "TOOL_MISSING"
-        assert "not found in PATH" in res.output_summary
+        assert res.status == "INCONCLUSIVE"
+        assert "Tooling gap: external binary not installed." in res.output_summary
+        assert res.missing_tools == ["testssl"]
 
     async def test_dry_run_mode_does_not_spawn_processes(
         self, loaded_checklist: TIRWebChecklist, mock_subprocess_factory

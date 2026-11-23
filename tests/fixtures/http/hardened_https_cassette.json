@@ -1,0 +1,18 @@
+{
+  "target": "https://hardened.example.in",
+  "responses": {
+    "GET https://hardened.example.in": {
+      "status_code": 200,
+      "headers": {
+        "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+        "Content-Security-Policy": "default-src 'self'; frame-ancestors 'none'",
+        "X-Content-Type-Options": "nosniff",
+        "X-Frame-Options": "DENY",
+        "Referrer-Policy": "strict-origin-when-cross-origin",
+        "Permissions-Policy": "geolocation=(), microphone=(), camera=()",
+        "Cache-Control": "no-store"
+      },
+      "body": "<html><head><title>Hardened App</title></head><body><h1>Secure</h1></body></html>"
+    }
+  }
+}

@@ -85,3 +85,36 @@ jobs:
             trivy --version && \
             testssl.sh --version && \
             python -c 'import weasyprint; print(\"WeasyPrint OK:\", weasyprint.__version__)'"
+            
+  benchmark-precision-recall:
+    name: Precision & Recall Regression Benchmark
+    runs-on: ubuntu-latest
+    needs: validate-and-test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install TIRweb
+        run: |
+          pip install -r requirements.txt
+          pip install -e .
+
+      - name: Start Benchmark Targets (Juice Shop, DVWA, VAmPI)
+        run: |
+          docker compose -f benchmarks/docker-compose.benchmark.yml up -d --wait juice-shop dvwa vampi
+
+      - name: Evaluate Precision & Recall Thresholds
+        run: |
+          python benchmarks/evaluate.py --target-filter "_local" --min-precision 0.90 --min-recall 0.90
+
+      - name: Tear Down Benchmark Containers
+        if: always()
+        run: |
+          docker compose -f benchmarks/docker-compose.benchmark.yml down -v

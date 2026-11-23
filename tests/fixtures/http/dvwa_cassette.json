@@ -1,0 +1,22 @@
+{
+  "target": "http://localhost:8081",
+  "responses": {
+    "GET http://localhost:8081": {
+      "status_code": 302,
+      "headers": {
+        "Location": "http://localhost:8081/login.php",
+        "Set-Cookie": "PHPSESSID=abc123session; path=/"
+      },
+      "body": ""
+    },
+    "GET http://localhost:8081/login.php": {
+      "status_code": 200,
+      "headers": {
+        "Server": "Apache/2.4.25 (Debian)",
+        "X-Powered-By": "PHP/7.0.33",
+        "Set-Cookie": "PHPSESSID=abc123session; path=/"
+      },
+      "body": "<html><body><form method='post' action='login.php'><input type='text' name='username'><input type='password' name='password'></form></body></html>"
+    }
+  }
+}

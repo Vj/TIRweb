@@ -1,11 +1,15 @@
 import asyncio
+import platform
+import shutil
+import sys
 from pathlib import Path
 from typing import Annotated, Optional
 import typer
 from rich.console import Console
 from rich.table import Table
-from .dispatcher import ToolDispatcher
+from .dispatcher import ToolDispatcher, summarize_tooling_gaps
 from .models import AppProfile, AuthContext, ExecutionMode, TIRWebChecklist
+from .orchestrator import run_audit_pipeline
 from .probes import ScanContext
 from .reporter import generate_compliance_report, generate_html_report
 
@@ -15,6 +19,65 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 console = Console()
+
+
+@app.command("doctor")
+def run_doctor() -> None:
+    """Run preflight diagnostics for Python runtime, native HTTPx probes, and external scanners."""
+    table = Table(title="TIRweb Environment & Tooling Preflight (doctor)")
+    table.add_column("Component", style="cyan", no_wrap=True)
+    table.add_column("Type", style="magenta")
+    table.add_column("Status", style="bold")
+    table.add_column("Notes / Remediation")
+
+    table.add_row(
+        f"Python {sys.version.split()[0]} ({platform.system()})",
+        "Runtime",
+        "[green]READY[/green]",
+        "Core async probe engine available.",
+    )
+    table.add_row(
+        "Native HTTPx Probe Suite (20+ probes)",
+        "Built-in",
+        "[green]READY[/green]",
+        "TLS, Headers, Cookies, Methods, Discovery, Errors, Auth, Cache, CSRF, Assets/SRI, CVE, Canary Inj, CORS, IDOR, JWT, Metafiles, Path Confusion, Redirect, GraphQL, Arch/DNS.",
+    )
+
+    try:
+        import weasyprint  # noqa: F401
+
+        table.add_row(
+            "WeasyPrint PDF Engine",
+            "Optional",
+            "[green]READY[/green]",
+            "Native PDF export available (HTML report always available).",
+        )
+    except Exception as exc:
+        table.add_row(
+            "WeasyPrint PDF Engine",
+            "Optional",
+            "[yellow]HTML-ONLY[/yellow]",
+            f"GTK3/Pango runtime missing ({exc}); HTML output unaffected.",
+        )
+
+    external_tools = [
+        ("nuclei", "Template DAST scanner (nuclei_bola, nuclei_bfla, nuclei_injection, nuclei_ssrf)"),
+        ("trivy", "Dependency SCA & SBOM vulnerability scanner (trivy_sca)"),
+        ("testssl.sh", "Deep TLS cipher/protocol analyzer (testssl)"),
+    ]
+    for binary, desc in external_tools:
+        path = shutil.which(binary)
+        if path:
+            table.add_row(binary, "External CLI", "[green]INSTALLED[/green]", f"{path} — {desc}")
+        else:
+            table.add_row(
+                binary,
+                "External CLI",
+                "[yellow]MISSING[/yellow]",
+                f"Not in PATH ({desc}). Install locally or use the TIRweb Docker image.",
+            )
+
+    console.print(table)
 
 
 @app.command("validate")
@@ -40,14 +103,14 @@ def run_scan(
         Path,
         typer.Option("--checklist", "-c", exists=True, help="Path to TIRweb YAML checklist"),
     ],
+    client: Annotated[
+        str,
+        typer.Option("--client", help="Client or entity name for the report header (required)"),
+    ],
     profile: Annotated[
         AppProfile,
         typer.Option("--profile", "-p", help="Application domain profile"),
     ] = AppProfile.CORE,
-    client: Annotated[
-        str,
-        typer.Option("--client", help="Client or entity name for the HTML report header"),
-    ] = "Target Organization",
     auditor: Annotated[
         str,
         typer.Option("--auditor", help="Assessing team or organization name"),
@@ -88,6 +151,18 @@ def run_scan(
             help="Specific resource path/URL to test for differential access (repeatable)",
         ),
     ] = None,
+    scan_timeout: Annotated[
+        int,
+        typer.Option("--scan-timeout", min=1, max=7200, help="Max total scan duration in seconds (1-7200)"),
+    ] = 900,
+    max_requests: Annotated[
+        int,
+        typer.Option("--max-requests", min=1, max=10000, help="Max outbound HTTP requests across native probes (1-10000)"),
+    ] = 500,
+    allow_default_creds: Annotated[
+        bool,
+        typer.Option("--allow-default-creds", help="Opt-in to active differential default-credential testing"),
+    ] = False,
     automated_only: Annotated[
         bool,
         typer.Option("--automated-only", help="Run only fully automated checks"),
@@ -126,11 +201,14 @@ def run_scan(
         primary_auth=auth_ctx,
         secondary_auth=secondary_ctx,
         probe_endpoints=endpoint,
+        max_requests=max_requests,
+        allow_default_creds=allow_default_creds,
     )
 
     loaded = TIRWebChecklist.from_yaml(checklist)
     modes = {ExecutionMode.AUTOMATED} if automated_only else None
     selected = loaded.filter_checks(profile=profile, include_core=True, modes=modes)
+    selection_summary = loaded.explain_profile_selection(profile=profile, include_core=True, modes=modes)
 
     auth_badge = (
         "[green]Authenticated[/green]"
@@ -138,41 +216,57 @@ def run_scan(
         else "[yellow]Unauthenticated[/yellow]"
     )
     console.print(
-        f"[bold cyan]TIRweb Audit[/bold cyan] | Target: [bold]{target}[/bold] | "
-        f"Profile: [bold]{profile.value}[/bold] | Mode: {auth_badge} | Checks: [bold]{len(selected)}[/bold]"
+        f"[bold cyan]TIRweb Audit[/bold cyan] | Client: [bold]{client}[/bold] | Target: [bold]{target}[/bold] | "
+        f"Profile: [bold]{profile.value}[/bold] ({selection_summary.selected_count}/{selection_summary.total_available} checks) | Mode: {auth_badge}"
     )
 
     async def _orchestrate():
         dispatcher = ToolDispatcher(concurrency=concurrency)
         await dispatcher.initialize_dynamic_bindings()
-        tasks = [
-            dispatcher.execute_check(
-                target=target, module=mod, check=chk, ctx=scan_ctx, dry_run=dry_run
-            )
-            for mod, chk in selected
-        ]
-        return await asyncio.gather(*tasks)
+        return await asyncio.wait_for(
+            run_audit_pipeline(
+                dispatcher=dispatcher,
+                target=target,
+                selected=selected,
+                scan_ctx=scan_ctx,
+                dry_run=dry_run,
+            ),
+            timeout=scan_timeout,
+        )
 
     results = asyncio.run(_orchestrate())
 
-    table = Table(title=f"TIRweb Execution Summary ({profile.value})")
+    conclusive_count = sum(1 for r in results if r.conclusive)
+    total_atomic_findings = sum(len(r.findings) for r in results)
+    tooling_gaps = summarize_tooling_gaps(results)
+
+    table = Table(
+        title=f"TIRweb Execution Summary ({profile.value}) — {conclusive_count} of {len(results)} conclusively assessed"
+    )
     table.add_column("Check ID", style="cyan", no_wrap=True)
     table.add_column("Module", style="magenta")
     table.add_column("Severity")
-    table.add_column("Mode")
+    table.add_column("Coverage")
     table.add_column("Status", style="bold")
-    table.add_column("Indian Regulatory Mapping")
+    table.add_column("Findings")
 
     for res in results:
         table.add_row(
             res.check_id,
             res.module_id,
             res.severity,
-            res.execution_mode.value,
+            res.coverage_label,
             res.status,
-            "; ".join(res.india_compliance[:2]),
+            str(len(res.findings)) if res.findings else "-",
         )
     console.print(table)
+
+    if tooling_gaps:
+        gap_names = ", ".join(f"{g['tool']} ({g['affected_checks_count']} checks)" for g in tooling_gaps)
+        console.print(
+            f"[bold yellow]Tooling Gaps:[/bold yellow] Optional external scanners unavailable: {gap_names}. "
+            "Run [cyan]tirweb doctor[/cyan] for remediation."
+        )
 
     if out:
         report_payload = {
@@ -180,13 +274,19 @@ def run_scan(
             "schema_version": loaded.schema_version,
             "target": target,
             "profile": profile.value,
+            "profile_selection": selection_summary.model_dump(),
             "auth_context": auth_ctx.redacted_summary(),
+            "tooling_gaps": tooling_gaps,
             "summary": {
                 "total": len(results),
-                "pass": sum(1 for r in results if r.status == "PASS"),
+                "conclusively_assessed": conclusive_count,
+                "conclusive_label": f"{conclusive_count} of {len(results)} conclusively assessed",
+                "atomic_findings_total": total_atomic_findings,
                 "fail": sum(1 for r in results if r.status == "FAIL"),
+                "no_issues_found": sum(1 for r in results if r.status == "NO_ISSUES_FOUND"),
                 "hybrid_review": sum(1 for r in results if r.status == "HYBRID_REVIEW"),
                 "manual_required": sum(1 for r in results if r.status == "MANUAL_REQUIRED"),
+                "inconclusive": sum(1 for r in results if r.status == "INCONCLUSIVE"),
             },
             "results": [r.model_dump() for r in results],
         }
@@ -206,14 +306,14 @@ def export_report(
         Path,
         typer.Option("--input", "-i", exists=True, help="Path to TIRweb JSON report"),
     ],
+    client: Annotated[
+        str,
+        typer.Option("--client", help="Client or entity name for cover header (required)"),
+    ],
     output: Annotated[
         Path,
         typer.Option("--out", "-o", help="Output HTML path"),
     ] = Path("tirweb_compliance_report.html"),
-    client: Annotated[
-        str,
-        typer.Option("--client", help="Client or entity name for cover header"),
-    ] = "Target Organization",
     auditor: Annotated[
         str,
         typer.Option("--auditor", help="Assessing organization name"),

@@ -1,3 +1,20 @@
+Once these three binaries are on PATH, rerunning the same scan should flip most of those 16 INCONCLUSIVE and
+ MANUAL_REQUIRED rows to actual FAIL/NO_ISSUES_FOUND results — no code changes needed.
+
+# nuclei (covers nuclei_auth / nuclei_bfla / nuclei_bola / nuclei_exposures / nuclei_injection / nuclei_ssrf)
+go install -v github.com/projectdiscovery/nuclei/v3/cmd/nuclei@latest
+nuclei -update-templates
+
+# testssl.sh
+git clone --depth 1 https://github.com/drwetter/testssl.sh.git
+ln -s "$PWD/testssl.sh/testssl.sh" /usr/local/bin/testssl.sh
+
+# trivy
+curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sh -s -- -b /usr/local/bin
+
+
+
+
 OWASP Top Testing Checklist
 Broken Access Control
 The number one web application vulnerability category. Broken access control allows users to act outside their intended permissions.

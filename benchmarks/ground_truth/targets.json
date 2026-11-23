@@ -1,0 +1,60 @@
+{
+  "targets": [
+    {
+      "name": "altoro_testfire_cleartext_tomcat",
+      "url": "http://demo.testfire.net",
+      "profile": "core",
+      "must_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:cleartext_target",
+        "WEB-CRY-001:httpx_tls:no_https_redirect",
+        "WEB-INF-001:httpx_headers:missing_content-security-policy",
+        "WEB-INF-001:httpx_headers:missing_x-frame-options",
+        "WEB-INF-001:httpx_headers:leak_server",
+        "WEB-INF-003:httpx_cve_fingerprint:CVE-2017-12617",
+        "WEB-IAM-004:httpx_auth_surface:http_login"
+      ],
+      "must_not_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:missing_hsts"
+      ]
+    },
+    {
+      "name": "juice_shop_local",
+      "url": "http://localhost:3000",
+      "profile": "ecommerce",
+      "must_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:cleartext_target",
+        "WEB-INF-001:httpx_headers:missing_content-security-policy"
+      ],
+      "must_not_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:missing_hsts"
+      ]
+    },
+    {
+      "name": "dvwa_local",
+      "url": "http://localhost:8081",
+      "profile": "core",
+      "must_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:cleartext_target",
+        "WEB-IAM-006:httpx_cookies:PHPSESSID:secure",
+        "WEB-IAM-006:httpx_cookies:PHPSESSID:httponly",
+        "WEB-IAM-004:httpx_auth_surface:http_login"
+      ],
+      "must_not_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:missing_hsts"
+      ]
+    },
+    {
+      "name": "vampi_local",
+      "url": "http://localhost:5000",
+      "profile": "core",
+      "must_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:cleartext_target",
+        "WEB-INF-001:httpx_headers:missing_content-security-policy",
+        "WEB-INF-001:httpx_headers:leak_server"
+      ],
+      "must_not_detect_rule_prefixes": [
+        "WEB-CRY-001:httpx_tls:missing_hsts"
+      ]
+    }
+  ]
+}
