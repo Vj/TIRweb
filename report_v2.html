@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TIRweb Compliance &amp; Security Audit Report — T1</title>
+  <title>TIRweb Compliance &amp; Security Audit Report — Altoro Mutual Demo</title>
   <style>
     :root {
       --bg: #f8fafc;
@@ -326,17 +326,17 @@
       <div>
         <h1>TIRweb — Web &amp; API Security Compliance Report</h1>
         <div style="color: var(--muted);">OWASP WSTG v4.2, CERT-In, DPDP Rules 2025 &amp; RBI Regulatory Audit</div>
-        <div class="conclusive-pill">1 of 39 conclusively assessed</div>
+        <div class="conclusive-pill">12 of 39 conclusively assessed</div>
       </div>
       <div style="text-align: right; font-size: 12px; color: var(--muted);">
         Schema v1.0.0<br />
-        Generated: 19 Nov 2026, 16:32 UTC
+        Generated: 24 Nov 2026, 14:38 UTC
       </div>
     </div>
 
     <div class="meta-grid">
-      <div class="meta-item"><span>Client / Entity</span><strong>T1</strong></div>
-      <div class="meta-item"><span>Target Scope</span><strong>http://www.testfire.net/</strong></div>
+      <div class="meta-item"><span>Client / Entity</span><strong>Altoro Mutual Demo</strong></div>
+      <div class="meta-item"><span>Target Scope</span><strong>http://demo.testfire.net</strong></div>
       <div class="meta-item"><span>Audit Profile</span><strong>CORE</strong></div>
       <div class="meta-item"><span>Assessing Team</span><strong>Security Assessment Team</strong></div>
     </div>
@@ -358,11 +358,11 @@
 
     <div class="kpi-grid">
       <div class="kpi-card"><div class="num">39</div><div class="lbl">Controls Evaluated</div></div>
-      <div class="kpi-card kpi-fail"><div class="num">1</div><div class="lbl">Atomic Findings</div></div>
-      <div class="kpi-card kpi-pass"><div class="num">0</div><div class="lbl">No Issues Found</div></div>
-      <div class="kpi-card kpi-hybrid"><div class="num">4</div><div class="lbl">Hybrid Review</div></div>
-      <div class="kpi-card kpi-manual"><div class="num">18</div><div class="lbl">Manual Playbook</div></div>
-      <div class="kpi-card kpi-inc"><div class="num">16</div><div class="lbl">Inconclusive</div></div>
+      <div class="kpi-card kpi-fail"><div class="num">41</div><div class="lbl">Atomic Findings</div></div>
+      <div class="kpi-card kpi-pass"><div class="num">2</div><div class="lbl">No Issues Found</div></div>
+      <div class="kpi-card kpi-hybrid"><div class="num">6</div><div class="lbl">Hybrid Review</div></div>
+      <div class="kpi-card kpi-manual"><div class="num">16</div><div class="lbl">Manual Playbook</div></div>
+      <div class="kpi-card kpi-inc"><div class="num">5</div><div class="lbl">Inconclusive</div></div>
     </div>
 
     <h2>1. Atomic Findings by Severity</h2>
@@ -378,11 +378,11 @@
       </thead>
       <tbody>
         <tr>
-          <td><span class="badge sev-Critical">0</span></td>
-          <td><span class="badge sev-High">1</span></td>
-          <td><span class="badge sev-Medium">0</span></td>
-          <td><span class="badge sev-Low">0</span></td>
-          <td><span class="badge sev-Info">0</span></td>
+          <td><span class="badge sev-Critical">10</span></td>
+          <td><span class="badge sev-High">4</span></td>
+          <td><span class="badge sev-Medium">11</span></td>
+          <td><span class="badge sev-Low">14</span></td>
+          <td><span class="badge sev-Info">2</span></td>
         </tr>
       </tbody>
     </table>
@@ -404,20 +404,6 @@
       <tbody>
         
         <tr>
-          <td><strong>nuclei_auth</strong></td>
-          <td>2</td>
-          <td>WEB-IAM-004, WEB-IAM-005</td>
-          <td>Install &#39;nuclei_auth&#39; or run inside the official TIRweb Docker image.</td>
-        </tr>
-        
-        <tr>
-          <td><strong>nuclei_bfla</strong></td>
-          <td>2</td>
-          <td>WEB-IAM-002, WEB-IAM-008</td>
-          <td>Install &#39;nuclei_bfla&#39; or run inside the official TIRweb Docker image.</td>
-        </tr>
-        
-        <tr>
           <td><strong>nuclei_bola</strong></td>
           <td>2</td>
           <td>WEB-IAM-001, WEB-IAM-008</td>
@@ -432,13 +418,6 @@
         </tr>
         
         <tr>
-          <td><strong>nuclei_injection</strong></td>
-          <td>4</td>
-          <td>WEB-INJ-001, WEB-INJ-002, WEB-INJ-003, WEB-INJ-004</td>
-          <td>Install &#39;nuclei_injection&#39; or run inside the official TIRweb Docker image.</td>
-        </tr>
-        
-        <tr>
           <td><strong>nuclei_ssrf</strong></td>
           <td>1</td>
           <td>WEB-LOG-004</td>
@@ -450,13 +429,6 @@
           <td>1</td>
           <td>WEB-CRY-001</td>
           <td>Install &#39;testssl&#39; or run inside the official TIRweb Docker image.</td>
-        </tr>
-        
-        <tr>
-          <td><strong>trivy_sca</strong></td>
-          <td>2</td>
-          <td>WEB-CRY-002, WEB-INF-003</td>
-          <td>Install &#39;trivy_sca&#39; or run inside the official TIRweb Docker image.</td>
         </tr>
         
       </tbody>
@@ -482,8 +454,8 @@
             <td><strong>WEB-CRY-002</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(a) (Encryption, Obfuscation, Masking, Virtual Tokens)</td>
             <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -498,8 +470,8 @@
             <td><strong>WEB-IAM-002</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(b) (Role-Based Access Enforcement)</td>
             <td>Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
@@ -522,8 +494,8 @@
             <td><strong>WEB-CRY-003</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(a) &amp; (c) (PII Masking &amp; Exposure Prevention)</td>
             <td>Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</td>
-            <td><span class="cov-badge">2 of 4 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">3 of 4 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
@@ -570,7 +542,7 @@
             <td><strong>WEB-INF-009</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(a)</td>
             <td>[WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
+            <td><span class="cov-badge">0 of 2 automated bindings (manual playbook)</span></td>
             <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
           </tr>
           
@@ -578,16 +550,16 @@
             <td><strong>WEB-INF-012</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(b)</td>
             <td>[WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INJ-009</strong></td>
             <td>DPDP Rules 2025 - Rule 6(1)(a)</td>
             <td>[WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
         </tbody>
@@ -610,8 +582,8 @@
             <td><strong>WEB-CRY-002</strong></td>
             <td>CERT-In CISG-2024-02 (CBOM Cryptographic Inventory)</td>
             <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -626,15 +598,15 @@
             <td><strong>WEB-IAM-002</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-IAM-005</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
             <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
           </tr>
           
@@ -642,7 +614,7 @@
             <td><strong>WEB-INJ-001</strong></td>
             <td>CERT-In CISG-2024-01 (Input Validation &amp; Secure Coding)</td>
             <td>SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</td>
-            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
             <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
@@ -650,7 +622,7 @@
             <td><strong>WEB-INJ-001</strong></td>
             <td>CERT-In CISG-2026-02 (Defending against AI-Assisted Exploitation)</td>
             <td>SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</td>
-            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
             <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
@@ -658,7 +630,7 @@
             <td><strong>WEB-INJ-003</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
             <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
           </tr>
           
@@ -666,7 +638,7 @@
             <td><strong>WEB-INJ-003</strong></td>
             <td>CERT-In CISG-2026-02</td>
             <td>OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
             <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
           </tr>
           
@@ -674,7 +646,7 @@
             <td><strong>WEB-INJ-004</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>XML External Entity (XXE) &amp; Insecure Deserialization</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
             <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
           </tr>
           
@@ -714,16 +686,16 @@
             <td><strong>WEB-IAM-004</strong></td>
             <td>CERT-In CISG-2024-01 (Authentication Controls)</td>
             <td>Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</td>
-            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
-            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-IAM-006</strong></td>
             <td>CERT-In CISG-2024-01 (Session Management)</td>
             <td>Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</td>
-            <td><span class="cov-badge">1 of 5 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">4 of 5 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -738,8 +710,8 @@
             <td><strong>WEB-IAM-008</strong></td>
             <td>CERT-In CISG-2024-01 (API Security)</td>
             <td>Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</td>
-            <td><span class="cov-badge">2 of 5 bindings executed</span></td>
-            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+            <td><span class="cov-badge">3 of 5 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -754,40 +726,40 @@
             <td><strong>WEB-INF-002</strong></td>
             <td>CERT-In CISG-2026-02 (Public Exposure &amp; Attack Surface Reduction)</td>
             <td>Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
+            <td><span class="badge st-NO_ISSUES_FOUND">NO_ISSUES_FOUND</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-002</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
+            <td><span class="badge st-NO_ISSUES_FOUND">NO_ISSUES_FOUND</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-003</strong></td>
             <td>CERT-In CISG-2024-02 (Technical Guidelines on SBOM, QBOM &amp; CBOM v2.0)</td>
             <td>Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">2 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-003</strong></td>
             <td>CERT-In CISG-2025-02 (Comprehensive Cyber Security Audit Policy Guidelines)</td>
             <td>Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">2 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-004</strong></td>
             <td>CERT-In CISG-2024-02 (Software Supply Chain Integrity)</td>
             <td>Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</td>
-            <td><span class="cov-badge">0 of 3 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
@@ -834,8 +806,8 @@
             <td><strong>WEB-INJ-002</strong></td>
             <td>CERT-In CISG-2024-01 (Client-Side Injection Controls)</td>
             <td>Cross-Site Scripting (Reflected, Stored, DOM, File-Upload XSS &amp; Context Encoding)</td>
-            <td><span class="cov-badge">1 of 4 bindings executed</span></td>
-            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+            <td><span class="cov-badge">3 of 4 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -906,47 +878,47 @@
             <td><strong>WEB-INF-001</strong></td>
             <td>CERT-In CISG-2024-01 (Web Server &amp; Application Hardening)</td>
             <td>Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</td>
-            <td><span class="cov-badge">0 of 4 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">3 of 4 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-001</strong></td>
             <td>CERT-In CISG-2026-02</td>
             <td>Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</td>
-            <td><span class="cov-badge">0 of 4 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">3 of 4 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-007</strong></td>
             <td>CERT-In CISG-2026-02 (Attack Surface &amp; Shadow Asset Governance)</td>
             <td>[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
-            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-007</strong></td>
             <td>CERT-In CISG-2024-01</td>
             <td>[WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
-            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-008</strong></td>
             <td>CERT-In CISG-2026-02 (Public Metadata &amp; Policy Hardening)</td>
             <td>[WSTG-INFO-03 / CONF-08] Webserver Metafiles &amp; Legacy RIA Cross-Domain Policy Audit</td>
-            <td><span class="cov-badge">0 of 1 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 1 bindings executed</span></td>
+            <td><span class="badge st-NO_ISSUES_FOUND">NO_ISSUES_FOUND</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-009</strong></td>
             <td>CERT-In CISG-2024-01 (Information Leakage Prevention)</td>
             <td>[WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
+            <td><span class="cov-badge">0 of 2 automated bindings (manual playbook)</span></td>
             <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
           </tr>
           
@@ -954,15 +926,15 @@
             <td><strong>WEB-INF-012</strong></td>
             <td>CERT-In CISG-2024-01 (Access Control &amp; Routing Consistency)</td>
             <td>[WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INJ-006</strong></td>
             <td>CERT-In CISG-2024-01 (Input Parsing Consistency)</td>
             <td>[WSTG-INPV-03] HTTP Parameter Pollution (HPP) Consistency</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
+            <td><span class="cov-badge">0 of 2 automated bindings (manual playbook)</span></td>
             <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
           </tr>
           
@@ -970,16 +942,16 @@
             <td><strong>WEB-INJ-009</strong></td>
             <td>CERT-In CISG-2024-01 (Client-Side &amp; Phishing Redirect Controls)</td>
             <td>[WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-INF-010</strong></td>
             <td>CERT-In CISG-2026-02 (Perimeter &amp; Origin Isolation)</td>
             <td>[WSTG-INFO-10] Application Architecture, WAF &amp; Reverse-Proxy Trust Boundary Mapping</td>
-            <td><span class="cov-badge">0 of 1 automated bindings (manual playbook)</span></td>
-            <td><span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
         </tbody>
@@ -1002,8 +974,8 @@
             <td><strong>WEB-CRY-002</strong></td>
             <td>RBI Card Data Tokenisation Guidelines</td>
             <td>Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -1018,7 +990,7 @@
             <td><strong>WEB-IAM-005</strong></td>
             <td>RBI Digital Payment Security Controls (Mandatory 2FA / Additional Factor of Authentication)</td>
             <td>MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</td>
-            <td><span class="cov-badge">0 of 2 bindings executed</span></td>
+            <td><span class="cov-badge">1 of 2 bindings executed</span></td>
             <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
           </tr>
           
@@ -1034,32 +1006,32 @@
             <td><strong>WEB-CRY-003</strong></td>
             <td>RBI Digital Payment Security Controls</td>
             <td>Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</td>
-            <td><span class="cov-badge">2 of 4 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">3 of 4 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-IAM-004</strong></td>
             <td>RBI Digital Payment Security Controls (Credential Hygiene)</td>
             <td>Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</td>
-            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
-            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+            <td><span class="cov-badge">2 of 3 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-IAM-006</strong></td>
             <td>RBI Digital Payment Security Controls (Session Timeout &amp; Binding)</td>
             <td>Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</td>
-            <td><span class="cov-badge">1 of 5 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">4 of 5 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
             <td><strong>WEB-IAM-008</strong></td>
             <td>RBI Digital Payment Security Controls (API Gateway &amp; Microservice Security)</td>
             <td>Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</td>
-            <td><span class="cov-badge">2 of 5 bindings executed</span></td>
-            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
+            <td><span class="cov-badge">3 of 5 bindings executed</span></td>
+            <td><span class="badge st-FAIL">FAIL</span></td>
           </tr>
           
           <tr>
@@ -1074,8 +1046,8 @@
             <td><strong>WEB-INF-004</strong></td>
             <td>RBI Digital Payment Security Controls (Payment Page Script Integrity)</td>
             <td>Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</td>
-            <td><span class="cov-badge">0 of 3 bindings executed</span></td>
-            <td><span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span></td>
+            <td><span class="cov-badge">1 of 3 bindings executed</span></td>
+            <td><span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span></td>
           </tr>
           
           <tr>
@@ -1102,24 +1074,24 @@
 
     <div class="filter-bar no-print" id="filterBar">
       <button class="filter-btn active" data-filter="ALL">All (39)</button>
-      <button class="filter-btn" data-filter="FAIL">Failed (1)</button>
-      <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review (4)</button>
-      <button class="filter-btn" data-filter="NO_ISSUES_FOUND">No Issues Found (0)</button>
-      <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual (18)</button>
-      <button class="filter-btn" data-filter="INCONCLUSIVE">Inconclusive (16)</button>
+      <button class="filter-btn" data-filter="FAIL">Failed (10)</button>
+      <button class="filter-btn" data-filter="HYBRID_REVIEW">Hybrid Review (6)</button>
+      <button class="filter-btn" data-filter="NO_ISSUES_FOUND">No Issues Found (2)</button>
+      <button class="filter-btn" data-filter="MANUAL_REQUIRED">Manual (16)</button>
+      <button class="filter-btn" data-filter="INCONCLUSIVE">Inconclusive (5)</button>
       <input type="text" id="searchInput" class="search-input" placeholder="Filter by Check ID, WSTG ID, CWE/CVE, or keyword..." />
     </div>
 
     <div id="findingsList">
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-cry-002 encryption at rest, modern password hashing &amp; cryptographic key management [trivy_sca] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="FAIL" data-search="web-cry-002 encryption at rest, modern password hashing &amp; cryptographic key management [trivy_sca] fail (1 finding(s)): command timed out after 180s
 [manual_review] manual playbook verification queued. dpdp rules 2025 - rule 6(1)(a) (encryption, obfuscation, masking, virtual tokens) cert-in cisg-2024-02 (cbom cryptographic inventory) rbi card data tokenisation guidelines">
         <div class="finding-top">
           <div class="finding-title">[WEB-CRY-002] Encryption at Rest, Modern Password Hashing &amp; Cryptographic Key Management</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1133,6 +1105,24 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>High/Critical Vulnerable Third-Party Dependencies or Secrets Detected</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1395</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-CRY-002:trivy:1</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Command timed out after 180s</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Upgrade vulnerable dependencies to patched versions and regenerate SBOM.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -1160,7 +1150,7 @@
         </div>
         
 
-        <div class="evidence-box">[trivy_sca] Tooling gap: external binary not installed.
+        <div class="evidence-box">[trivy_sca] FAIL (1 finding(s)): Command timed out after 180s
 [manual_review] Manual playbook verification queued.</div>
       </div>
       
@@ -1220,14 +1210,14 @@
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-iam-002 vertical privilege escalation, bfla, http method tampering &amp; forced admin browsing [nuclei_bfla] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-002 vertical privilege escalation, bfla, http method tampering &amp; forced admin browsing [nuclei_bfla] no_issues_found: probed 5 administrative path(s); none reachable unauthenticated.
 [manual_proxy] manual playbook verification queued. dpdp rules 2025 - rule 6(1)(b) (role-based access enforcement) cert-in cisg-2024-01">
         <div class="finding-top">
           <div class="finding-title">[WEB-IAM-002] Vertical Privilege Escalation, BFLA, HTTP Method Tampering &amp; Forced Admin Browsing</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1270,16 +1260,16 @@
         </div>
         
 
-        <div class="evidence-box">[nuclei_bfla] Tooling gap: external binary not installed.
+        <div class="evidence-box">[nuclei_bfla] NO_ISSUES_FOUND: Probed 5 administrative path(s); none reachable unauthenticated.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-iam-005 mfa enforcement &amp; enterprise sso integrity (oauth 2.0 / oidc / saml) [nuclei_auth] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-iam-005 mfa enforcement &amp; enterprise sso integrity (oauth 2.0 / oidc / saml) [nuclei_auth] inconclusive: skipped_not_authorized: pass --allow-default-creds to run active credential probes.
 [manual_proxy] manual playbook verification queued. rbi digital payment security controls (mandatory 2fa / additional factor of authentication) cert-in cisg-2024-01">
         <div class="finding-top">
           <div class="finding-title">[WEB-IAM-005] MFA Enforcement &amp; Enterprise SSO Integrity (OAuth 2.0 / OIDC / SAML)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
             <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
           </div>
@@ -1322,17 +1312,17 @@
         </div>
         
 
-        <div class="evidence-box">[nuclei_auth] Tooling gap: external binary not installed.
+        <div class="evidence-box">[nuclei_auth] INCONCLUSIVE: SKIPPED_NOT_AUTHORIZED: Pass --allow-default-creds to run active credential probes.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
       <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-001 sql &amp; nosql injection (parameterized queries, blind &amp; second-order sqli) [httpx_canary_inj] no_issues_found: no unencoded canary reflection or sql error signatures detected.
-[nuclei_injection] tooling gap: external binary not installed.
+[nuclei_injection] inconclusive: inconclusive_injection: nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (input validation &amp; secure coding) cert-in cisg-2026-02 (defending against ai-assisted exploitation)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-001] SQL &amp; NoSQL Injection (Parameterized Queries, Blind &amp; Second-Order SQLi)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">1 of 3 bindings executed</span>
+            <span class="cov-badge">2 of 3 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
             <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
@@ -1376,16 +1366,16 @@
         
 
         <div class="evidence-box">[httpx_canary_inj] NO_ISSUES_FOUND: No unencoded canary reflection or SQL error signatures detected.
-[nuclei_injection] Tooling gap: external binary not installed.
+[nuclei_injection] INCONCLUSIVE: INCONCLUSIVE_INJECTION: Nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inj-003 os command, ldap, ssti, crlf &amp; email header injection [nuclei_injection] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inj-003 os command, ldap, ssti, crlf &amp; email header injection [nuclei_injection] inconclusive: inconclusive_injection: nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 cert-in cisg-2026-02">
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-003] OS Command, LDAP, SSTI, CRLF &amp; Email Header Injection</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
             <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
           </div>
@@ -1428,16 +1418,16 @@
         </div>
         
 
-        <div class="evidence-box">[nuclei_injection] Tooling gap: external binary not installed.
+        <div class="evidence-box">[nuclei_injection] INCONCLUSIVE: INCONCLUSIVE_INJECTION: Nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inj-004 xml external entity (xxe) &amp; insecure deserialization [nuclei_injection] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inj-004 xml external entity (xxe) &amp; insecure deserialization [nuclei_injection] inconclusive: inconclusive_injection: nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01">
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-004] XML External Entity (XXE) &amp; Insecure Deserialization</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Critical">Critical</span>
             <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
           </div>
@@ -1478,7 +1468,7 @@
         </div>
         
 
-        <div class="evidence-box">[nuclei_injection] Tooling gap: external binary not installed.
+        <div class="evidence-box">[nuclei_injection] INCONCLUSIVE: INCONCLUSIVE_INJECTION: Nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
@@ -1580,7 +1570,7 @@
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="FAIL" data-search="web-cry-001 transport layer hardening (https enforcement, tls 1.2/1.3, cipher suites &amp; hsts) [httpx_tls] fail (1 finding(s)): cleartext http transport detected; hsts skipped over non-tls origin. http probe error: all connection attempts failed hsts evaluation skipped: hsts headers are ignored by browsers over cleartext http.
+      <div class="finding-card" data-status="FAIL" data-search="web-cry-001 transport layer hardening (https enforcement, tls 1.2/1.3, cipher suites &amp; hsts) [httpx_tls] fail (2 finding(s)): cleartext http transport detected; hsts skipped over non-tls origin. hsts evaluation skipped: hsts headers are ignored by browsers over cleartext http.
 [testssl] tooling gap: external binary not installed. dpdp rules 2025 - rule 6(1)(a) (encryption in transit) cert-in cisg-2024-01 rbi digital payment security controls">
         <div class="finding-top">
           <div class="finding-title">[WEB-CRY-001] Transport Layer Hardening (HTTPS Enforcement, TLS 1.2/1.3, Cipher Suites &amp; HSTS)</div>
@@ -1614,8 +1604,22 @@
               </span>
             </div>
             <div class="atomic-meta">Rule: <code>WEB-CRY-001:httpx_tls:cleartext_target</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
-            <div><strong>Evidence:</strong> Target URL &#39;http://www.testfire.net/&#39; uses unencrypted &#39;http://&#39; transport.</div>
+            <div><strong>Evidence:</strong> Target URL &#39;http://demo.testfire.net&#39; uses unencrypted &#39;http://&#39; transport.</div>
             <div class="atomic-remediation"><strong>Remediation:</strong> Enforce HTTPS (TLS 1.2/1.3) across all endpoints and redirect HTTP (port 80) to HTTPS (port 443).</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Automatic HTTP-to-HTTPS Redirect</span>
+              <span>
+                
+                <span class="cov-badge">CWE-319</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-CRY-001:httpx_tls:no_https_redirect</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net returned HTTP 200 (Location: &#39;none&#39;).</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Configure a permanent 301/308 redirect from HTTP to HTTPS.</div>
           </div>
           
         </div>
@@ -1623,20 +1627,20 @@
 
         
 
-        <div class="evidence-box">[httpx_tls] FAIL (1 finding(s)): Cleartext HTTP transport detected; HSTS skipped over non-TLS origin. HTTP probe error: All connection attempts failed HSTS evaluation skipped: HSTS headers are ignored by browsers over cleartext HTTP.
+        <div class="evidence-box">[httpx_tls] FAIL (2 finding(s)): Cleartext HTTP transport detected; HSTS skipped over non-TLS origin. HSTS evaluation skipped: HSTS headers are ignored by browsers over cleartext HTTP.
 [testssl] Tooling gap: external binary not installed.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-cry-003 sensitive data exposure prevention (urls, client storage, cache headers &amp; logs) [httpx_cache] inconclusive: skipped_no_auth: provide --auth-file or --bearer-token to test authenticated cache headers.
-[httpx_client_assets] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-cry-003 sensitive data exposure prevention (urls, client storage, cache headers &amp; logs) [httpx_cache] inconclusive: skipped_no_auth: provide --auth-file or --bearer-token to test authenticated cache headers.
+[httpx_client_assets] no_issues_found: no active mixed content, unprotected cdn scripts, or sensitive web storage keys detected.
 [httpx_jwt] inconclusive: skipped_no_jwt: no bearer_token configured in authcontext.
 [manual_proxy] manual playbook verification queued. dpdp rules 2025 - rule 6(1)(a) &amp; (c) (pii masking &amp; exposure prevention) rbi digital payment security controls">
         <div class="finding-top">
           <div class="finding-title">[WEB-CRY-003] Sensitive Data Exposure Prevention (URLs, Client Storage, Cache Headers &amp; Logs)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">2 of 4 bindings executed</span>
+            <span class="cov-badge">3 of 4 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1678,7 +1682,7 @@
         
 
         <div class="evidence-box">[httpx_cache] INCONCLUSIVE: SKIPPED_NO_AUTH: Provide --auth-file or --bearer-token to test authenticated cache headers.
-[httpx_client_assets] Probe execution error: All connection attempts failed
+[httpx_client_assets] NO_ISSUES_FOUND: No active mixed content, unprotected CDN scripts, or sensitive Web Storage keys detected.
 [httpx_jwt] INCONCLUSIVE: SKIPPED_NO_JWT: No bearer_token configured in AuthContext.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
@@ -1729,15 +1733,15 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-004 authentication hardening (brute-force, password policy, breach screening &amp; enumeration) [httpx_auth_surface] no_issues_found: no insecure login forms detected on probed entry paths.
-[nuclei_auth] tooling gap: external binary not installed.
+      <div class="finding-card" data-status="FAIL" data-search="web-iam-004 authentication hardening (brute-force, password policy, breach screening &amp; enumeration) [httpx_auth_surface] fail (2 finding(s)): authentication surface audit found 2 issue(s).
+[nuclei_auth] inconclusive: skipped_not_authorized: pass --allow-default-creds to run active credential probes.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (authentication controls) rbi digital payment security controls (credential hygiene)">
         <div class="finding-top">
           <div class="finding-title">[WEB-IAM-004] Authentication Hardening (Brute-Force, Password Policy, Breach Screening &amp; Enumeration)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">1 of 3 bindings executed</span>
+            <span class="cov-badge">2 of 3 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1751,6 +1755,38 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Login Form Served Over Unencrypted HTTP</span>
+              <span>
+                
+                <span class="cov-badge">CWE-319</span>
+                <span class="badge sev-High">High</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-004:httpx_auth_surface:http_login</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Password input field rendered on cleartext HTTP page: http://demo.testfire.net/login.jsp</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Serve all authentication forms exclusively over HTTPS.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Password Input Missing Explicit &#39;autocomplete&#39; Attribute</span>
+              <span>
+                
+                <span class="cov-badge">CWE-522</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-004:httpx_auth_surface:autocomplete</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Input element on http://demo.testfire.net/login.jsp: &lt;input type=&#34;password&#34; id=&#34;passw&#34; name=&#34;passw&#34; style=&#34;width: 150px;&#34;&gt;</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set autocomplete=&#39;current-password&#39; or &#39;off&#39; on sensitive password inputs.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -1778,22 +1814,22 @@
         </div>
         
 
-        <div class="evidence-box">[httpx_auth_surface] NO_ISSUES_FOUND: No insecure login forms detected on probed entry paths.
-[nuclei_auth] Tooling gap: external binary not installed.
+        <div class="evidence-box">[httpx_auth_surface] FAIL (2 finding(s)): Authentication surface audit found 2 issue(s).
+[nuclei_auth] INCONCLUSIVE: SKIPPED_NOT_AUTHORIZED: Pass --allow-default-creds to run active credential probes.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-iam-006 session lifecycle management, token entropy &amp; fixation resistance [httpx_cookies] probe execution error: all connection attempts failed
-[httpx_csrf] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="FAIL" data-search="web-iam-006 session lifecycle management, token entropy &amp; fixation resistance [httpx_cookies] fail (2 finding(s)): inspected 1 set-cookie header(s); found 2 attribute weakness(es).
+[httpx_csrf] fail (3 finding(s)): flagged 3 post form(s) lacking explicit anti-csrf tokens.
 [httpx_jwt] inconclusive: skipped_no_jwt: no bearer_token configured in authcontext.
-[httpx_headers] probe execution error: all connection attempts failed
+[httpx_headers] fail (6 finding(s)): identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (session management) rbi digital payment security controls (session timeout &amp; binding)">
         <div class="finding-top">
           <div class="finding-title">[WEB-IAM-006] Session Lifecycle Management, Token Entropy &amp; Fixation Resistance</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">1 of 5 bindings executed</span>
+            <span class="cov-badge">4 of 5 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1807,6 +1843,164 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Cookie &#39;JSESSIONID&#39; Missing &#39;Secure&#39; Attribute</span>
+              <span>
+                
+                <span class="cov-badge">CWE-614</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_cookies:JSESSIONID:secure</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Set-Cookie: JSESSIONID=&lt;redacted&gt;; Path=/; HttpOnly</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Add the &#39;Secure&#39; flag to cookie &#39;JSESSIONID&#39; so it is only transmitted over TLS.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Cookie &#39;JSESSIONID&#39; Missing &#39;SameSite&#39; Attribute</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1275</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_cookies:JSESSIONID:samesite</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Set-Cookie: JSESSIONID=&lt;redacted&gt;; Path=/; HttpOnly</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;SameSite=Lax&#39; or &#39;SameSite=Strict&#39; on cookie &#39;JSESSIONID&#39;.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>HTML POST Form Lacks Anti-CSRF Token and SameSite Mitigation</span>
+              <span>
+                
+                <span class="cov-badge">CWE-352</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_csrf:/feedback.jsp:1</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> POST form #1 (action=&#39;sendFeedback&#39;) on http://demo.testfire.net/feedback.jsp has no hidden CSRF token field.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Include a per-session anti-CSRF token in all state-changing forms.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>HTML POST Form Lacks Anti-CSRF Token and SameSite Mitigation</span>
+              <span>
+                
+                <span class="cov-badge">CWE-352</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_csrf:/login.jsp:1</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> POST form #1 (action=&#39;doLogin&#39;) on http://demo.testfire.net/login.jsp has no hidden CSRF token field.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Include a per-session anti-CSRF token in all state-changing forms.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>HTML POST Form Lacks Anti-CSRF Token and SameSite Mitigation</span>
+              <span>
+                
+                <span class="cov-badge">CWE-352</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_csrf:/subscribe.jsp:1</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> POST form #1 (action=&#39;doSubscribe&#39;) on http://demo.testfire.net/subscribe.jsp has no hidden CSRF token field.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Include a per-session anti-CSRF token in all state-changing forms.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Content-Security-Policy (CSP) Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:missing_content-security-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;content-security-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Define a restrictive Content-Security-Policy header to mitigate XSS and unauthorized script execution.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Clickjacking Protection (X-Frame-Options / CSP frame-ancestors)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1021</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:missing_x-frame-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-frame-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Frame-Options: DENY&#39; (or SAMEORIGIN) and CSP &#39;frame-ancestors&#39; directive.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing X-Content-Type-Options: nosniff Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-16</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:missing_x-content-type-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-content-type-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Content-Type-Options: nosniff&#39; to prevent MIME-sniffing attacks.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Referrer-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:missing_referrer-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;referrer-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;Referrer-Policy: strict-origin-when-cross-origin&#39; or &#39;no-referrer&#39;.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Permissions-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:missing_permissions-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;permissions-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Restrict powerful browser features via &#39;Permissions-Policy&#39; header.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Technology Stack Disclosure via &#39;server&#39; Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-006:httpx_headers:leak_server</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> server: Apache-Coyote/1.1</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Strip or obfuscate the &#39;server&#39; response header on the web server/reverse proxy.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -1834,10 +2028,10 @@
         </div>
         
 
-        <div class="evidence-box">[httpx_cookies] Probe execution error: All connection attempts failed
-[httpx_csrf] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_cookies] FAIL (2 finding(s)): Inspected 1 Set-Cookie header(s); found 2 attribute weakness(es).
+[httpx_csrf] FAIL (3 finding(s)): Flagged 3 POST form(s) lacking explicit anti-CSRF tokens.
 [httpx_jwt] INCONCLUSIVE: SKIPPED_NO_JWT: No bearer_token configured in AuthContext.
-[httpx_headers] Probe execution error: All connection attempts failed
+[httpx_headers] FAIL (6 finding(s)): Identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
@@ -1893,17 +2087,17 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-iam-008 advanced api &amp; microservice authorization (mass assignment, graphql, versioning &amp; grpc) [httpx_graphql] no_issues_found: no graphql endpoints detected at standard paths (/graphql, /api/graphql) within probe scope.
-[httpx_api_auth] inconclusive: skipped_no_endpoints: configure --endpoint values to assess api authentication.
+      <div class="finding-card" data-status="FAIL" data-search="web-iam-008 advanced api &amp; microservice authorization (mass assignment, graphql, versioning &amp; grpc) [httpx_graphql] no_issues_found: no graphql endpoints detected at standard paths (/graphql, /api/graphql) within probe scope.
+[httpx_api_auth] fail (9 finding(s)): http://demo.testfire.net/cgi.exe: unauthenticated=404/not-found-or-hidden, malformed_jwt=404/not-found-or-hidden. | http://demo.testfire.net/feedback.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/index.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/login.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/search.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/status_check.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/style.css: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/subscribe.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/survey_questions.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/swagger/index.html: unauthenticated=200/success, malformed_jwt=200/success.
 [nuclei_bola] tooling gap: external binary not installed.
-[nuclei_bfla] tooling gap: external binary not installed.
+[nuclei_bfla] no_issues_found: probed 5 administrative path(s); none reachable unauthenticated.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (api security) rbi digital payment security controls (api gateway &amp; microservice security)">
         <div class="finding-top">
           <div class="finding-title">[WEB-IAM-008] Advanced API &amp; Microservice Authorization (Mass Assignment, GraphQL, Versioning &amp; gRPC)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">2 of 5 bindings executed</span>
+            <span class="cov-badge">3 of 5 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -1917,6 +2111,136 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/feedback.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/feedback.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/feedback.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/index.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/index.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/index.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/login.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/login.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/login.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/search.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/search.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/search.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/status_check.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/status_check.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/status_check.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/style.css&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/style.css</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/style.css with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/subscribe.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/subscribe.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/subscribe.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/survey_questions.jsp&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/survey_questions.jsp</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/survey_questions.jsp with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>API Endpoint Accepted Malformed Bearer Token (&#39;/swagger/index.html&#39;)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-347</span>
+                <span class="badge sev-Critical">Critical</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-IAM-008:httpx_api_auth:malformed_jwt:/swagger/index.html</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> GET http://demo.testfire.net/swagger/index.html with malformed JWT returned HTTP 200.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Enforce cryptographic JWT signature verification before granting access.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -1947,9 +2271,9 @@
         
 
         <div class="evidence-box">[httpx_graphql] NO_ISSUES_FOUND: No GraphQL endpoints detected at standard paths (/graphql, /api/graphql) within probe scope.
-[httpx_api_auth] INCONCLUSIVE: SKIPPED_NO_ENDPOINTS: Configure --endpoint values to assess API authentication.
+[httpx_api_auth] FAIL (9 finding(s)): http://demo.testfire.net/cgi.exe: unauthenticated=404/not-found-or-hidden, malformed_jwt=404/not-found-or-hidden. | http://demo.testfire.net/feedback.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/index.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/login.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/search.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/status_check.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/style.css: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/subscribe.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/survey_questions.jsp: unauthenticated=200/success, malformed_jwt=200/success. | http://demo.testfire.net/swagger/index.html: unauthenticated=200/success, malformed_jwt=200/success.
 [nuclei_bola] Tooling gap: external binary not installed.
-[nuclei_bfla] Tooling gap: external binary not installed.
+[nuclei_bfla] NO_ISSUES_FOUND: Probed 5 administrative path(s); none reachable unauthenticated.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
@@ -1999,20 +2323,21 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-002 attack surface, build artifacts, source maps &amp; admin interface exposure [httpx_discovery] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="NO_ISSUES_FOUND" data-search="web-inf-002 attack surface, build artifacts, source maps &amp; admin interface exposure [httpx_discovery] no_issues_found: no open directory listings or default admin consoles detected at common paths.
+[httpx_exposed_artifacts] no_issues_found: no exposed backup files, source maps, or debug endpoints detected at checked paths.
 [nuclei_exposures] tooling gap: external binary not installed. cert-in cisg-2026-02 (public exposure &amp; attack surface reduction) cert-in cisg-2024-01">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-002] Attack Surface, Build Artifacts, Source Maps &amp; Admin Interface Exposure</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">2 of 3 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-NO_ISSUES_FOUND">NO_ISSUES_FOUND</span>
           </div>
         </div>
         <div class="tag-row">
           <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
           <strong>Mode:</strong> automated &nbsp;|&nbsp;
-          <strong>Bindings:</strong> httpx_discovery, nuclei_exposures
+          <strong>Bindings:</strong> httpx_discovery, httpx_exposed_artifacts, nuclei_exposures
         </div>
         
         <div class="tag-row">
@@ -2024,18 +2349,19 @@
 
         
 
-        <div class="evidence-box">[httpx_discovery] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_discovery] NO_ISSUES_FOUND: No open directory listings or default admin consoles detected at common paths.
+[httpx_exposed_artifacts] NO_ISSUES_FOUND: No exposed backup files, source maps, or debug endpoints detected at checked paths.
 [nuclei_exposures] Tooling gap: external binary not installed.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-003 software composition analysis (sca), sbom/cbom &amp; dependency hygiene [httpx_cve_fingerprint] probe execution error: all connection attempts failed
-[trivy_sca] tooling gap: external binary not installed. cert-in cisg-2024-02 (technical guidelines on sbom, qbom &amp; cbom v2.0) cert-in cisg-2025-02 (comprehensive cyber security audit policy guidelines)">
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-003 software composition analysis (sca), sbom/cbom &amp; dependency hygiene [httpx_cve_fingerprint] fail (1 finding(s)): version fingerprinting matched 1 known vulnerable/eol signature(s).
+[trivy_sca] fail (1 finding(s)): command timed out after 180s cert-in cisg-2024-02 (technical guidelines on sbom, qbom &amp; cbom v2.0) cert-in cisg-2025-02 (comprehensive cyber security audit policy guidelines)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-003] Software Composition Analysis (SCA), SBOM/CBOM &amp; Dependency Hygiene</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">2 of 2 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2050,22 +2376,54 @@
         
 
         
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Legacy Apache Tomcat Connector (Apache-Coyote/1.1) — End-of-Life / RCE Exposure</span>
+              <span>
+                <span class="cov-badge">CVE-2017-12617 / CVE-2020-1938</span>
+                <span class="cov-badge">CWE-1104</span>
+                <span class="badge sev-High">High</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-003:httpx_cve_fingerprint:CVE-2017-12617 / CVE-2020-1938</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Matched banner signature &#39;Apache-Coyote/1.1&#39; in response headers.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Upgrade Apache Tomcat to a supported 10.1.x / 11.x release and suppress the Server banner.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>High/Critical Vulnerable Third-Party Dependencies or Secrets Detected</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1395</span>
+                <span class="badge sev-High">High</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-003:trivy:1</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Command timed out after 180s</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Upgrade vulnerable dependencies to patched versions and regenerate SBOM.</div>
+          </div>
+          
+        </div>
+        
 
         
 
-        <div class="evidence-box">[httpx_cve_fingerprint] Probe execution error: All connection attempts failed
-[trivy_sca] Tooling gap: external binary not installed.</div>
+        <div class="evidence-box">[httpx_cve_fingerprint] FAIL (1 finding(s)): Version fingerprinting matched 1 known vulnerable/EOL signature(s).
+[trivy_sca] FAIL (1 finding(s)): Command timed out after 180s</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-004 client-side supply chain, subresource integrity (sri) &amp; artifact verification [httpx_client_assets] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inf-004 client-side supply chain, subresource integrity (sri) &amp; artifact verification [httpx_client_assets] no_issues_found: no active mixed content, unprotected cdn scripts, or sensitive web storage keys detected.
 [nuclei_exposures] tooling gap: external binary not installed.
 [manual_review] manual playbook verification queued. cert-in cisg-2024-02 (software supply chain integrity) rbi digital payment security controls (payment page script integrity)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-004] Client-Side Supply Chain, Subresource Integrity (SRI) &amp; Artifact Verification</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 3 bindings executed</span>
+            <span class="cov-badge">1 of 3 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2106,7 +2464,7 @@
         </div>
         
 
-        <div class="evidence-box">[httpx_client_assets] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_client_assets] NO_ISSUES_FOUND: No active mixed content, unprotected CDN scripts, or sensitive Web Storage keys detected.
 [nuclei_exposures] Tooling gap: external binary not installed.
 [manual_review] Manual playbook verification queued.</div>
       </div>
@@ -2257,16 +2615,16 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-002 cross-site scripting (reflected, stored, dom, file-upload xss &amp; context encoding) [httpx_canary_inj] no_issues_found: no unencoded canary reflection or sql error signatures detected.
-[nuclei_injection] tooling gap: external binary not installed.
-[httpx_headers] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="FAIL" data-search="web-inj-002 cross-site scripting (reflected, stored, dom, file-upload xss &amp; context encoding) [httpx_canary_inj] no_issues_found: no unencoded canary reflection or sql error signatures detected.
+[nuclei_injection] inconclusive: inconclusive_injection: nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
+[httpx_headers] fail (6 finding(s)): identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (client-side injection controls)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-002] Cross-Site Scripting (Reflected, Stored, DOM, File-Upload XSS &amp; Context Encoding)</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">1 of 4 bindings executed</span>
+            <span class="cov-badge">3 of 4 bindings executed</span>
             <span class="badge sev-High">High</span>
-            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2280,6 +2638,94 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Content-Security-Policy (CSP) Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:missing_content-security-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;content-security-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Define a restrictive Content-Security-Policy header to mitigate XSS and unauthorized script execution.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Clickjacking Protection (X-Frame-Options / CSP frame-ancestors)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1021</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:missing_x-frame-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-frame-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Frame-Options: DENY&#39; (or SAMEORIGIN) and CSP &#39;frame-ancestors&#39; directive.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing X-Content-Type-Options: nosniff Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-16</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:missing_x-content-type-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-content-type-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Content-Type-Options: nosniff&#39; to prevent MIME-sniffing attacks.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Referrer-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:missing_referrer-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;referrer-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;Referrer-Policy: strict-origin-when-cross-origin&#39; or &#39;no-referrer&#39;.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Permissions-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:missing_permissions-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;permissions-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Restrict powerful browser features via &#39;Permissions-Policy&#39; header.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Technology Stack Disclosure via &#39;server&#39; Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INJ-002:httpx_headers:leak_server</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> server: Apache-Coyote/1.1</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Strip or obfuscate the &#39;server&#39; response header on the web server/reverse proxy.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -2308,8 +2754,8 @@
         
 
         <div class="evidence-box">[httpx_canary_inj] NO_ISSUES_FOUND: No unencoded canary reflection or SQL error signatures detected.
-[nuclei_injection] Tooling gap: external binary not installed.
-[httpx_headers] Probe execution error: All connection attempts failed
+[nuclei_injection] INCONCLUSIVE: INCONCLUSIVE_INJECTION: Nuclei not installed and no parameterized/--endpoint &#39;{inj}&#39; routes available.
+[httpx_headers] FAIL (6 finding(s)): Identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
@@ -2655,16 +3101,16 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-001 web server hardening, security headers, cors policy &amp; http method restrictions [httpx_headers] probe execution error: all connection attempts failed
-[httpx_methods] probe execution error: all connection attempts failed
-[httpx_cors] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-001 web server hardening, security headers, cors policy &amp; http method restrictions [httpx_headers] fail (6 finding(s)): identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
+[httpx_methods] no_issues_found: no risky http methods (trace/put/delete) detected.
+[httpx_cors] no_issues_found: no permissive cors reflection detected (acao=&#39;none&#39;, acac=&#39;none&#39;).
 [nuclei_exposures] tooling gap: external binary not installed. cert-in cisg-2024-01 (web server &amp; application hardening) cert-in cisg-2026-02">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-001] Web Server Hardening, Security Headers, CORS Policy &amp; HTTP Method Restrictions</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 4 bindings executed</span>
+            <span class="cov-badge">3 of 4 bindings executed</span>
             <span class="badge sev-Medium">Medium</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2679,28 +3125,117 @@
         
 
         
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Content-Security-Policy (CSP) Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:missing_content-security-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;content-security-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Define a restrictive Content-Security-Policy header to mitigate XSS and unauthorized script execution.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Clickjacking Protection (X-Frame-Options / CSP frame-ancestors)</span>
+              <span>
+                
+                <span class="cov-badge">CWE-1021</span>
+                <span class="badge sev-Medium">Medium</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:missing_x-frame-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-frame-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Frame-Options: DENY&#39; (or SAMEORIGIN) and CSP &#39;frame-ancestors&#39; directive.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing X-Content-Type-Options: nosniff Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-16</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:missing_x-content-type-options</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;x-content-type-options&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;X-Content-Type-Options: nosniff&#39; to prevent MIME-sniffing attacks.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Referrer-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:missing_referrer-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;referrer-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Set &#39;Referrer-Policy: strict-origin-when-cross-origin&#39; or &#39;no-referrer&#39;.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Missing Permissions-Policy Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:missing_permissions-policy</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) did not include &#39;permissions-policy&#39;.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Restrict powerful browser features via &#39;Permissions-Policy&#39; header.</div>
+          </div>
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>Technology Stack Disclosure via &#39;server&#39; Header</span>
+              <span>
+                
+                <span class="cov-badge">CWE-200</span>
+                <span class="badge sev-Low">Low</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-001:httpx_headers:leak_server</code> &nbsp;|&nbsp; Confidence: CONFIRMED</div>
+            <div><strong>Evidence:</strong> server: Apache-Coyote/1.1</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Strip or obfuscate the &#39;server&#39; response header on the web server/reverse proxy.</div>
+          </div>
+          
+        </div>
+        
 
         
 
-        <div class="evidence-box">[httpx_headers] Probe execution error: All connection attempts failed
-[httpx_methods] Probe execution error: All connection attempts failed
-[httpx_cors] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_headers] FAIL (6 finding(s)): Identified 6 discrete header/banner issue(s) on http://demo.testfire.net.
+[httpx_methods] NO_ISSUES_FOUND: No risky HTTP methods (TRACE/PUT/DELETE) detected.
+[httpx_cors] NO_ISSUES_FOUND: No permissive CORS reflection detected (ACAO=&#39;none&#39;, ACAC=&#39;none&#39;).
 [nuclei_exposures] Tooling gap: external binary not installed.</div>
       </div>
       
-      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-007 [wstg-info-01 / info-04] search engine recon, subdomain &amp; virtual host enumeration manual verification playbook ready (awaiting tester execution &amp; evidence). cert-in cisg-2026-02 (attack surface &amp; shadow asset governance) cert-in cisg-2024-01">
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-007 [wstg-info-01 / info-04] search engine recon, subdomain &amp; virtual host enumeration [httpx_arch_and_dns] fail (1 finding(s)): dns resolved demo.testfire.net -&gt; 65.61.137.117. no standard cdn/waf perimeter headers detected on edge response.
+[manual_review] manual playbook verification queued. cert-in cisg-2026-02 (attack surface &amp; shadow asset governance) cert-in cisg-2024-01">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-007] [WSTG-INFO-01 / INFO-04] Search Engine Recon, Subdomain &amp; Virtual Host Enumeration</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 1 automated bindings (manual playbook)</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Medium">Medium</span>
-            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
           <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
-          <strong>Mode:</strong> manual &nbsp;|&nbsp;
-          <strong>Bindings:</strong> manual_review
+          <strong>Mode:</strong> hybrid &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_arch_and_dns, manual_review
         </div>
         
         <div class="tag-row">
@@ -2708,6 +3243,24 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>No Edge WAF / CDN Perimeter Layer Fingerprinted</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Info">Info</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-007:httpx_arch_and_dns:no_waf_cdn_detected</code> &nbsp;|&nbsp; Confidence: SIGNAL</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) exposed no standard WAF/CDN headers.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Verify whether an upstream WAF/reverse-proxy protects the origin and ensure direct origin IPs are firewalled.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -2733,16 +3286,17 @@
         </div>
         
 
-        <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
+        <div class="evidence-box">[httpx_arch_and_dns] FAIL (1 finding(s)): DNS resolved demo.testfire.net -&gt; 65.61.137.117. No standard CDN/WAF perimeter headers detected on edge response.
+[manual_review] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-008 [wstg-info-03 / conf-08] webserver metafiles &amp; legacy ria cross-domain policy audit [httpx_metafiles] probe execution error: all connection attempts failed cert-in cisg-2026-02 (public metadata &amp; policy hardening)">
+      <div class="finding-card" data-status="NO_ISSUES_FOUND" data-search="web-inf-008 [wstg-info-03 / conf-08] webserver metafiles &amp; legacy ria cross-domain policy audit [httpx_metafiles] no_issues_found: no sensitive disclosures in robots.txt/sitemap.xml or wildcard ria policies detected. cert-in cisg-2026-02 (public metadata &amp; policy hardening)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-008] [WSTG-INFO-03 / CONF-08] Webserver Metafiles &amp; Legacy RIA Cross-Domain Policy Audit</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 1 bindings executed</span>
+            <span class="cov-badge">1 of 1 bindings executed</span>
             <span class="badge sev-Medium">Medium</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-NO_ISSUES_FOUND">NO_ISSUES_FOUND</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2760,14 +3314,14 @@
 
         
 
-        <div class="evidence-box">[httpx_metafiles] Probe execution error: All connection attempts failed</div>
+        <div class="evidence-box">[httpx_metafiles] NO_ISSUES_FOUND: No sensitive disclosures in robots.txt/sitemap.xml or wildcard RIA policies detected.</div>
       </div>
       
       <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-009 [wstg-info-05] client-side source code, html comments &amp; downloadable file metadata audit manual verification playbook ready (awaiting tester execution &amp; evidence). cert-in cisg-2024-01 (information leakage prevention) dpdp rules 2025 - rule 6(1)(a)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-009] [WSTG-INFO-05] Client-Side Source Code, HTML Comments &amp; Downloadable File Metadata Audit</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 1 automated bindings (manual playbook)</span>
+            <span class="cov-badge">0 of 2 automated bindings (manual playbook)</span>
             <span class="badge sev-Medium">Medium</span>
             <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
           </div>
@@ -2775,7 +3329,7 @@
         <div class="tag-row">
           <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
           <strong>Mode:</strong> manual &nbsp;|&nbsp;
-          <strong>Bindings:</strong> manual_review
+          <strong>Bindings:</strong> httpx_source_metadata, manual_review
         </div>
         
         <div class="tag-row">
@@ -2809,14 +3363,14 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inf-012 [wstg-conf-13] url path confusion &amp; reverse-proxy normalization consistency [httpx_path_confusion] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inf-012 [wstg-conf-13] url path confusion &amp; reverse-proxy normalization consistency [httpx_path_confusion] no_issues_found: no http 401/403 restricted baseline endpoints found among candidates (path confusion not applicable).
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (access control &amp; routing consistency) dpdp rules 2025 - rule 6(1)(b)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-012] [WSTG-CONF-13] URL Path Confusion &amp; Reverse-Proxy Normalization Consistency</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Medium">Medium</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2853,7 +3407,7 @@
         </div>
         
 
-        <div class="evidence-box">[httpx_path_confusion] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_path_confusion] NO_ISSUES_FOUND: No HTTP 401/403 restricted baseline endpoints found among candidates (path confusion not applicable).
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
@@ -2861,7 +3415,7 @@
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-006] [WSTG-INPV-03] HTTP Parameter Pollution (HPP) Consistency</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 1 automated bindings (manual playbook)</span>
+            <span class="cov-badge">0 of 2 automated bindings (manual playbook)</span>
             <span class="badge sev-Medium">Medium</span>
             <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
           </div>
@@ -2869,7 +3423,7 @@
         <div class="tag-row">
           <strong>Module:</strong> TIR-INJECT &nbsp;|&nbsp;
           <strong>Mode:</strong> manual &nbsp;|&nbsp;
-          <strong>Bindings:</strong> manual_proxy
+          <strong>Bindings:</strong> httpx_hpp_consistency, manual_proxy
         </div>
         
         <div class="tag-row">
@@ -2903,14 +3457,14 @@
         <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
       </div>
       
-      <div class="finding-card" data-status="INCONCLUSIVE" data-search="web-inj-009 [wstg-clnt-04 / clnt-05 / clnt-06 / clnt-08] open redirect, css injection, client resource manipulation &amp; legacy flash [httpx_open_redirect] probe execution error: all connection attempts failed
+      <div class="finding-card" data-status="HYBRID_REVIEW" data-search="web-inj-009 [wstg-clnt-04 / clnt-05 / clnt-06 / clnt-08] open redirect, css injection, client resource manipulation &amp; legacy flash [httpx_open_redirect] no_issues_found: no external redirect reflection detected across common redirect parameters.
 [manual_proxy] manual playbook verification queued. cert-in cisg-2024-01 (client-side &amp; phishing redirect controls) dpdp rules 2025 - rule 6(1)(a)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INJ-009] [WSTG-CLNT-04 / CLNT-05 / CLNT-06 / CLNT-08] Open Redirect, CSS Injection, Client Resource Manipulation &amp; Legacy Flash</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 2 bindings executed</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Medium">Medium</span>
-            <span class="badge st-INCONCLUSIVE">INCONCLUSIVE</span>
+            <span class="badge st-HYBRID_REVIEW">HYBRID_REVIEW</span>
           </div>
         </div>
         <div class="tag-row">
@@ -2951,23 +3505,24 @@
         </div>
         
 
-        <div class="evidence-box">[httpx_open_redirect] Probe execution error: All connection attempts failed
+        <div class="evidence-box">[httpx_open_redirect] NO_ISSUES_FOUND: No external redirect reflection detected across common redirect parameters.
 [manual_proxy] Manual playbook verification queued.</div>
       </div>
       
-      <div class="finding-card" data-status="MANUAL_REQUIRED" data-search="web-inf-010 [wstg-info-10] application architecture, waf &amp; reverse-proxy trust boundary mapping manual verification playbook ready (awaiting tester execution &amp; evidence). cert-in cisg-2026-02 (perimeter &amp; origin isolation)">
+      <div class="finding-card" data-status="FAIL" data-search="web-inf-010 [wstg-info-10] application architecture, waf &amp; reverse-proxy trust boundary mapping [httpx_arch_and_dns] fail (1 finding(s)): dns resolved demo.testfire.net -&gt; 65.61.137.117. no standard cdn/waf perimeter headers detected on edge response.
+[manual_review] manual playbook verification queued. cert-in cisg-2026-02 (perimeter &amp; origin isolation)">
         <div class="finding-top">
           <div class="finding-title">[WEB-INF-010] [WSTG-INFO-10] Application Architecture, WAF &amp; Reverse-Proxy Trust Boundary Mapping</div>
           <div style="display: flex; gap: 6px; align-items: center; flex-wrap: wrap;">
-            <span class="cov-badge">0 of 1 automated bindings (manual playbook)</span>
+            <span class="cov-badge">1 of 2 bindings executed</span>
             <span class="badge sev-Info">Info</span>
-            <span class="badge st-MANUAL_REQUIRED">MANUAL_REQUIRED</span>
+            <span class="badge st-FAIL">FAIL</span>
           </div>
         </div>
         <div class="tag-row">
           <strong>Module:</strong> TIR-INFRA &nbsp;|&nbsp;
-          <strong>Mode:</strong> manual &nbsp;|&nbsp;
-          <strong>Bindings:</strong> manual_review
+          <strong>Mode:</strong> hybrid &nbsp;|&nbsp;
+          <strong>Bindings:</strong> httpx_arch_and_dns, manual_review
         </div>
         
         <div class="tag-row">
@@ -2975,6 +3530,24 @@
         </div>
         
 
+        
+        <div class="atomic-list">
+          
+          <div class="atomic-item">
+            <div class="atomic-header">
+              <span>No Edge WAF / CDN Perimeter Layer Fingerprinted</span>
+              <span>
+                
+                <span class="cov-badge">CWE-693</span>
+                <span class="badge sev-Info">Info</span>
+              </span>
+            </div>
+            <div class="atomic-meta">Rule: <code>WEB-INF-010:httpx_arch_and_dns:no_waf_cdn_detected</code> &nbsp;|&nbsp; Confidence: SIGNAL</div>
+            <div><strong>Evidence:</strong> Response from http://demo.testfire.net (HTTP 200) exposed no standard WAF/CDN headers.</div>
+            <div class="atomic-remediation"><strong>Remediation:</strong> Verify whether an upstream WAF/reverse-proxy protects the origin and ensure direct origin IPs are firewalled.</div>
+          </div>
+          
+        </div>
         
 
         
@@ -2998,7 +3571,8 @@
         </div>
         
 
-        <div class="evidence-box">Manual verification playbook ready (awaiting tester execution &amp; evidence).</div>
+        <div class="evidence-box">[httpx_arch_and_dns] FAIL (1 finding(s)): DNS resolved demo.testfire.net -&gt; 65.61.137.117. No standard CDN/WAF perimeter headers detected on edge response.
+[manual_review] Manual playbook verification queued.</div>
       </div>
       
     </div>

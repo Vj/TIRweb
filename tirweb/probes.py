@@ -5,6 +5,7 @@ import json
 import re
 import socket
 import ssl
+import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable
@@ -13,7 +14,6 @@ import httpx
 from .models import AuthContext, ChecklistItem, ProbeFinding, ProbeOutcome
 
 
-# Add allow_default_creds field to ScanContext:
 @dataclass
 class ScanContext:
     primary_auth: AuthContext
@@ -24,6 +24,8 @@ class ScanContext:
     max_requests: int = 500
     request_count: int = 0
     allow_default_creds: bool = False
+    allow_active_injection: bool = False
+    source_path: str | None = None
     _listeners: list[Callable[[httpx.Request], Any]] = field(default_factory=list)
 
     async def track_request(self, request: httpx.Request) -> None:
@@ -57,6 +59,24 @@ def _http_access_outcome(resp: httpx.Response) -> str:
     return "other"
 
 
+WEAK_CIPHER_SUITES = "DES-CBC3-SHA:RC4-SHA:RC4-MD5:EXP-RC4-MD5:@SECLEVEL=0"
+
+
+def _test_weak_cipher_acceptance(host: str, port: int, timeout: float) -> str | None:
+    """Attempt a secondary TLS handshake offering only legacy weak ciphers."""
+    try:
+        weak_ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        weak_ctx.check_hostname = False
+        weak_ctx.verify_mode = ssl.CERT_NONE
+        weak_ctx.set_ciphers(WEAK_CIPHER_SUITES)
+        with socket.create_connection((host, port), timeout=timeout) as raw_sock:
+            with weak_ctx.wrap_socket(raw_sock, server_hostname=host) as tls_sock:
+                cipher = tls_sock.cipher()
+                return cipher[0] if cipher else None
+    except Exception:
+        return None
+
+
 # ==============================================================================
 # 1. NATIVE TLS / HTTPS & HSTS PROBE (WSTG-CRYP-01, WSTG-CONF-07)
 # ==============================================================================
@@ -64,7 +84,7 @@ def _http_access_outcome(resp: httpx.Response) -> str:
 async def probe_tls_and_https(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> ProbeOutcome:
-    """Detect cleartext HTTP targets, missing HTTP->HTTPS redirects, legacy TLS, and HSTS."""
+    """Detect cleartext HTTP targets, missing HTTP->HTTPS redirects, legacy TLS, weak ciphers, and HSTS."""
     parsed = urlparse(target)
     host = parsed.hostname or ""
     findings: list[ProbeFinding] = []
@@ -81,7 +101,6 @@ async def probe_tls_and_https(
                 cwe="CWE-319",
             )
         )
-        # Check whether HTTP redirects to HTTPS
         try:
             async with httpx.AsyncClient(
                 timeout=ctx.timeout, verify=False, follow_redirects=False
@@ -109,8 +128,9 @@ async def probe_tls_and_https(
             conclusive=True,
         )
 
-    # Target uses HTTPS: inspect TLS version, cipher & HSTS
+    # Target uses HTTPS: inspect TLS version, weak cipher acceptance & HSTS
     tls_port = parsed.port or 443
+    loop = asyncio.get_running_loop()
     try:
         ssl_ctx = ssl.create_default_context()
         if not ctx.verify_tls:
@@ -133,6 +153,20 @@ async def probe_tls_and_https(
                             cwe="CWE-326",
                         )
                     )
+        weak_negotiated = await loop.run_in_executor(
+            None, _test_weak_cipher_acceptance, host, tls_port, ctx.timeout
+        )
+        if weak_negotiated:
+            findings.append(
+                ProbeFinding(
+                    rule_id=f"{check.id}:httpx_tls:weak_cipher",
+                    title=f"Weak Legacy Cipher Suite Accepted ({weak_negotiated})",
+                    severity="High",
+                    evidence=f"{host}:{tls_port} accepted legacy cipher '{weak_negotiated}'.",
+                    remediation="Disable RC4, DES, 3DES, EXPORT, and NULL ciphers; enforce AEAD suites (AES-GCM, ChaCha20-Poly1305).",
+                    cwe="CWE-327",
+                )
+            )
     except ssl.SSLCertVerificationError as exc:
         findings.append(
             ProbeFinding(
@@ -462,7 +496,6 @@ async def probe_directory_and_default_pages(
         follow_redirects=True,
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
-        # 1. Check root and common asset directories for 'Index of /'
         for dir_path in ("/", "/static/", "/assets/", "/uploads/", "/backup/"):
             resp = await client.get(urljoin(target, dir_path))
             if resp.status_code == 200 and re.search(r"<title>\s*Index of\s+/", resp.text, re.IGNORECASE):
@@ -477,7 +510,6 @@ async def probe_directory_and_default_pages(
                     )
                 )
 
-        # 2. Check high-signal default consoles and build artifacts
         for path, marker, title, severity in DEFAULT_EXPOSURE_PATHS:
             resp = await client.get(urljoin(target, path))
             if resp.status_code in {200, 401} and marker.lower() in resp.text.lower():
@@ -705,7 +737,7 @@ async def probe_csrf_tokens(
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
-        follow_redirects=True,  # Follow landing 302s to reach login/dashboard forms
+        follow_redirects=True,
         trust_env=True,
         headers=ctx.primary_auth.to_http_headers(),
         event_hooks={"request": [ctx.track_request]},
@@ -756,13 +788,17 @@ async def probe_csrf_tokens(
 
 
 # ==============================================================================
-# 10. MIXED CONTENT & SUBRESOURCE INTEGRITY (SRI) PROBE (WSTG-CRYP-03, INF-004)
+# 10. MIXED CONTENT, SRI & CLIENT STORAGE PROBE (WSTG-CRYP-03, INF-004)
 # ==============================================================================
+
+_STORAGE_PATTERN = re.compile(r"(localStorage|sessionStorage)\.setItem\(\s*['\"]([^'\"]+)['\"]", re.IGNORECASE)
+_SENSITIVE_STORAGE_KEY = re.compile(r"(token|jwt|password|secret|ssn|card|pan|aadhaar)", re.IGNORECASE)
+
 
 async def probe_client_assets_and_sri(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> ProbeOutcome:
-    """Check HTTPS pages for cleartext http:// mixed content and external scripts missing SRI hashes."""
+    """Check HTTPS pages for cleartext mixed content, missing SRI hashes, and sensitive Web Storage keys."""
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
@@ -800,7 +836,7 @@ async def probe_client_assets_and_sri(
                 findings.append(
                     ProbeFinding(
                         rule_id=f"{check.id}:httpx_client_assets:missing_sri:{parsed_src.hostname}",
-                        title=f"External Third-Party Script Missing Subresource Integrity (SRI)",
+                        title="External Third-Party Script Missing Subresource Integrity (SRI)",
                         severity="Low",
                         evidence=f"External script '{src}' loaded without integrity='sha384-...' attribute.",
                         remediation="Add cryptographic 'integrity' and 'crossorigin=\"anonymous\"' attributes to external CDN scripts.",
@@ -808,12 +844,41 @@ async def probe_client_assets_and_sri(
                     )
                 )
 
+    for m in _STORAGE_PATTERN.finditer(resp.text):
+        storage_api, key_name = m.group(1), m.group(2)
+        if _SENSITIVE_STORAGE_KEY.search(key_name):
+            findings.append(
+                ProbeFinding(
+                    rule_id=f"{check.id}:httpx_client_assets:web_storage:{key_name}",
+                    title=f"Sensitive Key Persisted in Browser {storage_api} ('{key_name}')",
+                    severity="High",
+                    evidence=f"{storage_api}.setItem('{key_name}', ...) detected on {final_url}.",
+                    remediation="Store session tokens in HttpOnly, Secure cookies or ephemeral memory rather than Web Storage.",
+                    cwe="CWE-922",
+                    confidence="SIGNAL",
+                )
+            )
+
+    for cookie_name, cookie_val in resp.cookies.items():
+        if _SENSITIVE_STORAGE_KEY.search(cookie_name) and re.match(r"^[\w\s,.@-]{3,40}$", cookie_val or ""):
+            findings.append(
+                ProbeFinding(
+                    rule_id=f"{check.id}:httpx_client_assets:plaintext_cookie:{cookie_name}",
+                    title=f"Readable / Non-Opaque Sensitive Cookie ('{cookie_name}')",
+                    severity="Medium",
+                    evidence=f"Cookie '{cookie_name}' stores plain unencrypted text rather than an opaque session identifier.",
+                    remediation="Replace client-side plaintext PII/token cookies with opaque server-side session references.",
+                    cwe="CWE-312",
+                    confidence="SIGNAL",
+                )
+            )
+
     return ProbeOutcome(
         findings=findings,
         summary=(
-            f"Client asset audit identified {len(findings)} mixed-content / missing-SRI issue(s)."
+            f"Client asset audit identified {len(findings)} mixed-content / SRI / storage issue(s)."
             if findings
-            else "No active mixed content or unprotected external CDN scripts detected."
+            else "No active mixed content, unprotected CDN scripts, or sensitive Web Storage keys detected."
         ),
         conclusive=True,
     )
@@ -901,17 +966,24 @@ async def probe_cve_fingerprint(
 
 
 # ==============================================================================
-# 12. SAFE CANARY REFLECTED XSS & ERROR-BASED SQLI PROBE (WSTG-INPV-01, INPV-04)
+# 12. SAFE CANARY REFLECTED XSS, SQLI, SSTI & CMDI PROBES (WSTG-INPV-01/04)
 # ==============================================================================
 
 async def probe_canary_injection(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> ProbeOutcome:
-    """Inject benign reflection canary and single-quote syntax probe on discovered query parameters."""
+    """Inject benign reflection canary and single-quote syntax probe on query params and {inj} templates."""
     parsed = urlparse(target)
-    target_urls = [target]
-    if not parsed.query:
-        target_urls.append(f"{target.rstrip('/')}/search?q=test")
+    candidate_urls: list[str] = []
+
+    if parsed.query:
+        candidate_urls.append(target)
+    for ep in ctx.probe_endpoints or []:
+        full = resolve_endpoint(target, ep)
+        if "{inj}" in full or "?" in full:
+            candidate_urls.append(full)
+    if not candidate_urls:
+        candidate_urls.append(f"{target.rstrip('/')}/search?q=test")
 
     xss_canary = "tirweb7x9q\"'><"
     findings: list[ProbeFinding] = []
@@ -920,15 +992,53 @@ async def probe_canary_injection(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
         follow_redirects=True,
+        trust_env=True,
         headers=ctx.primary_auth.to_http_headers(),
+        event_hooks={"request": [ctx.track_request]},
     ) as client:
-        for base_url in target_urls:
+        for base_url in candidate_urls:
+            if "{inj}" in base_url:
+                sqli_url = base_url.replace("{inj}", "%27")
+                try:
+                    sqli_resp = await client.get(sqli_url)
+                    for label, pattern in STACK_TRACE_PATTERNS:
+                        if "Database" in label and pattern.search(sqli_resp.text):
+                            findings.append(
+                                ProbeFinding(
+                                    rule_id=f"{check.id}:httpx_canary_inj:sqli_template",
+                                    title="Error-Based SQL Injection Signal on Parameterized Endpoint",
+                                    severity="Critical",
+                                    evidence=f"GET {sqli_url} triggered {label} signature.",
+                                    remediation="Use parameterized queries / prepared statements for all database access.",
+                                    cwe="CWE-89",
+                                )
+                            )
+                except httpx.HTTPError:
+                    pass
+
+                xss_url = base_url.replace("{inj}", xss_canary)
+                try:
+                    xss_resp = await client.get(xss_url)
+                    if xss_canary in xss_resp.text:
+                        findings.append(
+                            ProbeFinding(
+                                rule_id=f"{check.id}:httpx_canary_inj:xss_template",
+                                title="Unencoded Reflected XSS Canary on Parameterized Endpoint",
+                                severity="High",
+                                evidence=f"GET {xss_url} reflected unencoded canary '{xss_canary}'.",
+                                remediation="Apply context-aware HTML/attribute output encoding.",
+                                cwe="CWE-79",
+                            )
+                        )
+                except httpx.HTTPError:
+                    pass
+                continue
+
             p = urlparse(base_url)
             if not p.query:
                 continue
             params = dict(pair.split("=", 1) for pair in p.query.split("&") if "=" in pair)
             for param_name in params:
-                # 1. Benign Reflected XSS Canary
                 xss_params = dict(params)
                 xss_params[param_name] = xss_canary
                 xss_url = urlunparse(p._replace(query=urlencode(xss_params)))
@@ -948,7 +1058,6 @@ async def probe_canary_injection(
                 except httpx.HTTPError:
                     pass
 
-                # 2. Error-Based SQLi Single-Quote Probe
                 sqli_params = dict(params)
                 sqli_params[param_name] = "'"
                 sqli_url = urlunparse(p._replace(query=urlencode(sqli_params)))
@@ -980,8 +1089,122 @@ async def probe_canary_injection(
     )
 
 
+async def probe_ssti_and_cmdi_fallback(
+    target: str, check: ChecklistItem, ctx: ScanContext
+) -> ProbeOutcome:
+    """
+    Native async fallback for nuclei_injection: tests benign SSTI arithmetic ({{7*7}} -> 49),
+    reflected shell echo canary, and opt-in bounded sleep timing delta (--allow-active-injection).
+    """
+    templates = [
+        resolve_endpoint(target, ep)
+        for ep in (ctx.probe_endpoints or [])
+        if "{inj}" in ep
+    ]
+    if not templates:
+        parsed = urlparse(target)
+        if parsed.query:
+            first_key = parsed.query.split("=", 1)[0]
+            base = parsed._replace(query="").geturl()
+            templates.append(f"{base}?{first_key}={{inj}}")
+
+    if not templates:
+        return ProbeOutcome(
+            findings=[],
+            summary="INCONCLUSIVE_INJECTION: Nuclei not installed and no parameterized/--endpoint '{inj}' routes available.",
+            conclusive=False,
+        )
+
+    findings: list[ProbeFinding] = []
+    executed = 0
+    cmd_marker = "TIRWEBCMDCANARY7d2"
+
+    async with httpx.AsyncClient(
+        timeout=ctx.timeout,
+        verify=ctx.verify_tls,
+        follow_redirects=True,
+        trust_env=True,
+        headers=ctx.primary_auth.to_http_headers(),
+        event_hooks={"request": [ctx.track_request]},
+    ) as client:
+        for tmpl in templates:
+            ssti_url = tmpl.replace("{inj}", "%7B%7B7*7%7D%7D")
+            try:
+                resp = await client.get(ssti_url)
+                executed += 1
+                if "49" in resp.text and "{{7*7}}" not in resp.text:
+                    findings.append(
+                        ProbeFinding(
+                            rule_id=f"{check.id}:nuclei_injection:ssti",
+                            title="Server-Side Template Injection (SSTI) Expression Evaluated",
+                            severity="Critical",
+                            evidence=f"GET {ssti_url} evaluated '{{{{7*7}}}}' to '49' in response body.",
+                            remediation="Do not pass user input into server-side template compilation; use sandboxed/logic-less templates.",
+                            cwe="CWE-1336",
+                            confidence="SIGNAL",
+                        )
+                    )
+            except httpx.HTTPError:
+                pass
+
+            cmd_url = tmpl.replace("{inj}", f"%3Becho%20{cmd_marker}")
+            try:
+                cmd_resp = await client.get(cmd_url)
+                executed += 1
+                if cmd_marker in cmd_resp.text:
+                    findings.append(
+                        ProbeFinding(
+                            rule_id=f"{check.id}:nuclei_injection:cmdi_echo",
+                            title="OS Command Injection Output Reflected",
+                            severity="Critical",
+                            evidence=f"GET {cmd_url} echoed command marker '{cmd_marker}'.",
+                            remediation="Avoid shell invocation; pass arguments as arrays to subprocess APIs with strict allowlisting.",
+                            cwe="CWE-78",
+                        )
+                    )
+            except httpx.HTTPError:
+                pass
+
+            if ctx.allow_active_injection:
+                base_url = tmpl.replace("{inj}", "1")
+                sleep_url = tmpl.replace("{inj}", "%3Bsleep%202%3B")
+                try:
+                    t0 = time.monotonic()
+                    await client.get(base_url)
+                    base_dt = time.monotonic() - t0
+
+                    t1 = time.monotonic()
+                    await client.get(sleep_url)
+                    sleep_dt = time.monotonic() - t1
+
+                    if sleep_dt - base_dt >= 1.5:
+                        findings.append(
+                            ProbeFinding(
+                                rule_id=f"{check.id}:nuclei_injection:cmdi_timing",
+                                title="Blind OS Command Injection Timing Delta Detected",
+                                severity="Critical",
+                                evidence=f"GET {sleep_url} took {sleep_dt:.2f}s vs baseline {base_dt:.2f}s.",
+                                remediation="Eliminate shell command execution on user-controlled inputs.",
+                                cwe="CWE-78",
+                                confidence="SIGNAL",
+                            )
+                        )
+                except httpx.HTTPError:
+                    pass
+
+    return ProbeOutcome(
+        findings=findings,
+        summary=(
+            f"Native injection fallback detected {len(findings)} issue(s)."
+            if findings
+            else f"Executed {executed} SSTI/CMDi canary probe(s); no template evaluation or command echo detected."
+        ),
+        conclusive=executed > 0,
+    )
+
+
 # ==============================================================================
-# 13. EXISTING PROBES UPGRADED TO STRUCTURED ProbeOutcome
+# 13. JWT, CORS, METAFILES, PATH CONFUSION, REDIRECT, IDOR, API AUTH & GRAPHQL
 # ==============================================================================
 
 INSECURE_JWT_ALGS = {"none", "hs1", "rs1", "es1", "rsa1_5"}
@@ -1305,7 +1528,6 @@ async def probe_path_confusion(
         follow_redirects=False,
         headers=ctx.primary_auth.to_http_headers(),
     ) as client:
-        # Baseline soft-404 check so custom 200 error pages do not create false positives
         not_found_resp = await client.get(urljoin(target, "/__tirweb_baseline_404_canary__"))
         baseline_404_len = len(not_found_resp.content)
 
@@ -1482,7 +1704,7 @@ async def probe_api_authentication(
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
-        follow_redirects=False,  # 302 to login is an access-denied signal; never follow
+        follow_redirects=False,
         trust_env=True,
         event_hooks={"request": [ctx.track_request]},
     ) as client:
@@ -1670,7 +1892,7 @@ async def probe_bfla_exposed_panels(
     async with httpx.AsyncClient(
         timeout=ctx.timeout,
         verify=ctx.verify_tls,
-        follow_redirects=False,  # 302 to login is an access-denied signal; never follow
+        follow_redirects=False,
         trust_env=True,
         event_hooks={"request": [ctx.track_request]},
     ) as client:
@@ -1714,7 +1936,10 @@ async def probe_bfla_exposed_panels(
         conclusive=True,
     )
 
+
 GRAPHQL_DEFAULT_PATHS = ("/graphql", "/api/graphql", "/v1/graphql", "/graphql/console")
+
+
 async def probe_graphql_security(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> ProbeOutcome:
@@ -1811,6 +2036,7 @@ async def probe_graphql_security(
         summary="No GraphQL endpoints detected at standard paths (/graphql, /api/graphql) within probe scope.",
         conclusive=True,
     )
+
 
 # ==============================================================================
 # 14. EXPOSED BUILD ARTIFACTS, SOURCE METADATA & HPP CONSISTENCY PROBES
@@ -2029,6 +2255,7 @@ async def probe_http_parameter_pollution(
         conclusive=True,
     )
 
+
 # ==============================================================================
 # 15. ARCHITECTURE, WAF/CDN FINGERPRINTING & SUBDOMAIN/ORIGIN PROBE
 #     (WEB-INF-007: WSTG-INFO-01/04 & WEB-INF-010: WSTG-INFO-10)
@@ -2099,7 +2326,6 @@ async def probe_architecture_and_dns(
 
     loop = asyncio.get_running_loop()
 
-    # 1. Non-blocking DNS resolution (A & AAAA records)
     resolved_ips: list[str] = []
     try:
         addr_infos = await loop.getaddrinfo(hostname, port, type=socket.SOCK_STREAM)
@@ -2120,7 +2346,6 @@ async def probe_architecture_and_dns(
         headers=ctx.primary_auth.to_http_headers(),
         event_hooks={"request": [ctx.track_request]},
     ) as client:
-        # 2. Fingerprint WAF / CDN / Reverse-Proxy perimeter headers
         try:
             resp = await client.get(target)
         except httpx.HTTPError as exc:
@@ -2153,8 +2378,6 @@ async def probe_architecture_and_dns(
                 )
             )
 
-        # 3. Direct-IP Origin Isolation Check (WSTG-INFO-10)
-        # If an edge CDN/WAF is present, verify the resolved IP doesn't serve the app directly without SNI/edge routing
         if detected_perimeters and resolved_ips:
             first_ip = resolved_ips[0]
             ip_host = f"[{first_ip}]" if ":" in first_ip else first_ip
@@ -2177,9 +2400,8 @@ async def probe_architecture_and_dns(
                         )
                     )
             except httpx.HTTPError:
-                pass  # Direct IP blocked or TLS SNI mismatch — expected for properly isolated origins
+                pass
 
-        # 4. Shadow / Non-Production Subdomain DNS & Reachability Check (WSTG-INFO-01/04)
         base_domain = _extract_registrable_domain(hostname)
         if base_domain:
             exposed_shadows: list[str] = []

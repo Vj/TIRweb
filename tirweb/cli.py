@@ -179,6 +179,14 @@ def run_scan(
         Optional[Path],
         typer.Option("--out", "-o", help="Single self-contained HTML report output path"),
     ] = Path("tirweb_report.html"),
+    source_path: Annotated[
+        Optional[Path],
+        typer.Option("--source-path", exists=True, help="Optional local repository path for SAST/SCA secret & weak-hash scanning"),
+    ] = None,
+    allow_active_injection: Annotated[
+        bool,
+        typer.Option("--allow-active-injection", help="Opt-in to bounded sleep timing probes for blind command injection"),
+    ] = False,
 ) -> None:
     """Run security checks and export a single self-contained HTML compliance report."""
     try:
@@ -203,6 +211,8 @@ def run_scan(
         probe_endpoints=endpoint,
         max_requests=max_requests,
         allow_default_creds=allow_default_creds,
+        allow_active_injection=allow_active_injection,
+        source_path=str(source_path) if source_path else None,
     )
 
     loaded = TIRWebChecklist.from_yaml(checklist)

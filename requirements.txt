@@ -17,3 +17,10 @@ pytest>=8.4.0
 pytest-asyncio>=1.5.0
 ruff>=0.8.0
 mypy>=1.13.0
+
+# Using WinGet (built into Windows 11)
+winget install --id ProjectDiscovery.Nuclei -e
+winget install --id AquaSecurity.Trivy -e
+
+# Restart VS Code terminal so the updated PATH loads, then download Nuclei templates:
+nuclei -update-templates

@@ -1,6 +1,9 @@
 import asyncio
+import os
+import re
 import shutil
 from datetime import datetime, timezone
+from pathlib import Path
 from typing import Awaitable, Callable
 from pydantic import BaseModel, Field
 from .models import (
@@ -39,6 +42,7 @@ from .probes import (
     probe_path_confusion,
     probe_security_headers,
     probe_source_comments_and_file_metadata,
+    probe_ssti_and_cmdi_fallback,
     probe_tls_and_https,
     probe_verbose_errors,
 )
@@ -104,7 +108,6 @@ def _normalize_outcome(
     if passed:
         return ProbeOutcome(findings=[], summary=detail, conclusive=True)
 
-    # Split multi-line bullet findings from legacy probes into atomic ProbeFinding items
     lines = [ln.lstrip("- ").strip() for ln in detail.splitlines() if ln.strip()]
     header_line = lines[0] if lines else detail
     bullet_lines = lines[1:] if len(lines) > 1 else [header_line]
@@ -176,12 +179,12 @@ async def bind_nuclei(tag: str) -> ToolHandler:
 
         code, out = await _run_subprocess(cmd)
         if code == 127:
-            # Graceful native async fallbacks when external nuclei binary is absent
             if tag == "auth-bypass,bfla":
                 return await probe_bfla_exposed_panels(target, check, ctx)
             if tag == "auth,oauth,saml":
                 return await probe_differential_default_creds(target, check, ctx)
-            # For idor,bola / injection / ssrf / exposures: never guess unauthenticated; report tooling gap
+            if tag == "sqli,ssti,cmdi,xxe":
+                return await probe_ssti_and_cmdi_fallback(target, check, ctx)
             raise FileNotFoundError(out)
 
         raw_findings = [line.strip() for line in out.splitlines() if line.strip()]
@@ -205,32 +208,94 @@ async def bind_nuclei(tag: str) -> ToolHandler:
     return _handler
 
 
+_WEAK_HASH_RE = re.compile(r"\b(?:hashlib\.)?(md5|sha1)\s*\(", re.IGNORECASE)
+_SOURCE_SECRET_PATTERNS: list[tuple[str, re.Pattern[str]]] = [
+    ("Private Key Material", re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----")),
+    ("AWS Access Key ID", re.compile(r"\bAKIA[0-9A-Z]{16}\b")),
+]
+
+
 async def bind_trivy_sca(
     target: str, check: ChecklistItem, ctx: ScanContext
 ) -> ProbeOutcome:
+    if not ctx.source_path:
+        return ProbeOutcome(
+            findings=[],
+            summary="SKIPPED_NO_SOURCE: Pass --source-path <dir> to scan local source/dependencies for secrets and weak hashes.",
+            conclusive=False,
+        )
+
     code, out = await _run_subprocess(
-        ["trivy", "fs", "--severity", "HIGH,CRITICAL", "--quiet", "."]
+        ["trivy", "fs", "--severity", "HIGH,CRITICAL", "--quiet", ctx.source_path]
     )
-    if code == 127:
-        raise FileNotFoundError(out)
-    has_vulns = code != 0 or ("Total:" in out and "Total: 0" not in out)
-    findings = (
-        [
-            ProbeFinding(
-                rule_id=f"{check.id}:trivy:1",
-                title="High/Critical Vulnerable Third-Party Dependencies Detected",
-                severity=check.severity.value,
-                evidence=out or f"trivy exited with code {code}.",
-                remediation="Upgrade vulnerable dependencies to patched versions and regenerate SBOM.",
-                cwe="CWE-1395",
-            )
-        ]
-        if has_vulns
-        else []
-    )
+    if code != 127:
+        has_vulns = code != 0 or ("Total:" in out and "Total: 0" not in out)
+        findings = (
+            [
+                ProbeFinding(
+                    rule_id=f"{check.id}:trivy:1",
+                    title="High/Critical Vulnerable Third-Party Dependencies or Secrets Detected",
+                    severity=check.severity.value,
+                    evidence=out or f"trivy exited with code {code}.",
+                    remediation="Upgrade vulnerable dependencies to patched versions and regenerate SBOM.",
+                    cwe="CWE-1395",
+                )
+            ]
+            if has_vulns
+            else []
+        )
+        return ProbeOutcome(
+            findings=findings,
+            summary=out or f"No HIGH/CRITICAL dependency CVEs detected in '{ctx.source_path}'.",
+            conclusive=True,
+        )
+
+    # Pure-Python fallback when trivy binary is absent
+    findings: list[ProbeFinding] = []
+    scanned_files = 0
+    for root, dirs, files in os.walk(ctx.source_path):
+        dirs[:] = [d for d in dirs if d not in {".git", ".venv", "venv", "node_modules", "__pycache__"}]
+        for fname in files:
+            if not fname.endswith((".py", ".js", ".ts", ".java", ".go", ".env", ".yaml", ".yml", ".json")):
+                continue
+            fpath = os.path.join(root, fname)
+            try:
+                content = Path(fpath).read_text(encoding="utf-8", errors="ignore")
+            except OSError:
+                continue
+            scanned_files += 1
+            if _WEAK_HASH_RE.search(content):
+                findings.append(
+                    ProbeFinding(
+                        rule_id=f"{check.id}:trivy_sca:weak_hash:{fname}",
+                        title=f"Weak Cryptographic Hash (MD5/SHA1) Referenced in '{fname}'",
+                        severity="High",
+                        evidence=f"Found md5()/sha1() call in {fpath}.",
+                        remediation="Use Argon2id/bcrypt/scrypt for password hashing and SHA-256/SHA-3 for integrity digests.",
+                        cwe="CWE-327",
+                        confidence="SIGNAL",
+                    )
+                )
+            for label, pat in _SOURCE_SECRET_PATTERNS:
+                if pat.search(content):
+                    findings.append(
+                        ProbeFinding(
+                            rule_id=f"{check.id}:trivy_sca:secret:{fname}",
+                            title=f"Hardcoded {label} Detected in '{fname}'",
+                            severity="Critical",
+                            evidence=f"Matched {label} pattern in {fpath}.",
+                            remediation="Move secrets to a vault/KMS and rotate compromised credentials immediately.",
+                            cwe="CWE-798",
+                        )
+                    )
+
     return ProbeOutcome(
         findings=findings,
-        summary=out or "No HIGH/CRITICAL dependency CVEs detected within local workspace scan.",
+        summary=(
+            f"[python-fallback] Scanned {scanned_files} file(s) in '{ctx.source_path}'; found {len(findings)} issue(s)."
+            if findings
+            else f"[python-fallback] Scanned {scanned_files} file(s) in '{ctx.source_path}'; no weak hashes or hardcoded keys detected."
+        ),
         conclusive=True,
     )
 
@@ -256,7 +321,7 @@ class ToolDispatcher:
     def __init__(self, concurrency: int = 4) -> None:
         self.semaphore = asyncio.Semaphore(concurrency)
         self.registry: dict[str, ToolHandler] = {
-            # Native Python HTTPx probes (19 bindings)
+            # Native Python HTTPx probes (24 bindings)
             "httpx_tls": probe_tls_and_https,
             "httpx_headers": probe_security_headers,
             "httpx_cookies": probe_cookie_security,
@@ -404,18 +469,12 @@ class ToolDispatcher:
                     missing_tools.append(binding)
                     logs.append(f"[{binding}] Tooling gap: external binary not installed.")
                 except RuntimeError as exc:
-                    # Request budget exhausted -> mark inconclusive, never false pass/fail
                     logs.append(f"[{binding}] INCONCLUSIVE (budget cap): {exc}")
                 except Exception as exc:
                     logs.append(f"[{binding}] Probe execution error: {exc}")
-                
 
             coverage_label = f"{bindings_executed} of {bindings_total} bindings executed"
 
-            # Coverage-aware status roll-up:
-            # 1. Any affirmative finding -> FAIL
-            # 2. At least one binding ran cleanly -> HYBRID_REVIEW (if manual step exists) or NO_ISSUES_FOUND
-            # 3. Zero bindings ran conclusively (e.g., all external tools missing or skipped) -> INCONCLUSIVE
             if collected_findings:
                 status: CheckStatus = "FAIL"
                 is_conclusive = True
